@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="data:," />
+  <title>The Adventures of Laila &amp; Salma — Next-Gen Studio Ghibli WebGL2 Benchmark</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #1b2838;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none; -webkit-user-select: none;
+    }
+    #viewport { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+    #viewport:active { cursor: grabbing; }
+
+    .hud-card {
+      position: fixed; z-index: 20;
+      background: rgba(254, 249, 238, 0.84);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(185, 139, 82, 0.52);
+      box-shadow: 0 8px 24px rgba(45, 30, 18, 0.18);
+      color: #3a2618;
+      border-radius: 16px;
+    }
+    #top-banner {
+      top: 12px; left: 14px;
+      padding: 8px 14px;
+      display: flex; align-items: center; gap: 10px;
+      max-width: calc(100vw - 170px);
+    }
+    .badge {
+      background: linear-gradient(135deg, #e07a5f, #d97706);
+      color: #fffdf8; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    #top-banner h1 { font-size: 14px; font-weight: 800; line-height: 1.2; }
+    #top-banner p { font-size: 11px; color: #6b4e37; margin-top: 1px; }
+
+    #controls-dock {
+      bottom: 12px; left: 50%; transform: translateX(-50%);
+      padding: 6px 10px;
+      display: flex; flex-wrap: nowrap; align-items: center; justify-content: center; gap: 4px;
+      max-width: calc(100vw - 20px);
+      border-radius: 999px;
+    }
+    .dock-group {
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 6px;
+      border-right: 1px solid rgba(185, 139, 82, 0.35);
+    }
+    .dock-group:last-child { border-right: none; padding-right: 2px; }
+    .dock-group:first-child { padding-left: 2px; }
+    .pill-btn {
+      border: 1px solid rgba(185, 139, 82, 0.45);
+      background: rgba(255, 253, 247, 0.90);
+      color: #4a3220;
+      font-size: 11px; font-weight: 700;
+      padding: 5px 9px; border-radius: 999px;
+      cursor: pointer; transition: all 0.16s ease;
+      white-space: nowrap;
+    }
+    .pill-btn:hover { background: #fff4d8; transform: translateY(-1px); }
+    .pill-btn.active {
+      background: linear-gradient(135deg, #2a9d8f, #1f7a70);
+      color: #ffffff; border-color: #1f7a70;
+      box-shadow: 0 2px 8px rgba(42, 157, 143, 0.35);
+    }
+    .pill-btn.toggle-on {
+      background: linear-gradient(135deg, #e07a5f, #c85a3d);
+      color: #ffffff; border-color: #c85a3d;
+    }
+    #fps-pill {
+      top: 12px; right: 14px;
+      padding: 6px 12px;
+      font-size: 11.5px; font-weight: 700;
+      display: flex; align-items: center; gap: 7px;
+      border-radius: 999px;
+    }
+    #hint-strip {
+      position: fixed; top: 52px; right: 14px;
+      background: rgba(42, 28, 18, 0.56); color: #fff8eb;
+      padding: 4px 11px; border-radius: 999px; font-size: 10.5px;
+      pointer-events: none; z-index: 15; white-space: nowrap;
+      backdrop-filter: blur(6px);
+    }
+    #loading-veil {
+      position: fixed; inset: 0; z-index: 50;
+      background: linear-gradient(160deg, #56b4e9 0%, #a5def5 55%, #fff3d6 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      color: #3a2618; transition: opacity 0.55s ease;
+    }
+    #loading-veil.done { opacity: 0; pointer-events: none; }
+    @media (max-width: 1100px) {
+      #controls-dock { flex-wrap: wrap; border-radius: 18px; }
+    }
+    @media (max-width: 720px) {
+      #fps-pill { display: none; }
+      #hint-strip { display: none; }
+      #top-banner p { display: none; }
+    }
+  </style>
+
+  <!-- Same Three.js + Post-Processing stack used by the game -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+</head>
+<body>
+  <div id="loading-veil">
+    <div style="font-size:38px;">🌸✨🏡</div>
+    <div style="font-size:20px;font-weight:800;">Painting Studio Ghibli Courtyard...</div>
+    <div style="font-size:13px;opacity:0.8;">Compiling custom GLSL shaders, sculpted characters &amp; painted textures</div>
+  </div>
+
+  <div id="top-banner" class="hud-card">
+    <span class="badge">WebGL2 Next-Gen</span>
+    <div>
+      <h1>Studio Ghibli Graphics Benchmark — Home Courtyard</h1>
+      <p>Custom Miyazaki GLSL Shading • Hand-Inked Outlines • Painted Gouache Textures • Normal-Transferred Foliage • Reflective Water</p>
+    </div>
+  </div>
+
+  <div id="fps-pill" class="hud-card">
+    <span id="fps-val">60 FPS</span>
+    <span style="opacity:0.45;">•</span>
+    <span>WebGL2</span>
+  </div>
+
+  <div id="hint-strip">Drag to Orbit • Scroll to Zoom • WASD to Walk</div>
+
+  <div id="controls-dock" class="hud-card">
+    <div class="dock-group">
+      <button class="pill-btn active" data-cam="hero">🏡 Courtyard</button>
+      <button class="pill-btn" data-cam="sisters">👧 Laila &amp; Salma</button>
+      <button class="pill-btn" data-cam="fountain">⛲ Fountain</button>
+      <button class="pill-btn" data-cam="sakura">🌸 Trees</button>
+      <button class="pill-btn" data-cam="vista">🌄 Vista</button>
+    </div>
+    <div class="dock-group">
+      <button class="pill-btn active" data-time="morning">☀️ Morning</button>
+      <button class="pill-btn" data-time="sunset">🌅 Sunset</button>
+      <button class="pill-btn" data-time="twilight">🌙 Twilight</button>
+    </div>
+    <div class="dock-group">
+      <button class="pill-btn toggle-on" id="tog-outlines">✒️ Ink</button>
+      <button class="pill-btn toggle-on" id="tog-rim">✨ Rim</button>
+      <button class="pill-btn toggle-on" id="tog-bloom">🌤️ Bloom</button>
+    </div>
+  </div>
+
+  <canvas id="viewport"></canvas>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // =========================================================================
+    // 1. RENDERER, SCENE, COMPOSER (ACES Filmic + Soft Bloom + FXAA + 2048px PCF)
+    // =========================================================================
+    const canvas = document.getElementById('viewport');
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.02;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0xc8ecfb, 0.0082);
+
+    const camera = new THREE.PerspectiveCamera(44, window.innerWidth / window.innerHeight, 0.15, 360);
+
+    // Post-processing composer (gentle high-threshold film bloom so blossoms never blow out white!)
+    let composer = null, bloomPass = null, fxaaPass = null;
+    if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass) {
+      composer = new THREE.EffectComposer(renderer);
+      composer.addPass(new THREE.RenderPass(scene, camera));
+      bloomPass = new THREE.UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        0.16, 0.42, 0.94
+      );
+      composer.addPass(bloomPass);
+      if (THREE.FXAAShader && THREE.ShaderPass) {
+        fxaaPass = new THREE.ShaderPass(THREE.FXAAShader);
+        fxaaPass.uniforms.resolution.value.set(1 / window.innerWidth, 1 / window.innerHeight);
+        composer.addPass(fxaaPass);
+      }
+    }
+
+    // Strictly 3 cohesive scene lights (Sun + Sky/Ground Hemisphere + Subtle Warm Bounce)
+    const sunLight = new THREE.DirectionalLight(0xfff4d9, 1.38);
+    sunLight.position.set(22, 30, 18);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.camera.near = 2;
+    sunLight.shadow.camera.far = 95;
+    sunLight.shadow.camera.left = -26;
+    sunLight.shadow.camera.right = 26;
+    sunLight.shadow.camera.top = 26;
+    sunLight.shadow.camera.bottom = -26;
+    sunLight.shadow.bias = -0.00045;
+    sunLight.shadow.normalBias = 0.025;
+    scene.add(sunLight);
+
+    const hemiLight = new THREE.HemisphereLight(0x9bd7ff, 0x6b9e56, 0.68);
+    scene.add(hemiLight);
+
+    const bounceLight = new THREE.DirectionalLight(0xffd2a6, 0.28);
+    bounceLight.position.set(-16, 8, -14);
+    scene.add(bounceLight);
+
+    // =========================================================================
+    // 2. LOAD HAND-PAINTED STUDIO GHIBLI GOUACHE TEXTURES
+    // =========================================================================
+    const texLoader = new THREE.TextureLoader();
+    function loadPaintedTex(path, rx, ry) {
+      const t = texLoader.load(path);
+      t.encoding = THREE.sRGBEncoding;
+      t.wrapS = THREE.RepeatWrapping;
+      t.wrapT = THREE.RepeatWrapping;
+      if (rx && ry) t.repeat.set(rx, ry);
+      t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      return t;
+    }
+    const TEX = {
+      sky: loadPaintedTex('assets/ghibli_showcase/sky_panorama.jpg', 1, 1),
+      cobble: loadPaintedTex('assets/ghibli_showcase/stone_cobble.jpg', 7, 7),
+      plaster: loadPaintedTex('assets/ghibli_showcase/plaster_wall.jpg', 2.4, 1.6),
+      roof: loadPaintedTex('assets/ghibli_showcase/terracotta_roof.jpg', 4, 2.2),
+      meadow: loadPaintedTex('assets/ghibli_showcase/meadow_ground.jpg', 12, 12)
+    };
+    TEX.sky.wrapS = THREE.RepeatWrapping;
+    TEX.sky.wrapT = THREE.ClampToEdgeWrapping;
+
+    // Shared global uniforms for time-of-day, rim light, ink outlines, wind
+    const GLOBAL = {
+      uTime: { value: 0 },
+      uSunDir: { value: new THREE.Vector3(22, 30, 18).normalize() },
+      uSunCol: { value: new THREE.Color(0xfff5dc) },
+      uShadowTint: { value: new THREE.Color(0x6e84c2) },
+      uRimCol: { value: new THREE.Color(0xffe7a8) },
+      uRimStrength: { value: 0.42 },
+      uFogCol: { value: new THREE.Color(0xc8ecfb) },
+      uFogDensity: { value: 0.0085 },
+      uTimeMode: { value: 0.0 }, // 0=morning, 1=sunset, 2=twilight
+      outlinesOn: true,
+      bloomOn: true
+    };
+
+    const outlineMeshes = [];
+    const outlineMatCache = {};
+    function getOutlineMat(hex) {
+      const k = hex || 0x3b241c;
+      if (!outlineMatCache[k]) {
+        outlineMatCache[k] = new THREE.MeshBasicMaterial({ color: k, side: THREE.BackSide });
+      }
+      return outlineMatCache[k];
+    }
+    function addInkOutline(mesh, scaleBoost, hex) {
+      if (!mesh || !mesh.geometry) return null;
+      const om = new THREE.Mesh(mesh.geometry, getOutlineMat(hex || 0x3b241c));
+      const s = 1 + (scaleBoost || 0.032);
+      om.scale.set(s, s, s);
+      om.castShadow = false;
+      om.receiveShadow = false;
+      mesh.add(om);
+      outlineMeshes.push(om);
+      return om;
+    }
+
+    // =========================================================================
+    // 3. CUSTOM MIYAZAKI CEL-SHADED MATERIAL (Warm Sun + Lavender Shadows + Rim + Contact AO)
+    // =========================================================================
+    function makeGhibliMat(colorHex, opts) {
+      const cfg = Object.assign({
+        map: null,
+        roughness: 0.84,
+        metalness: 0.02,
+        rimBoost: 1.0,
+        aoGround: 0.24,
+        emissive: 0x000000,
+        emissiveIntensity: 0.0,
+        side: THREE.FrontSide
+      }, opts || {});
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        map: cfg.map || null,
+        roughness: cfg.roughness,
+        metalness: cfg.metalness,
+        emissive: cfg.emissive,
+        emissiveIntensity: cfg.emissiveIntensity,
+        side: cfg.side
+      });
+
+      mat.onBeforeCompile = function (shader) {
+        shader.uniforms.uGhibliShadowTint = GLOBAL.uShadowTint;
+        shader.uniforms.uGhibliRimCol = GLOBAL.uRimCol;
+        shader.uniforms.uGhibliRimStr = GLOBAL.uRimStrength;
+        shader.uniforms.uGhibliSunDir = GLOBAL.uSunDir;
+        shader.uniforms.uRimBoost = { value: cfg.rimBoost };
+        shader.uniforms.uAoGround = { value: cfg.aoGround };
+
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vGhibliWorldPos;\nvarying vec3 vGhibliWorldNorm;')
+          .replace('#include <worldpos_vertex>', [
+            '#include <worldpos_vertex>',
+            'vGhibliWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+            'vGhibliWorldNorm = normalize(mat3(modelMatrix) * objectNormal);'
+          ].join('\n'));
+
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', [
+            '#include <common>',
+            'uniform vec3 uGhibliShadowTint;',
+            'uniform vec3 uGhibliRimCol;',
+            'uniform float uGhibliRimStr;',
+            'uniform vec3 uGhibliSunDir;',
+            'uniform float uRimBoost;',
+            'uniform float uAoGround;',
+            'varying vec3 vGhibliWorldPos;',
+            'varying vec3 vGhibliWorldNorm;'
+          ].join('\n'))
+          .replace('#include <dithering_fragment>', [
+            'vec3 nW = normalize(vGhibliWorldNorm);',
+            'vec3 vDir = normalize(cameraPosition - vGhibliWorldPos);',
+            'float ndl = dot(nW, normalize(uGhibliSunDir));',
+            '// Soft painterly Miyazaki multi-step shading warp',
+            'float cel = smoothstep(-0.18, 0.24, ndl);',
+            '// Tint shadow side into luminous cool lavender-blue instead of muddy gray!',
+            'gl_FragColor.rgb = mix(gl_FragColor.rgb * mix(vec3(1.0), uGhibliShadowTint * 1.18, 0.42), gl_FragColor.rgb * vec3(1.05, 1.02, 0.96), cel);',
+            '// Golden Fresnel Rim Light catching sunlit silhouettes!',
+            'float fresnel = pow(1.0 - max(0.0, dot(nW, vDir)), 3.2);',
+            'float rimMask = smoothstep(-0.15, 0.55, ndl) * uGhibliRimStr * uRimBoost;',
+            'gl_FragColor.rgb += uGhibliRimCol * fresnel * rimMask;',
+            '// Soft ground contact Ambient Occlusion so buildings, chairs & feet feel grounded!',
+            'float gAO = mix(1.0 - uAoGround, 1.0, smoothstep(0.0, 0.65, max(0.0, vGhibliWorldPos.y)));',
+            'gl_FragColor.rgb *= gAO;',
+            '#include <dithering_fragment>'
+          ].join('\n'));
+      };
+      return mat;
+    }
+
+    // =========================================================================
+    // 4. PAINTED STUDIO GHIBLI SKY DOME (with Time-of-Day Shader Grading!)
+    // =========================================================================
+    const skyMat = new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      depthWrite: false,
+      uniforms: {
+        uTex: { value: TEX.sky },
+        uTime: GLOBAL.uTime,
+        uTimeMode: GLOBAL.uTimeMode
+      },
+      vertexShader: [
+        'varying vec2 vUv;',
+        'varying vec3 vDir;',
+        'void main() {',
+        '  vUv = uv;',
+        '  vDir = normalize(position);',
+        '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D uTex;',
+        'uniform float uTime;',
+        'uniform float uTimeMode;',
+        'varying vec2 vUv;',
+        'varying vec3 vDir;',
+        'void main() {',
+        '  // Map upper hemisphere cleanly onto the painted Miyazaki panorama with gentle cloud drift!',
+        '  float elev = clamp(vDir.y, 0.0, 1.0);',
+        '  vec2 uv = vec2(fract(vUv.x * 2.0 + uTime * 0.0022), clamp(elev * 1.18 + 0.04, 0.02, 0.98));',
+        '  vec3 col = texture2D(uTex, uv).rgb;',
+        '  // Smooth horizon glow & Miyazaki Sunset / Twilight grading',
+        '  if (uTimeMode > 0.5 && uTimeMode < 1.5) {',
+        '    vec3 sunsetTint = mix(vec3(1.24, 0.72, 0.44), vec3(0.76, 0.58, 0.88), pow(elev, 0.7));',
+        '    col = mix(col * sunsetTint, vec3(1.0, 0.62, 0.34), (1.0 - elev) * 0.38);',
+        '  } else if (uTimeMode >= 1.5) {',
+        '    vec3 nightBase = mix(vec3(0.14, 0.22, 0.44), vec3(0.05, 0.09, 0.22), pow(elev, 0.6));',
+        '    col = mix(col * vec3(0.24, 0.34, 0.62), nightBase, 0.58);',
+        '    // Twinkling Ghibli evening stars in upper sky!',
+        '    float st = fract(sin(dot(floor(vUv * 420.0), vec2(12.9898, 78.233))) * 43758.5453);',
+        '    if (st > 0.9965 && elev > 0.22) {',
+        '      float tw = 0.55 + 0.45 * sin(uTime * 3.5 + st * 900.0);',
+        '      col += vec3(1.0, 0.95, 0.80) * tw * smoothstep(0.22, 0.5, elev);',
+        '    }',
+        '  }',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+    const skyDome = new THREE.Mesh(new THREE.SphereGeometry(210, 32, 20), skyMat);
+    scene.add(skyDome);
+
+    // =========================================================================
+    // 5. SCULPTED ROLLING TERRAIN WITH SEAMLESS GLSL COBBLE-TO-MEADOW SPLAT BLENDING!
+    // =========================================================================
+    function getTerrainHeight(x, z) {
+      const r = Math.hypot(x, z);
+      // Flat storybook courtyard & Villa front terrace
+      if (r < 14.2) return 0.0;
+      const t = Math.min(1, (r - 14.2) / 14.0);
+      const s = t * t * (3 - 2 * t);
+      const hills = (Math.sin(x * 0.085 + 0.6) * Math.cos(z * 0.075 - 0.3) * 2.1
+        + Math.sin((x + z) * 0.055) * 1.4 + 1.2);
+      const ridge = Math.max(0, (r - 28.0) * 0.26);
+      // Keep north-south garden promenade gently flat
+      const laneFlat = Math.exp(-Math.pow(x / 5.0, 2)) * (z > 0 && z < 26 ? 1.0 : 0.0);
+      return (hills * s + ridge) * (1.0 - laneFlat * 0.85);
+    }
+
+    const terrainGeo = new THREE.PlaneGeometry(150, 150, 110, 110);
+    terrainGeo.rotateX(-Math.PI / 2);
+    const tPos = terrainGeo.attributes.position;
+    for (let i = 0; i < tPos.count; i++) {
+      const vx = tPos.getX(i), vz = tPos.getZ(i);
+      tPos.setY(i, getTerrainHeight(vx, vz));
+    }
+    terrainGeo.computeVertexNormals();
+
+    // Custom GLSL Terrain Splat Material using MeshStandardMaterial + shadow map!
+    const terrainMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.92,
+      metalness: 0.0
+    });
+    terrainMat.onBeforeCompile = function (shader) {
+      shader.uniforms.uCobbleTex = { value: TEX.cobble };
+      shader.uniforms.uMeadowTex = { value: TEX.meadow };
+      shader.uniforms.uShadowTint = GLOBAL.uShadowTint;
+      shader.uniforms.uSunDir = GLOBAL.uSunDir;
+
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vTWPos;\nvarying vec3 vTWNorm;')
+        .replace('#include <worldpos_vertex>', [
+          '#include <worldpos_vertex>',
+          'vTWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+          'vTWNorm = normalize(mat3(modelMatrix) * objectNormal);'
+        ].join('\n'));
+
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', [
+          '#include <common>',
+          'uniform sampler2D uCobbleTex;',
+          'uniform sampler2D uMeadowTex;',
+          'uniform vec3 uShadowTint;',
+          'uniform vec3 uSunDir;',
+          'varying vec3 vTWPos;',
+          'varying vec3 vTWNorm;'
+        ].join('\n'))
+        .replace('#include <map_fragment>', [
+          'vec3 cCobble = texture2D(uCobbleTex, vTWPos.xz * 0.24).rgb;',
+          'vec3 cMeadow = texture2D(uMeadowTex, vTWPos.xz * 0.14).rgb;',
+          '// Organic painterly noise along courtyard rim & paths so grass softly creeps over stone!',
+          'float edgeNoise = sin(vTWPos.x * 1.4 + vTWPos.z * 1.1) * 0.45 + cos(vTWPos.x * 2.7 - vTWPos.z * 2.1) * 0.25;',
+          'float rCourt = length(vTWPos.xz - vec2(0.0, 0.5)) + edgeNoise * 0.65;',
+          'float inCircle = 1.0 - smoothstep(8.8, 10.1, rCourt);',
+          'float inNorthWalk = (1.0 - smoothstep(2.4, 3.25, abs(vTWPos.x) + edgeNoise * 0.28)) * step(-13.8, vTWPos.z) * step(vTWPos.z, 22.0);',
+          'float inCrossWalk = (1.0 - smoothstep(1.9, 2.65, abs(vTWPos.z - 0.5) + edgeNoise * 0.25)) * step(-18.0, vTWPos.x) * step(vTWPos.x, 18.0);',
+          'float stoneMask = clamp(max(inCircle, max(inNorthWalk, inCrossWalk)), 0.0, 1.0);',
+          '// Subtle warm sunlit watercolor wash across distant hills',
+          'float hillWarm = smoothstep(14.0, 48.0, length(vTWPos.xz));',
+          'cMeadow = mix(cMeadow, cMeadow * vec3(0.92, 1.05, 0.90), hillWarm * 0.5);',
+          'diffuseColor.rgb = mix(cMeadow, cCobble * vec3(1.04, 1.01, 0.95), stoneMask);'
+        ].join('\n'))
+        .replace('#include <dithering_fragment>', [
+          'float ndl = dot(normalize(vTWNorm), normalize(uSunDir));',
+          'float cel = smoothstep(-0.1, 0.35, ndl);',
+          'gl_FragColor.rgb = mix(gl_FragColor.rgb * mix(vec3(1.0), uShadowTint * 1.16, 0.35), gl_FragColor.rgb * vec3(1.04, 1.02, 0.97), cel);',
+          '#include <dithering_fragment>'
+        ].join('\n'));
+    };
+
+    const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+    terrainMesh.receiveShadow = true;
+    scene.add(terrainMesh);
+
+    // Sculpted low sandstone curb ring framing the circular fountain courtyard!
+    const curbMat = makeGhibliMat(0xefe4ce, { map: TEX.cobble, aoGround: 0.32 });
+    const curbRing = new THREE.Mesh(new THREE.TorusGeometry(9.6, 0.24, 10, 56), curbMat);
+    curbRing.rotation.x = Math.PI / 2;
+    curbRing.position.set(0, 0.06, 0.5);
+    curbRing.receiveShadow = true;
+    scene.add(curbRing);
+
+    // =========================================================================
+    // 6. CENTERPIECE: SCULPTED 2-TIER FOUNTAIN WITH CUSTOM GLSL REFLECTIVE CAUSTIC WATER!
+    // =========================================================================
+    const fountainGroup = new THREE.Group();
+    fountainGroup.position.set(0, 0, 0.5);
+
+    const marbleMat = makeGhibliMat(0xf4ead8, { map: TEX.plaster, roughness: 0.68, rimBoost: 0.85, aoGround: 0.30 });
+    const marbleTrimMat = makeGhibliMat(0xe5d3b5, { map: TEX.plaster, roughness: 0.72, aoGround: 0.25 });
+    const brassMat = makeGhibliMat(0xe8b243, { roughness: 0.34, metalness: 0.45, rimBoost: 1.2 });
+
+    // Sculpted sakura petal ShapeGeometry reused for water & drifting breeze petals!
+    const sakuraPetalShape = new THREE.Shape();
+    sakuraPetalShape.moveTo(0, -0.055);
+    sakuraPetalShape.bezierCurveTo(0.058, -0.025, 0.062, 0.042, 0.022, 0.064);
+    sakuraPetalShape.lineTo(0, 0.042);
+    sakuraPetalShape.lineTo(-0.022, 0.064);
+    sakuraPetalShape.bezierCurveTo(-0.062, 0.042, -0.058, -0.025, 0, -0.055);
+    const sakuraPetalGeo = new THREE.ShapeGeometry(sakuraPetalShape, 6);
+
+    // Smooth circular travertine base + buttery 56-segment sculpted basin via LatheGeometry!
+    const stepBase = new THREE.Mesh(new THREE.CylinderGeometry(3.55, 3.85, 0.22, 48), marbleTrimMat);
+    stepBase.position.y = 0.11; stepBase.receiveShadow = true; stepBase.castShadow = true;
+    fountainGroup.add(stepBase);
+
+    const outerBasinPts = [
+      new THREE.Vector2(0.01, 0.20), new THREE.Vector2(3.15, 0.20),
+      new THREE.Vector2(3.32, 0.45), new THREE.Vector2(3.25, 0.92),
+      new THREE.Vector2(3.46, 1.02), new THREE.Vector2(3.43, 1.12),
+      new THREE.Vector2(2.92, 1.12), new THREE.Vector2(2.85, 0.98),
+      new THREE.Vector2(2.82, 0.32), new THREE.Vector2(0.01, 0.32)
+    ];
+    const outerBasin = new THREE.Mesh(new THREE.LatheGeometry(outerBasinPts, 56), marbleMat);
+    outerBasin.castShadow = true; outerBasin.receiveShadow = true;
+    addInkOutline(outerBasin, 0.010);
+    fountainGroup.add(outerBasin);
+
+    // Sculpted classical Mediterranean chalice column + graceful upper bowl + fluted urn finial!
+    const columnPts = [
+      new THREE.Vector2(0.01, 0.30), new THREE.Vector2(0.84, 0.30),
+      new THREE.Vector2(0.76, 0.50), new THREE.Vector2(0.54, 0.78),
+      new THREE.Vector2(0.40, 1.12), new THREE.Vector2(0.36, 1.56),
+      new THREE.Vector2(0.56, 1.82), new THREE.Vector2(1.42, 2.02),
+      new THREE.Vector2(1.56, 2.13), new THREE.Vector2(1.52, 2.20),
+      new THREE.Vector2(1.34, 2.20), new THREE.Vector2(1.22, 1.98),
+      new THREE.Vector2(0.42, 1.94), new THREE.Vector2(0.32, 2.22),
+      new THREE.Vector2(0.24, 2.46), new THREE.Vector2(0.38, 2.66),
+      new THREE.Vector2(0.42, 2.82), new THREE.Vector2(0.24, 2.98),
+      new THREE.Vector2(0.14, 3.06), new THREE.Vector2(0.01, 3.09)
+    ];
+    const centerColumn = new THREE.Mesh(new THREE.LatheGeometry(columnPts, 48), marbleMat);
+    centerColumn.castShadow = true; centerColumn.receiveShadow = true;
+    addInkOutline(centerColumn, 0.013);
+    fountainGroup.add(centerColumn);
+
+    const brassNeck = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.04, 10, 28), brassMat);
+    brassNeck.rotation.x = Math.PI / 2; brassNeck.position.y = 2.94;
+    fountainGroup.add(brassNeck);
+
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), brassMat);
+    finial.scale.set(1, 1.38, 1); finial.position.y = 3.22;
+    fountainGroup.add(finial);
+
+    // Custom GLSL Shimmering Reflective Fountain Water Shader (Voronoi Caustics + Sky Fresnel + Splash Ripples!)
+    const waterShaderMat = new THREE.ShaderMaterial({
+      transparent: true,
+      uniforms: {
+        uTime: GLOBAL.uTime,
+        uSunDir: GLOBAL.uSunDir,
+        uTimeMode: GLOBAL.uTimeMode
+      },
+      vertexShader: [
+        'uniform float uTime;',
+        'varying vec2 vUv;',
+        'varying vec3 vWPos;',
+        'void main() {',
+        '  vUv = uv;',
+        '  vec3 p = position;',
+        '  float d = length(p.xy);',
+        '  p.z += sin(d * 8.0 - uTime * 4.2) * 0.018;',
+        '  vec4 wp = modelMatrix * vec4(p, 1.0);',
+        '  vWPos = wp.xyz;',
+        '  gl_Position = projectionMatrix * viewMatrix * wp;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform float uTime;',
+        'uniform vec3 uSunDir;',
+        'uniform float uTimeMode;',
+        'varying vec2 vUv;',
+        'varying vec3 vWPos;',
+        'float caustic(vec2 p, float t) {',
+        '  vec2 i = floor(p); vec2 f = fract(p);',
+        '  float m = 1.0;',
+        '  for (int y = -1; y <= 1; y++) {',
+        '    for (int x = -1; x <= 1; x++) {',
+        '      vec2 nb = vec2(float(x), float(y));',
+        '      vec2 pt = fract(sin(vec2(dot(i + nb, vec2(127.1, 311.7)), dot(i + nb, vec2(269.5, 183.3)))) * 43758.5453);',
+        '      pt = 0.5 + 0.42 * sin(t + 6.2831 * pt);',
+        '      m = min(m, length(nb + pt - f));',
+        '    }',
+        '  }',
+        '  return pow(clamp(m, 0.0, 1.0), 2.4);',
+        '}',
+        'void main() {',
+        '  vec2 cUv = vWPos.xz * 1.45;',
+        '  float ca = caustic(cUv + vec2(uTime * 0.25, -uTime * 0.18), uTime * 1.8);',
+        '  float r = length(vUv - 0.5) * 2.0;',
+        '  vec3 deepCol = vec3(0.08, 0.54, 0.70);',
+        '  vec3 shallowCol = vec3(0.26, 0.80, 0.86);',
+        '  vec3 base = mix(deepCol, shallowCol, clamp(r * 0.75 + 0.2, 0.0, 1.0));',
+        '  // Caustic sunlight net dancing in the turquoise pool!',
+        '  base += vec3(0.42, 0.88, 0.94) * ca * 0.48;',
+        '  // Fresnel sky reflection + sparkle',
+        '  vec3 vDir = normalize(cameraPosition - vWPos);',
+        '  vec3 nW = normalize(vec3(sin(vWPos.x * 7.0 + uTime * 3.2) * 0.08, 1.0, cos(vWPos.z * 7.0 - uTime * 2.8) * 0.08));',
+        '  float fres = pow(1.0 - max(0.0, dot(nW, vDir)), 2.8);',
+        '  vec3 skyRef = uTimeMode > 1.5 ? vec3(0.18, 0.30, 0.58) : (uTimeMode > 0.5 ? vec3(1.0, 0.72, 0.48) : vec3(0.68, 0.90, 1.0));',
+        '  base = mix(base, skyRef, fres * 0.52);',
+        '  vec3 hVec = normalize(normalize(uSunDir) + vDir);',
+        '  float spec = pow(max(0.0, dot(nW, hVec)), 48.0);',
+        '  base += vec3(1.0, 0.98, 0.88) * spec * 1.05;',
+        '  // Animated white foam splash ring where jets land + rim foam!',
+        '  float splashRing = smoothstep(0.09, 0.0, abs(r - 0.68 - sin(uTime * 4.5 + r * 12.0) * 0.03));',
+        '  float rimFoam = smoothstep(0.90, 1.0, r) * 0.52;',
+        '  base = mix(base, vec3(0.95, 0.99, 1.0), clamp(splashRing * 0.56 + rimFoam, 0.0, 0.84));',
+        '  if (uTimeMode > 1.5) base *= vec3(0.65, 0.78, 1.05);',
+        '  gl_FragColor = vec4(base, 0.88);',
+        '}'
+      ].join('\n')
+    });
+
+    const lowWater = new THREE.Mesh(new THREE.CircleGeometry(2.86, 48), waterShaderMat);
+    lowWater.rotation.x = -Math.PI / 2; lowWater.position.y = 0.96;
+    fountainGroup.add(lowWater);
+
+    const topWater = new THREE.Mesh(new THREE.CircleGeometry(1.32, 36), waterShaderMat);
+    topWater.rotation.x = -Math.PI / 2; topWater.position.y = 2.08;
+    fountainGroup.add(topWater);
+
+    // 8 Graceful Shimmering Parabolic Water Arcs (Upper Tier + Lower Basin) + Floating Sakura Petals!
+    const jetMat = new THREE.MeshBasicMaterial({ color: 0xe6fbff, transparent: true, opacity: 0.70 });
+    const fountainDroplets = [];
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      const pts = [];
+      for (let s = 0; s <= 14; s++) {
+        const t = s / 14;
+        const rad = 0.25 + t * 1.72;
+        const y = 2.88 + Math.sin(t * Math.PI) * 0.62 - t * t * 1.92;
+        pts.push(new THREE.Vector3(Math.cos(a) * rad, y, Math.sin(a) * rad));
+      }
+      const jet = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.030, 6, false), jetMat);
+      fountainGroup.add(jet);
+      for (let d = 0; d < 2; d++) {
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.048, 6, 5), jetMat);
+        drop.userData = { a: a, phase: d * 0.5 + i * 0.13 };
+        fountainGroup.add(drop);
+        fountainDroplets.push(drop);
+      }
+    }
+    const floatingPetals = [];
+    const petalMat = makeGhibliMat(0xf492b5, { roughness: 0.55, rimBoost: 0.4, side: THREE.DoubleSide });
+    for (let p = 0; p < 14; p++) {
+      const pet = new THREE.Mesh(sakuraPetalGeo, petalMat);
+      pet.scale.setScalar(1.35);
+      pet.rotation.x = -Math.PI / 2;
+      pet.userData = { angle: (p / 14) * Math.PI * 2, rad: 1.05 + (p % 3) * 0.52, spd: 0.22 + (p % 4) * 0.06 };
+      fountainGroup.add(pet);
+      floatingPetals.push(pet);
+    }
+    scene.add(fountainGroup);
+
+    // =========================================================================
+    // 7. HERO STUDIO GHIBLI ARCHITECTURE — SUNNYSIDE STORYBOOK VILLA & NEIGHBORS!
+    // =========================================================================
+    const plasterMat = makeGhibliMat(0xfff4e4, { map: TEX.plaster, roughness: 0.88, aoGround: 0.34 });
+    const plasterPeachMat = makeGhibliMat(0xffe7d1, { map: TEX.plaster, roughness: 0.88, aoGround: 0.34 });
+    const plasterSageMat = makeGhibliMat(0xe5f0e2, { map: TEX.plaster, roughness: 0.88, aoGround: 0.34 });
+    const roofMat = makeGhibliMat(0xffffff, { map: TEX.roof, roughness: 0.78, rimBoost: 1.25, aoGround: 0.10 });
+    const timberMat = makeGhibliMat(0x6e472d, { roughness: 0.82, aoGround: 0.28 });
+    const shutterMat = makeGhibliMat(0x529b8e, { roughness: 0.72, rimBoost: 1.1 });
+    const ironMat = makeGhibliMat(0x2c363f, { roughness: 0.48, metalness: 0.35 });
+    const windowGlowMats = [];
+
+    function createWindowGlowMat() {
+      const m = new THREE.MeshStandardMaterial({
+        color: 0x86c5e8,
+        emissive: 0xffd27d,
+        emissiveIntensity: 0.14,
+        roughness: 0.18,
+        metalness: 0.15
+      });
+      windowGlowMats.push(m);
+      return m;
+    }
+
+    function addStorybookWindow(parent, x, y, z, hasBalcony) {
+      const wg = new THREE.Group();
+      wg.position.set(x, y, z);
+      // Deeply recessed stone frame + warm timber mullions
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(1.56, 1.92, 0.24), marbleTrimMat);
+      wg.add(frame);
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(1.80, 0.14, 0.38), marbleMat);
+      sill.position.set(0, -0.98, 0.08); sill.castShadow = true; wg.add(sill);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(1.26, 1.64, 0.12), createWindowGlowMat());
+      glass.position.z = 0.02; wg.add(glass);
+      // Crossbar muntins
+      const vBar = new THREE.Mesh(new THREE.BoxGeometry(0.07, 1.66, 0.16), marbleMat);
+      vBar.position.z = 0.06; wg.add(vBar);
+      const hBar = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.07, 0.16), marbleMat);
+      hBar.position.set(0, 0.14, 0.06); wg.add(hBar);
+      // Open louvered sage-teal wooden shutters angled gently outward!
+      [-0.96, 0.96].forEach(sx => {
+        const sh = new THREE.Mesh(new THREE.BoxGeometry(0.56, 1.72, 0.08), shutterMat);
+        sh.position.set(sx, 0, 0.15);
+        sh.rotation.y = sx < 0 ? 0.24 : -0.24;
+        sh.castShadow = true;
+        wg.add(sh);
+      });
+      // Terracotta flowerbox overflowing with lush geraniums & trailing ivy!
+      const fBox = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.28, 0.32), makeGhibliMat(0xc86442));
+      fBox.position.set(0, -0.86, 0.24); wg.add(fBox);
+      const flCols = [0xff6b8b, 0xff9bb3, 0xffd166, 0xff5d73, 0xfff0f5];
+      for (let i = 0; i < 9; i++) {
+        const fx = -0.56 + i * 0.14;
+        const leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), makeGhibliMat(0x3f8f46));
+        leaf.position.set(fx, -0.68, 0.26 + (i % 2) * 0.06); wg.add(leaf);
+        const fl = new THREE.Mesh(new THREE.SphereGeometry(0.085, 7, 6), makeGhibliMat(flCols[i % flCols.length]));
+        fl.position.set(fx, -0.58 + (i % 2) * 0.05, 0.28 + (i % 2) * 0.05); wg.add(fl);
+      }
+      if (hasBalcony) {
+        const slab = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.16, 0.92), marbleTrimMat);
+        slab.position.set(0, -1.08, 0.42); slab.castShadow = true; wg.add(slab);
+        const topRail = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.06, 0.06), ironMat);
+        topRail.position.set(0, -0.32, 0.84); wg.add(topRail);
+        for (let r = -0.96; r <= 0.98; r += 0.24) {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.72, 6), ironMat);
+          post.position.set(r, -0.68, 0.84); wg.add(post);
+        }
+      }
+      parent.add(wg);
+    }
+
+    function buildSunnysideVilla() {
+      const vg = new THREE.Group();
+      vg.position.set(0, 0, -16.2);
+
+      // Stone plinth base + main warm hand-painted Mediterranean plaster massing
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(16.6, 1.05, 9.4), makeGhibliMat(0xe5d6bc, { map: TEX.cobble, aoGround: 0.38 }));
+      plinth.position.y = 0.52; plinth.castShadow = true; plinth.receiveShadow = true; vg.add(plinth);
+
+      const mainBody = new THREE.Mesh(new THREE.BoxGeometry(16.0, 7.6, 8.8), plasterMat);
+      mainBody.position.y = 4.82; mainBody.castShadow = true; mainBody.receiveShadow = true; vg.add(mainBody);
+
+      // Sculpted warm cornice band dividing floors
+      const cornice = new THREE.Mesh(new THREE.BoxGeometry(16.45, 0.26, 9.25), marbleTrimMat);
+      cornice.position.y = 4.68; cornice.castShadow = true; vg.add(cornice);
+
+      // Side corner stone quoins for storybook architectural depth
+      [-8.02, 8.02].forEach(qx => {
+        for (let q = 0; q < 7; q++) {
+          const quoin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.56, 0.56), marbleTrimMat);
+          quoin.position.set(qx, 1.45 + q * 1.02, 4.35); vg.add(quoin);
+        }
+      });
+
+      // Sweeping Overhanging Terracotta Clay Roof + Flush Triangular Gable Ends + Exposed Timber Corbels!
+      const roofL = new THREE.Mesh(new THREE.BoxGeometry(17.8, 0.34, 6.2), roofMat);
+      roofL.position.set(0, 9.75, 2.52); roofL.rotation.x = 0.42; roofL.castShadow = true; vg.add(roofL);
+      const roofR = new THREE.Mesh(new THREE.BoxGeometry(17.8, 0.34, 6.2), roofMat);
+      roofR.position.set(0, 9.75, -2.52); roofR.rotation.x = -0.42; roofR.castShadow = true; vg.add(roofR);
+      const gableShape = new THREE.Shape();
+      gableShape.moveTo(-4.35, 0); gableShape.lineTo(4.35, 0); gableShape.lineTo(0, 2.15); gableShape.closePath();
+      const gableGeo = new THREE.ExtrudeGeometry(gableShape, { depth: 15.84, bevelEnabled: false });
+      gableGeo.translate(0, 0, -7.92);
+      gableGeo.rotateY(Math.PI / 2);
+      const gable = new THREE.Mesh(gableGeo, plasterMat);
+      gable.position.set(0, 8.60, 0); vg.add(gable);
+      const ridge = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 18.0, 12), makeGhibliMat(0xc45a3b));
+      ridge.rotation.z = Math.PI / 2; ridge.position.set(0, 11.02, 0); vg.add(ridge);
+
+      // Carved timber eave corbel brackets casting cozy shadows under the roof!
+      for (let bx = -7.6; bx <= 7.6; bx += 1.52) {
+        const br = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.85), timberMat);
+        br.position.set(bx, 8.38, 4.78); br.castShadow = true; vg.add(br);
+      }
+
+      // Cozy terracotta chimney with gentle wisps of home-cooking smoke!
+      const chim = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.4, 1.15), plasterPeachMat);
+      chim.position.set(5.4, 11.0, -1.0); chim.castShadow = true; vg.add(chim);
+      const chimCap = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.22, 1.42), makeGhibliMat(0xc45a3b));
+      chimCap.position.set(5.4, 12.26, -1.0); vg.add(chimCap);
+
+      // Arched Timber Entry Portico + Recessed Door Panels + Brass Hardware + Striped Awning + Potted Citrus Trees!
+      const doorStoneArch = new THREE.Mesh(new THREE.BoxGeometry(2.92, 3.50, 0.30), marbleTrimMat);
+      doorStoneArch.position.set(0, 2.34, 4.38); vg.add(doorStoneArch);
+      const doorArch = new THREE.Mesh(new THREE.BoxGeometry(2.48, 3.22, 0.34), timberMat);
+      doorArch.position.set(0, 2.24, 4.44); vg.add(doorArch);
+      const doorLeaf = new THREE.Mesh(new THREE.BoxGeometry(2.04, 2.86, 0.14), makeGhibliMat(0x884f30, { roughness: 0.72 }));
+      doorLeaf.position.set(0, 2.15, 4.55); vg.add(doorLeaf);
+      // Recessed wooden door panels + brass handles
+      [-0.46, 0.46].forEach(dx => {
+        const pTop = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.72, 0.05), makeGhibliMat(0x6e3d24));
+        pTop.position.set(dx, 2.22, 4.62); vg.add(pTop);
+        const pBot = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.88, 0.05), makeGhibliMat(0x6e3d24));
+        pBot.position.set(dx, 1.28, 4.62); vg.add(pBot);
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), brassMat);
+        knob.position.set(dx * 0.28, 1.92, 4.67); vg.add(knob);
+      });
+      const doorSplit = new THREE.Mesh(new THREE.BoxGeometry(0.06, 2.84, 0.06), timberMat);
+      doorSplit.position.set(0, 2.15, 4.63); vg.add(doorSplit);
+      const doorWin = new THREE.Mesh(new THREE.CircleGeometry(0.58, 20, 0, Math.PI), createWindowGlowMat());
+      doorWin.position.set(0, 2.86, 4.64); vg.add(doorWin);
+      // Fanlight brass radial muntins
+      for (let m = -1; m <= 1; m++) {
+        const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.56, 0.04), marbleMat);
+        spoke.position.set(Math.sin(m * 0.65) * 0.28, 2.86 + Math.cos(m * 0.65) * 0.28, 4.66);
+        spoke.rotation.z = -m * 0.65; vg.add(spoke);
+      }
+      // Striped scalloped awning over entry
+      for (let s = 0; s < 7; s++) {
+        const stripe = new THREE.Mesh(
+          new THREE.BoxGeometry(0.46, 0.12, 1.48),
+          makeGhibliMat(s % 2 === 0 ? 0x3b9c8e : 0xfff8ec)
+        );
+        stripe.position.set(-1.38 + s * 0.46, 3.94, 5.06);
+        stripe.rotation.x = 0.28; stripe.castShadow = true; vg.add(stripe);
+      }
+      // Stone steps descending into courtyard
+      for (let st = 0; st < 3; st++) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(3.4 + st * 0.38, 0.22, 0.56), marbleTrimMat);
+        step.position.set(0, 0.62 - st * 0.22, 4.72 + st * 0.45);
+        step.receiveShadow = true; step.castShadow = true; vg.add(step);
+      }
+      // Warm glowing brass wall lanterns flanking the front door!
+      [-1.78, 1.78].forEach(lx => {
+        const sconce = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.10, 0.34, 10), new THREE.MeshStandardMaterial({
+          color: 0xfff2c6, emissive: 0xffb833, emissiveIntensity: 1.45
+        }));
+        sconce.position.set(lx, 3.08, 4.66); vg.add(sconce);
+        const cap = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.12, 10), ironMat);
+        cap.position.set(lx, 3.29, 4.66); vg.add(cap);
+      });
+      // Lush terracotta potted lemon trees welcoming guests on both sides of the porch!
+      const terraPotMat = makeGhibliMat(0xc9623f, { roughness: 0.78, aoGround: 0.32 });
+      const potLeafMat = makeGhibliMat(0x3f8f45, { rimBoost: 1.1 });
+      const lemonMat = makeGhibliMat(0xfcd34d, { roughness: 0.55 });
+      [-2.45, 2.45].forEach(px => {
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.25, 0.56, 16), terraPotMat);
+        pot.position.set(px, 0.28, 5.25); pot.castShadow = true; vg.add(pot);
+        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.045, 8, 18), terraPotMat);
+        rim.rotation.x = Math.PI / 2; rim.position.set(px, 0.55, 5.25); vg.add(rim);
+        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.85, 8), timberMat);
+        stem.position.set(px, 0.88, 5.25); vg.add(stem);
+        [[0, 1.42, 0, 0.42], [-0.22, 1.25, 0.16, 0.28], [0.22, 1.28, -0.14, 0.28], [0.06, 1.66, 0.08, 0.26]].forEach(b => {
+          const lf = new THREE.Mesh(new THREE.SphereGeometry(b[3], 12, 10), potLeafMat);
+          lf.position.set(px + b[0], b[1], 5.25 + b[2]); lf.castShadow = true; vg.add(lf);
+        });
+        [[0.22, 1.46, 0.32], [-0.24, 1.32, 0.28], [0.04, 1.62, 0.30]].forEach(lm => {
+          const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.062, 8, 6), lemonMat);
+          fruit.position.set(px + lm[0], lm[1], 5.25 + lm[2]); vg.add(fruit);
+        });
+      });
+
+      // Recessed Storybook Windows & Juliette Balconies!
+      addStorybookWindow(vg, -5.0, 2.75, 4.44, false);
+      addStorybookWindow(vg, 5.0, 2.75, 4.44, false);
+      addStorybookWindow(vg, -5.0, 6.45, 4.44, true);
+      addStorybookWindow(vg, 0.0, 6.45, 4.44, true);
+      addStorybookWindow(vg, 5.0, 6.45, 4.44, true);
+
+      // Graceful organic climbing ivy vines & pink climbing roses hugging the sunny plaster corner!
+      const ivyDark = makeGhibliMat(0x2f7539, { rimBoost: 0.9 });
+      const ivyBright = makeGhibliMat(0x4ea34a, { rimBoost: 1.05 });
+      const roseMat = makeGhibliMat(0xf47296, { rimBoost: 0.9 });
+      const vinePts = [];
+      for (let v = 0; v <= 14; v++) {
+        const t = v / 14;
+        vinePts.push(new THREE.Vector3(-7.45 + Math.sin(t * 5.2) * 0.35 + t * 0.85, 0.85 + t * 7.35, 4.46));
+      }
+      const vineCurve = new THREE.CatmullRomCurve3(vinePts);
+      vg.add(new THREE.Mesh(new THREE.TubeGeometry(vineCurve, 28, 0.045, 6, false), timberMat));
+      for (let i = 0; i < 42; i++) {
+        const t = i / 41;
+        const pt = vineCurve.getPoint(t);
+        const spread = 0.22 + Math.sin(i * 2.1) * 0.24;
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(0.14 + (i % 3) * 0.045, 8, 6),
+          i % 2 === 0 ? ivyBright : ivyDark
+        );
+        leaf.scale.set(1.25, 0.85, 0.45);
+        leaf.position.set(pt.x + Math.cos(i * 1.9) * spread, pt.y + Math.sin(i * 2.7) * 0.14, 4.50 + (i % 2) * 0.04);
+        vg.add(leaf);
+        if (i % 5 === 2) {
+          const rose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), roseMat);
+          rose.position.set(leaf.position.x + 0.05, leaf.position.y + 0.05, 4.58);
+          vg.add(rose);
+        }
+      }
+
+      // Hand-painted carved wooden Sunnyside Apartments sign!
+      const sc = document.createElement('canvas'); sc.width = 512; sc.height = 96;
+      const sctx = sc.getContext('2d');
+      sctx.fillStyle = '#fdf4df'; sctx.fillRect(0, 0, 512, 96);
+      sctx.strokeStyle = '#529b8e'; sctx.lineWidth = 8; sctx.strokeRect(6, 6, 500, 84);
+      sctx.fillStyle = '#4a2e1b'; sctx.font = 'bold 30px Georgia, serif'; sctx.textAlign = 'center';
+      sctx.fillText('SUNNYSIDE APARTMENTS', 256, 46);
+      sctx.fillStyle = '#2a7f74'; sctx.font = '600 18px sans-serif';
+      sctx.fillText('LAILA & SALMA\'S HOME • GARDEN COURTYARD', 256, 74);
+      const signTex = new THREE.CanvasTexture(sc); signTex.encoding = THREE.sRGBEncoding;
+      const signBoard = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.78, 0.12), new THREE.MeshBasicMaterial({ map: signTex }));
+      signBoard.position.set(0, 4.72, 4.68); vg.add(signBoard);
+
+      scene.add(vg);
+    }
+    buildSunnysideVilla();
+
+    // Two Neighboring Hillside Studio Ghibli Villas framing the courtyard horizon!
+    function buildNeighborVilla(x, z, rotY, wallMat, scale) {
+      const g = new THREE.Group();
+      g.position.set(x, getTerrainHeight(x, z) - 0.15, z);
+      g.rotation.y = rotY;
+      const body = new THREE.Mesh(new THREE.BoxGeometry(9.6, 6.0, 7.6), wallMat);
+      body.position.y = 3.0; body.castShadow = true; body.receiveShadow = true; g.add(body);
+      const r1 = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.30, 5.2), roofMat);
+      r1.position.set(0, 6.95, 2.05); r1.rotation.x = 0.44; r1.castShadow = true; g.add(r1);
+      const r2 = new THREE.Mesh(new THREE.BoxGeometry(10.8, 0.30, 5.2), roofMat);
+      r2.position.set(0, 6.95, -2.05); r2.rotation.x = -0.44; r2.castShadow = true; g.add(r2);
+      addStorybookWindow(g, -2.4, 3.7, 3.85, false);
+      addStorybookWindow(g, 2.4, 3.7, 3.85, true);
+      g.scale.setScalar(scale || 1.0);
+      scene.add(g);
+    }
+    buildNeighborVilla(-19.5, -9.5, 0.52, plasterSageMat, 0.96);
+    buildNeighborVilla(20.5, -8.8, -0.48, plasterPeachMat, 0.94);
+
+    // Sculpted Curved Garden Benches & Classic Teal-Iron Lampposts around the Fountain!
+    function addCourtyardBench(x, z, rotY) {
+      const bg = new THREE.Group();
+      bg.position.set(x, 0, z); bg.rotation.y = rotY;
+      [-0.78, 0.78].forEach(lx => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.48, 0.52), ironMat);
+        leg.position.set(lx, 0.24, 0); leg.castShadow = true; bg.add(leg);
+      });
+      for (let s = 0; s < 3; s++) {
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.06, 0.16), makeGhibliMat(0xb67b4d));
+        seat.position.set(0, 0.49, -0.18 + s * 0.18); seat.castShadow = true; bg.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.14, 0.055), makeGhibliMat(0xb67b4d));
+        back.position.set(0, 0.68 + s * 0.17, -0.28 - s * 0.03); back.rotation.x = -0.18; back.castShadow = true; bg.add(back);
+      }
+      scene.add(bg);
+    }
+    addCourtyardBench(-6.4, 4.2, 0.95);
+    addCourtyardBench(6.4, 4.2, -0.95);
+    addCourtyardBench(-6.8, -3.5, 2.15);
+    addCourtyardBench(6.8, -3.5, -2.15);
+
+    const lampBulbs = [];
+    function addGhibliLamppost(x, z) {
+      const lg = new THREE.Group();
+      lg.position.set(x, getTerrainHeight(x, z), z);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.65, 10), ironMat);
+      base.position.y = 0.32; lg.add(base);
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.10, 3.85, 10), ironMat);
+      pole.position.y = 2.45; pole.castShadow = true; lg.add(pole);
+      const globeMat = new THREE.MeshStandardMaterial({
+        color: 0xfff8dc, emissive: 0xffc655, emissiveIntensity: 0.75, roughness: 0.2
+      });
+      lampBulbs.push(globeMat);
+      const globe = new THREE.Mesh(new THREE.SphereGeometry(0.28, 14, 12), globeMat);
+      globe.position.y = 4.52; lg.add(globe);
+      const hat = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.22, 12), ironMat);
+      hat.position.y = 4.82; lg.add(hat);
+      scene.add(lg);
+    }
+    [[-8.2, 6.2], [8.2, 6.2], [-8.8, -6.2], [8.8, -6.2]].forEach(p => addGhibliLamppost(p[0], p[1]));
+
+    // =========================================================================
+    // 8. MASTERPIECE NORMAL-TRANSFERRED MIYAZAKI TREES (BOTW / NI NO KUNI TECHNIQUE!)
+    // =========================================================================
+    function createPainterlyLeafAlphaTex(isSakura) {
+      const S = 512;
+      const c = document.createElement('canvas'); c.width = S; c.height = S;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, S, S);
+      let seed = isSakura ? 777 : 1337;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+      for (let i = 0; i < (isSakura ? 46 : 52); i++) {
+        const layer = i < 16 ? 0 : (i < 34 ? 1 : 2);
+        const a = (i / 48) * Math.PI * 2 + rnd() * 0.6;
+        const rad = layer === 0 ? (15 + rnd() * 72) : (layer === 1 ? (66 + rnd() * 92) : (115 + rnd() * 75));
+        const x = S * 0.5 + Math.cos(a) * rad;
+        const y = S * 0.5 + Math.sin(a) * rad;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(a + rnd() * 1.4);
+        if (isSakura) {
+          const r = 34 + rnd() * 24;
+          ctx.fillStyle = layer === 0 ? '#e3cfd7' : (layer === 1 ? '#f8ebf0' : '#ffffff');
+          for (let p = 0; p < 5; p++) {
+            ctx.save();
+            ctx.rotate((p / 5) * Math.PI * 2);
+            ctx.beginPath();
+            ctx.ellipse(0, -r * 0.50, r * 0.38, r * 0.56, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+          ctx.fillStyle = 'rgba(255, 224, 130, 0.85)';
+          ctx.beginPath(); ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2); ctx.fill();
+        } else {
+          const len = 76 + rnd() * 44;
+          const wid = 32 + rnd() * 18;
+          ctx.fillStyle = layer === 0 ? '#bac4b6' : (layer === 1 ? '#e2e6de' : '#ffffff');
+          ctx.beginPath();
+          ctx.moveTo(0, len * 0.5);
+          ctx.bezierCurveTo(-wid, len * 0.18, -wid * 0.82, -len * 0.25, 0, -len * 0.5);
+          ctx.bezierCurveTo(wid * 0.82, -len * 0.25, wid, len * 0.18, 0, len * 0.5);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      tex.anisotropy = 4;
+      return tex;
+    }
+    const LEAF_TEX = createPainterlyLeafAlphaTex(false);
+    const SAKURA_TEX = createPainterlyLeafAlphaTex(true);
+
+    // Custom GLSL Normal-Transferred Foliage Shader (Zero harsh card seams + subsurface sunlit glow + breeze!)
+    function makeMiyazakiFoliageMat(sunHex, midHex, shadeHex, isSakura) {
+      return new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        uniforms: {
+          uMap: { value: isSakura ? SAKURA_TEX : LEAF_TEX },
+          uSunCol: { value: new THREE.Color(sunHex) },
+          uMidCol: { value: new THREE.Color(midHex) },
+          uShadeCol: { value: new THREE.Color(shadeHex) },
+          uSunDir: GLOBAL.uSunDir,
+          uTime: GLOBAL.uTime,
+          uTimeMode: GLOBAL.uTimeMode,
+          uRimCol: GLOBAL.uRimCol,
+          uRimStr: GLOBAL.uRimStrength,
+          uFogCol: GLOBAL.uFogCol,
+          uFogDensity: GLOBAL.uFogDensity
+        },
+        vertexShader: [
+          'uniform float uTime;',
+          'varying vec2 vUv;',
+          'varying vec3 vSmoothNorm;',
+          'varying vec3 vWPos;',
+          'void main() {',
+          '  vUv = uv;',
+          '  vec4 wp = modelMatrix * vec4(position, 1.0);',
+          '  // Gentle Miyazaki breeze rustling outer foliage clusters!',
+          '  float w = sin(uTime * 1.9 + wp.x * 0.75 + wp.z * 0.65) * 0.085;',
+          '  wp.x += w; wp.y += cos(uTime * 1.5 + wp.z) * 0.035;',
+          '  vWPos = wp.xyz;',
+          '  vSmoothNorm = normalize(mat3(modelMatrix) * normal);',
+          '  gl_Position = projectionMatrix * viewMatrix * wp;',
+          '}'
+        ].join('\n'),
+        fragmentShader: [
+          'uniform sampler2D uMap;',
+          'uniform vec3 uSunCol;',
+          'uniform vec3 uMidCol;',
+          'uniform vec3 uShadeCol;',
+          'uniform vec3 uSunDir;',
+          'uniform float uTimeMode;',
+          'uniform vec3 uRimCol;',
+          'uniform float uRimStr;',
+          'uniform vec3 uFogCol;',
+          'uniform float uFogDensity;',
+          'varying vec2 vUv;',
+          'varying vec3 vSmoothNorm;',
+          'varying vec3 vWPos;',
+          'void main() {',
+          '  vec4 tex = texture2D(uMap, vUv);',
+          '  if (tex.a < 0.42) discard;',
+          '  vec3 nW = normalize(vSmoothNorm);',
+          '  float ndl = dot(nW, normalize(uSunDir));',
+          '  // 3-band painterly Miyazaki canopy lighting driven by transferred cloud-center normals!',
+          '  float band1 = smoothstep(-0.35, 0.10, ndl);',
+          '  float band2 = smoothstep(0.18, 0.58, ndl);',
+          '  vec3 col = mix(uShadeCol, uMidCol, band1);',
+          '  col = mix(col, uSunCol, band2);',
+          '  // Multiply subtle inner brushstroke variation from painted leaf texture',
+          '  col *= mix(vec3(0.84, 0.86, 0.90), vec3(1.03, 1.01, 0.99), tex.r);',
+          '  // Soft backlit subsurface golden rim light (clamped to preserve painterly pigment!)',
+          '  vec3 vDir = normalize(cameraPosition - vWPos);',
+          '  float rim = pow(1.0 - max(0.0, dot(nW, vDir)), 3.0) * smoothstep(-0.2, 0.6, ndl);',
+          '  col += uRimCol * rim * uRimStr * 0.38;',
+          '  if (uTimeMode > 1.5) col *= vec3(0.36, 0.48, 0.78);',
+          '  else if (uTimeMode > 0.5) col *= vec3(1.10, 0.82, 0.68);',
+          '  // Soft highlight rolloff so petals stay lush & gouache-painted',
+          '  col = col / (1.0 + col * 0.22);',
+          '  // Exponential aerial perspective fog',
+          '  float dist = length(cameraPosition - vWPos);',
+          '  float fogF = 1.0 - exp(-pow(dist * uFogDensity, 2.0));',
+          '  col = mix(col, uFogCol, clamp(fogF, 0.0, 1.0));',
+          '  gl_FragColor = vec4(col, 1.0);',
+          '}'
+        ].join('\n')
+      });
+    }
+
+    const FOLIAGE_MATS = {
+      sakura: makeMiyazakiFoliageMat(0xf7b2cc, 0xe36fa2, 0x973d72, true),
+      emerald: makeMiyazakiFoliageMat(0xa8e06c, 0x4f9f46, 0x245d40, false),
+      olive: makeMiyazakiFoliageMat(0xc0dc78, 0x6b9846, 0x355e36, false)
+    };
+
+    const barkMat = makeGhibliMat(0x634330, { map: TEX.plaster, roughness: 0.92, aoGround: 0.42 });
+
+    function buildMasterpieceTree(kind, x, z, scale) {
+      const s = scale || 1.0;
+      const g = new THREE.Group();
+      g.position.set(x, getTerrainHeight(x, z) - 0.06, z);
+
+      // Smooth organic curving spline trunk + flared gnarled roots + 4 sweeping forked boughs!
+      const trunkCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0.08, 1.1, -0.04),
+        new THREE.Vector3(-0.06, 2.2, 0.06),
+        new THREE.Vector3(0.04, 3.25, 0.0)
+      ]);
+      const trunkGeo = new THREE.TubeGeometry(trunkCurve, 14, 0.34, 10, false);
+      // Smooth taper from flared base to upper trunk
+      const tp = trunkGeo.attributes.position;
+      for (let i = 0; i < tp.count; i++) {
+        const vy = tp.getY(i);
+        const taper = Math.max(0.45, 1.25 - (vy / 3.4) * 0.72);
+        tp.setX(i, tp.getX(i) * taper);
+        tp.setZ(i, tp.getZ(i) * taper);
+      }
+      trunkGeo.computeVertexNormals();
+      const trunk = new THREE.Mesh(trunkGeo, barkMat);
+      trunk.castShadow = true; trunk.receiveShadow = true;
+      g.add(trunk);
+
+      // 5 organic curved roots gripping the meadow
+      for (let r = 0; r < 5; r++) {
+        const a = (r / 5) * Math.PI * 2 + 0.3;
+        const rCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(Math.cos(a) * 0.16, 0.72, Math.sin(a) * 0.16),
+          new THREE.Vector3(Math.cos(a) * 0.52, 0.25, Math.sin(a) * 0.52),
+          new THREE.Vector3(Math.cos(a) * 0.86, -0.04, Math.sin(a) * 0.86)
+        ]);
+        const rMesh = new THREE.Mesh(new THREE.TubeGeometry(rCurve, 7, 0.12, 6, false), barkMat);
+        rMesh.castShadow = true; g.add(rMesh);
+      }
+
+      // 4 organic curved branches reaching into the cloud crown
+      [
+        [1.15, 3.85, 0.55], [-1.25, 3.72, -0.45], [0.45, 3.92, -1.15], [-0.55, 3.65, 1.15]
+      ].forEach(b => {
+        const bCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 2.35, 0),
+          new THREE.Vector3(b[0] * 0.55, 3.15, b[2] * 0.55),
+          new THREE.Vector3(b[0], b[1], b[2])
+        ]);
+        const bMesh = new THREE.Mesh(new THREE.TubeGeometry(bCurve, 8, 0.12, 6, false), barkMat);
+        bMesh.castShadow = true; g.add(bMesh);
+      });
+
+      // Soft inner shadow-caster volume (invisible or nestled deep inside) + 150 Normal-Transferred Leaf Cards!
+      const cloudCenters = [
+        [0.0, 4.75, 0.0, 1.42], [1.15, 4.35, 0.65, 1.18], [-1.20, 4.25, -0.55, 1.22],
+        [0.55, 4.15, -1.25, 1.15], [-0.65, 4.05, 1.18, 1.16], [1.55, 3.55, -0.55, 1.05],
+        [-1.55, 3.60, 0.65, 1.08], [0.15, 3.45, 1.48, 0.98], [-0.25, 3.45, -1.45, 1.00],
+        [0.72, 5.15, -0.32, 1.02], [-0.68, 5.05, 0.42, 0.98], [0.0, 3.75, 0.0, 1.25]
+      ];
+      const crownCenter = new THREE.Vector3(0, 3.95, 0);
+
+      // Batched merged leaf-card BufferGeometry with transferred spherical canopy normals!
+      const posArr = [], normArr = [], uvArr = [], idxArr = [];
+      let vOff = 0;
+      const basePlane = new THREE.PlaneGeometry(1.0, 1.0);
+      const bp = basePlane.attributes.position.array;
+      const bu = basePlane.attributes.uv.array;
+      const bi = basePlane.index.array;
+      const m4 = new THREE.Matrix4();
+      const q = new THREE.Quaternion();
+      const e = new THREE.Euler();
+      const vTmp = new THREE.Vector3();
+      const nTmp = new THREE.Vector3();
+
+      cloudCenters.forEach((c, ci) => {
+        const cardsPerPuff = 12;
+        for (let k = 0; k < cardsPerPuff; k++) {
+          const phi = Math.acos(1 - 2 * ((k + 0.5) / cardsPerPuff));
+          const theta = Math.PI * (1 + Math.sqrt(5)) * (k + ci * 7);
+          const rad = c[3] * (0.42 + ((k * 37 + ci * 13) % 10) * 0.048);
+          const px = c[0] + Math.sin(phi) * Math.cos(theta) * rad;
+          const py = c[1] + Math.cos(phi) * rad * 0.78;
+          const pz = c[2] + Math.sin(phi) * Math.sin(theta) * rad;
+          const cardSize = c[3] * (1.28 + ((k + ci) % 3) * 0.16);
+
+          e.set(((k * 17 + ci) % 7 - 3) * 0.35, theta + ci * 0.9, ((k * 23 + ci) % 5 - 2) * 0.3);
+          q.setFromEuler(e);
+          m4.compose(new THREE.Vector3(px, py, pz), q, new THREE.Vector3(cardSize, cardSize, cardSize));
+
+          for (let v = 0; v < 4; v++) {
+            vTmp.set(bp[v * 3], bp[v * 3 + 1], bp[v * 3 + 2]).applyMatrix4(m4);
+            posArr.push(vTmp.x, vTmp.y, vTmp.z);
+            // SECRET SAUCE: Smooth outward normal from canopy center -> seamless painterly cloud lighting!
+            nTmp.copy(vTmp).sub(crownCenter).normalize();
+            normArr.push(nTmp.x, nTmp.y, nTmp.z);
+            uvArr.push(bu[v * 2], bu[v * 2 + 1]);
+          }
+          for (let ii = 0; ii < bi.length; ii++) idxArr.push(bi[ii] + vOff);
+          vOff += 4;
+        }
+      });
+
+      const canopyGeo = new THREE.BufferGeometry();
+      canopyGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+      canopyGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
+      canopyGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvArr, 2));
+      canopyGeo.setIndex(idxArr);
+
+      const canopyMesh = new THREE.Mesh(canopyGeo, FOLIAGE_MATS[kind] || FOLIAGE_MATS.emerald);
+      g.add(canopyMesh);
+
+      // Subtle dappled shadow-caster proxy sphere nestled cleanly inside the canopy
+      const shadowProxy = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(2.1, 1),
+        new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
+      );
+      shadowProxy.position.set(0, 4.2, 0);
+      shadowProxy.castShadow = true;
+      g.add(shadowProxy);
+
+      g.scale.setScalar(s);
+      g.rotation.y = (x * 0.7 + z * 0.4);
+      scene.add(g);
+      return g;
+    }
+
+    // Hero Sakura & Lush Emerald/Olive Studio Ghibli Trees framing the Courtyard!
+    buildMasterpieceTree('sakura', -11.4, -7.2, 1.18);
+    buildMasterpieceTree('sakura', 11.4, -7.2, 1.15);
+    buildMasterpieceTree('emerald', -12.8, 5.2, 1.24);
+    buildMasterpieceTree('olive', 12.6, 5.8, 1.18);
+    buildMasterpieceTree('sakura', 15.8, -1.8, 1.05);
+    buildMasterpieceTree('emerald', -16.2, -1.5, 1.14);
+    buildMasterpieceTree('emerald', -9.2, 14.5, 1.28);
+    buildMasterpieceTree('sakura', 10.2, 13.8, 1.22);
+    buildMasterpieceTree('olive', -24.0, -18.0, 1.45);
+    buildMasterpieceTree('emerald', 24.0, -18.5, 1.42);
+
+    // =========================================================================
+    // 9. SCULPTED SMOOTH STUDIO GHIBLI LAILA, SALMA & MOCHI (ZERO BOXY PRIMITIVES!)
+    // =========================================================================
+    function createAnimeFaceTex(isSalma) {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      // Warm soft peach skin base with subtle cheek/forehead watercolor glow
+      const g = ctx.createRadialGradient(256, 250, 40, 256, 256, 260);
+      g.addColorStop(0, '#ffe4d1'); g.addColorStop(0.76, '#f7ccb1'); g.addColorStop(1, '#e8b292');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+
+      // Compensate 2:1 equirectangular sphere UV stretching (360° lon vs 180° lat)
+      // so eyes, pupils, blush & smiles render with exact 1:1 Studio Ghibli proportions!
+      ctx.save();
+      ctx.translate(256, 0);
+      ctx.scale(0.52, 1.0);
+      ctx.translate(-256, 0);
+
+      // Soft Miyazaki coral blush ovals
+      [-86, 86].forEach(bx => {
+        const bg = ctx.createRadialGradient(256 + bx, 326, 5, 256 + bx, 326, 42);
+        bg.addColorStop(0, 'rgba(244, 118, 136, 0.52)');
+        bg.addColorStop(1, 'rgba(244, 118, 136, 0.0)');
+        ctx.fillStyle = bg;
+        ctx.beginPath(); ctx.ellipse(256 + bx, 326, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
+      });
+
+      // Expressive Studio Ghibli layered eyes positioned cleanly below parted bangs!
+      [-60, 60].forEach(ex => {
+        const cx = 256 + ex, cy = 274;
+        // Soft luminous sclera
+        ctx.fillStyle = '#fffdf9';
+        ctx.beginPath(); ctx.ellipse(cx, cy, 38, 42, 0, 0, Math.PI * 2); ctx.fill();
+        // Deep warm chestnut-amber gradient iris
+        const ig = ctx.createLinearGradient(cx, cy - 32, cx, cy + 34);
+        ig.addColorStop(0, '#28140c');
+        ig.addColorStop(0.50, isSalma ? '#6b3b24' : '#4a291a');
+        ig.addColorStop(1, isSalma ? '#cf8a52' : '#a86b42');
+        ctx.fillStyle = ig;
+        ctx.beginPath(); ctx.ellipse(cx, cy + 2, 28, 34, 0, 0, Math.PI * 2); ctx.fill();
+        // Pupil
+        ctx.fillStyle = '#170b06';
+        ctx.beginPath(); ctx.ellipse(cx, cy + 2, 14, 18, 0, 0, Math.PI * 2); ctx.fill();
+        // Dual bright anime starlight catchlights!
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.ellipse(cx - 10, cy - 11, 10, 12, -0.25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 10, cy + 11, 5.2, 0, Math.PI * 2); ctx.fill();
+        // Graceful sweeping upper eyelash line
+        ctx.strokeStyle = '#281610'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(cx, cy + 6, 40, Math.PI * 1.12, Math.PI * 1.88);
+        ctx.stroke();
+        // Gentle arched eyebrow
+        ctx.lineWidth = 5; ctx.strokeStyle = '#3d2419';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 26, 34, Math.PI * 1.24, Math.PI * 1.76);
+        ctx.stroke();
+      });
+
+      // Tiny delicate anime nose shadow
+      ctx.fillStyle = 'rgba(182, 114, 86, 0.45)';
+      ctx.beginPath(); ctx.ellipse(256, 322, 4.5, 6.5, 0.2, 0, Math.PI * 2); ctx.fill();
+
+      // Warm joyful Ghibli smile!
+      ctx.strokeStyle = '#8f3f36'; ctx.lineWidth = 6.5; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(256, 344, isSalma ? 25 : 22, 0.16 * Math.PI, 0.84 * Math.PI);
+      ctx.stroke();
+
+      ctx.restore();
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
+    function createPleatedSkirtTex(baseCol, shadeCol, stripeCol) {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = baseCol; ctx.fillRect(0, 0, 512, 256);
+      // Soft hand-painted vertical pleats
+      for (let i = 0; i < 16; i++) {
+        const x = i * 32;
+        const g = ctx.createLinearGradient(x, 0, x + 32, 0);
+        g.addColorStop(0.0, shadeCol);
+        g.addColorStop(0.35, baseCol);
+        g.addColorStop(0.75, 'rgba(255,255,255,0.12)');
+        g.addColorStop(1.0, shadeCol);
+        ctx.fillStyle = g;
+        ctx.fillRect(x, 0, 32, 256);
+      }
+      // Crisp Ghibli storybook hem trim ribbon (v=0 is bottom of LatheGeometry!)
+      ctx.fillStyle = stripeCol;
+      ctx.fillRect(0, 224, 512, 14);
+      ctx.fillStyle = 'rgba(255, 252, 245, 0.88)';
+      ctx.fillRect(0, 244, 512, 12);
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      tex.wrapS = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    function buildSculptedSister(isSalma) {
+      const root = new THREE.Group();
+      const bodyPivot = new THREE.Group();
+      root.add(bodyPivot);
+
+      const skinMat = makeGhibliMat(0xf9d1b9, { roughness: 0.72, rimBoost: 0.95, aoGround: 0.10 });
+      const hairMat = makeGhibliMat(isSalma ? 0x4b2e20 : 0x2d1b15, { roughness: 0.48, rimBoost: 1.35, aoGround: 0.06 });
+      const topMat = makeGhibliMat(isSalma ? 0xfff1b0 : 0xfffaf0, { roughness: 0.78, rimBoost: 0.95, aoGround: 0.10 });
+      const skirtTex = isSalma
+        ? createPleatedSkirtTex('#df5b6d', '#b83c50', '#ffe79e')
+        : createPleatedSkirtTex('#3869b8', '#244b8f', '#fff6e4');
+      const skirtMat = makeGhibliMat(0xffffff, { map: skirtTex, roughness: 0.76, rimBoost: 1.05, aoGround: 0.14 });
+      const collarMat = makeGhibliMat(isSalma ? 0xdf5b6d : 0x3869b8, { roughness: 0.74, rimBoost: 1.0 });
+      const accentMat = makeGhibliMat(isSalma ? 0xf59e0b : 0xe05263, { roughness: 0.62, rimBoost: 1.1 });
+      const shoeMat = makeGhibliMat(isSalma ? 0xd97706 : 0xc93b50, { roughness: 0.52 });
+      const sockMat = makeGhibliMat(0xfffdf8, { roughness: 0.82 });
+
+      // Smooth sculpted flared pleated skirt via LatheGeometry (ORDERED BOTTOM -> TOP for outward normals!)
+      const skirtPts = [
+        new THREE.Vector2(0.35, 0.42),
+        new THREE.Vector2(0.39, 0.44),
+        new THREE.Vector2(0.33, 0.56),
+        new THREE.Vector2(0.24, 0.74),
+        new THREE.Vector2(0.18, 0.86)
+      ];
+      const skirt = new THREE.Mesh(new THREE.LatheGeometry(skirtPts, 28), skirtMat);
+      skirt.castShadow = true; addInkOutline(skirt, 0.028);
+      bodyPivot.add(skirt);
+
+      // Cute cream waist sash ribbon + subtle lace petticoat peeking under hem!
+      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.026, 8, 22), accentMat);
+      sash.rotation.x = Math.PI / 2; sash.position.y = 0.85; bodyPivot.add(sash);
+
+      // Smooth sculpted blouse torso via LatheGeometry (ordered bottom -> top)
+      const torsoPts = [
+        new THREE.Vector2(0.17, 0.84), new THREE.Vector2(0.21, 0.98),
+        new THREE.Vector2(0.22, 1.14), new THREE.Vector2(0.16, 1.26),
+        new THREE.Vector2(0.08, 1.32)
+      ];
+      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 24), topMat);
+      torso.scale.set(1.08, 1.0, 0.82); torso.castShadow = true; addInkOutline(torso, 0.028);
+      bodyPivot.add(torso);
+
+      // Sailor collar + bow ribbon on Laila; sunny Peter Pan collar & golden ribbon on Salma!
+      if (!isSalma) {
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.24, 0.18, 20), collarMat);
+        collar.scale.set(1.12, 1, 0.88); collar.position.y = 1.22; bodyPivot.add(collar);
+        const bow = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), accentMat);
+        bow.scale.set(1.5, 0.72, 0.7); bow.position.set(0, 1.12, 0.19); bodyPivot.add(bow);
+      } else {
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.036, 8, 20), makeGhibliMat(0xfffdf8));
+        collar.rotation.x = Math.PI / 2; collar.position.y = 1.24; bodyPivot.add(collar);
+        const bow = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), accentMat);
+        bow.scale.set(1.4, 0.7, 0.7); bow.position.set(0, 1.18, 0.18); bodyPivot.add(bow);
+      }
+
+      // Cute sculpted storybook backpack!
+      const pack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.36, 0.17), accentMat);
+      pack.position.set(0, 1.04, -0.22); pack.castShadow = true; addInkOutline(pack, 0.038);
+      bodyPivot.add(pack);
+
+      // Smooth tapered legs with ankle socks & rounded Mary-Jane shoes!
+      const legs = [];
+      [-0.105, 0.105].forEach(lx => {
+        const legG = new THREE.Group();
+        legG.position.set(lx, 0.56, 0);
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.30, 14), skinMat);
+        thigh.position.y = -0.15; thigh.castShadow = true; legG.add(thigh);
+        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.049, 0.18, 14), sockMat);
+        sock.position.y = -0.37; legG.add(sock);
+        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.072, 14, 10), shoeMat);
+        shoe.scale.set(0.95, 0.68, 1.48); shoe.position.set(0, -0.50, 0.035); shoe.castShadow = true;
+        addInkOutline(shoe, 0.042); legG.add(shoe);
+        bodyPivot.add(legG);
+        legs.push(legG);
+      });
+
+      // Soft puffy sleeves + naturally angled outward arms & rounded hands!
+      const arms = [];
+      [-0.23, 0.23].forEach(ax => {
+        const armG = new THREE.Group();
+        armG.position.set(ax, 1.21, 0.01);
+        const puff = new THREE.Mesh(new THREE.SphereGeometry(0.095, 14, 10), topMat);
+        puff.position.y = -0.04; puff.castShadow = true; addInkOutline(puff, 0.04); armG.add(puff);
+        const limb = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.040, 0.32, 12), skinMat);
+        limb.position.y = -0.23; limb.castShadow = true; armG.add(limb);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.050, 12, 10), skinMat);
+        hand.position.y = -0.40; armG.add(hand);
+        // Angle gently OUTWARD from torso!
+        armG.rotation.z = ax < 0 ? -0.22 : 0.22;
+        bodyPivot.add(armG);
+        arms.push(armG);
+      });
+
+      // Sculpted anime head with smooth curved chin + high-res painted face!
+      const headG = new THREE.Group();
+      headG.position.set(0, 1.56, 0);
+      const faceTex = createAnimeFaceTex(isSalma);
+      const headSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.285, 28, 22),
+        makeGhibliMat(0xffffff, { map: faceTex, roughness: 0.66, rimBoost: 0.9, aoGround: 0.03 })
+      );
+      headSphere.scale.set(0.98, 1.02, 0.96);
+      headSphere.rotation.y = -Math.PI / 2;
+      headSphere.castShadow = true;
+      addInkOutline(headSphere, 0.025);
+      headG.add(headSphere);
+
+      // Raised hair crown tilted gently back so forehead & sparkling eyes stay 100% unobstructed!
+      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.304, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.48), hairMat);
+      hairCap.position.set(0, 0.045, -0.025); hairCap.rotation.x = -0.34; hairCap.castShadow = true;
+      addInkOutline(hairCap, 0.024);
+      headG.add(hairCap);
+
+      // Delicate parted wispy front bangs stopping gracefully ABOVE their eyebrows!
+      const bangOffsets = [-0.15, -0.08, 0.02, 0.10, 0.16];
+      bangOffsets.forEach((bx, bi) => {
+        const yTip = (bi === 2) ? 0.145 : (bi === 1 || bi === 3 ? 0.132 : 0.108);
+        const bangCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bx * 0.65, 0.265, 0.12),
+          new THREE.Vector3(bx * 0.95, 0.205, 0.255),
+          new THREE.Vector3(bx * 1.06, yTip, 0.262)
+        ]);
+        const bang = new THREE.Mesh(new THREE.TubeGeometry(bangCurve, 8, 0.034, 7, false), hairMat);
+        headG.add(bang);
+      });
+
+      // Soft cheek-framing side locks hugging left & right of their faces!
+      [-1, 1].forEach(side => {
+        const lockCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.22, 0.16, 0.12),
+          new THREE.Vector3(side * 0.285, 0.02, 0.14),
+          new THREE.Vector3(side * 0.25, -0.14, 0.11)
+        ]);
+        headG.add(new THREE.Mesh(new THREE.TubeGeometry(lockCurve, 8, 0.042, 7, false), hairMat));
+      });
+
+      // Glossy anime hair halo highlight ring!
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(0.24, 0.014, 6, 20, Math.PI * 0.65),
+        new THREE.MeshBasicMaterial({ color: 0xffe4cc, transparent: true, opacity: 0.34 })
+      );
+      halo.rotation.x = Math.PI / 2 - 0.3; halo.rotation.z = Math.PI * 0.18;
+      halo.position.set(0, 0.22, 0.04);
+      headG.add(halo);
+
+      // Flowing back hair & signature hairstyle (Laila's sculpted braid + pearl headband; Salma's twin-tails + straw sunhat!)
+      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.295, 20, 16), hairMat);
+      hairBack.scale.set(1.04, 1.24, 0.72); hairBack.position.set(0, -0.10, -0.15);
+      headG.add(hairBack);
+
+      let swayHair = [];
+      if (!isSalma) {
+        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.298, 0.024, 8, 24, Math.PI), makeGhibliMat(0xfff9f0));
+        headband.position.set(0, 0.08, 0.01); headband.rotation.x = -0.18; headG.add(headband);
+        // Sculpted flowing side braid along spline!
+        const braidG = new THREE.Group();
+        braidG.position.set(-0.22, -0.06, -0.05);
+        for (let i = 0; i < 6; i++) {
+          const bead = new THREE.Mesh(new THREE.SphereGeometry(0.058 - i * 0.004, 10, 8), hairMat);
+          bead.position.set(Math.sin(i * 0.8) * 0.018, -i * 0.085, 0.03 + i * 0.012);
+          braidG.add(bead);
+        }
+        const tie = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), accentMat);
+        tie.position.set(0, -0.52, 0.10); braidG.add(tie);
+        headG.add(braidG);
+        swayHair.push(braidG);
+      } else {
+        // Salma's cute straw sunhat perched jauntily back so her sparkling eyes shine!
+        const hatMat = makeGhibliMat(0xf7d872, { roughness: 0.82, rimBoost: 1.05 });
+        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.45, 0.042, 28), hatMat);
+        brim.position.set(0, 0.275, -0.045); brim.rotation.x = -0.18; brim.castShadow = true; addInkOutline(brim, 0.022);
+        headG.add(brim);
+        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hatMat);
+        crown.position.set(0, 0.265, -0.045); crown.rotation.x = -0.18; headG.add(crown);
+        const hRib = new THREE.Mesh(new THREE.TorusGeometry(0.262, 0.026, 8, 24), makeGhibliMat(0xe05263));
+        hRib.rotation.x = Math.PI / 2 - 0.18; hRib.position.set(0, 0.295, -0.045); headG.add(hRib);
+        [-0.27, 0.27].forEach(tx => {
+          const tailG = new THREE.Group();
+          tailG.position.set(tx, 0.02, -0.06);
+          const tc = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(tx * 0.35, -0.18, -0.02),
+            new THREE.Vector3(tx * 0.45, -0.38, 0.04)
+          ]);
+          const tail = new THREE.Mesh(new THREE.TubeGeometry(tc, 10, 0.066, 8, false), hairMat);
+          tailG.add(tail); headG.add(tailG);
+          swayHair.push(tailG);
+        });
+      }
+      bodyPivot.add(headG);
+
+      // Soft contact shadow decal right under feet!
+      const shadowDisk = new THREE.Mesh(
+        new THREE.CircleGeometry(0.42, 20),
+        new THREE.MeshBasicMaterial({ color: 0x3b4466, transparent: true, opacity: 0.24, depthWrite: false })
+      );
+      shadowDisk.rotation.x = -Math.PI / 2; shadowDisk.position.y = 0.02;
+      root.add(shadowDisk);
+
+      if (isSalma) root.scale.setScalar(0.84);
+      scene.add(root);
+      return { root, bodyPivot, headG, legs, arms, swayHair };
+    }
+
+    const laila = buildSculptedSister(false);
+    laila.root.position.set(-0.75, 0, 5.4);
+    laila.root.rotation.y = 0.22;
+
+    const salma = buildSculptedSister(true);
+    salma.root.position.set(0.65, 0, 5.75);
+    salma.root.rotation.y = -0.25;
+
+    // Sculpted Smooth Mochi the Shiba Inu!
+    function buildSculptedMochi() {
+      const mg = new THREE.Group();
+      const furMat = makeGhibliMat(0xe59245, { roughness: 0.80, rimBoost: 1.35 });
+      const creamFur = makeGhibliMat(0xfff5e4, { roughness: 0.82 });
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 14), furMat);
+      body.scale.set(0.92, 0.86, 1.48); body.position.set(0, 0.36, 0); body.castShadow = true; addInkOutline(body, 0.04);
+      mg.add(body);
+      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 12), creamFur);
+      chest.position.set(0, 0.34, 0.24); mg.add(chest);
+      const bandana = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.042, 8, 16), makeGhibliMat(0xe04f5f));
+      bandana.rotation.x = Math.PI / 2 + 0.35; bandana.position.set(0, 0.47, 0.26); mg.add(bandana);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.23, 18, 14), furMat);
+      head.position.set(0, 0.62, 0.34); head.castShadow = true; addInkOutline(head, 0.04); mg.add(head);
+      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.125, 14, 10), creamFur);
+      snout.scale.set(1.0, 0.82, 1.25); snout.position.set(0, 0.56, 0.50); mg.add(snout);
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 6), makeGhibliMat(0x231712));
+      nose.position.set(0, 0.60, 0.63); mg.add(nose);
+      [-0.085, 0.085].forEach(ex => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), makeGhibliMat(0x1f1410));
+        eye.position.set(ex, 0.66, 0.52); mg.add(eye);
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.17, 10), furMat);
+        ear.position.set(ex * 1.65, 0.82, 0.30); ear.rotation.z = ex < 0 ? 0.24 : -0.24; mg.add(ear);
+      });
+      [[-0.13, 0.22], [0.13, 0.22], [-0.13, -0.22], [0.13, -0.22]].forEach(lp => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.044, 0.28, 10), creamFur);
+        leg.position.set(lp[0], 0.14, lp[1]); leg.castShadow = true; mg.add(leg);
+      });
+      const tailCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0.44, -0.34),
+        new THREE.Vector3(0, 0.64, -0.44),
+        new THREE.Vector3(0, 0.72, -0.26)
+      ]);
+      const tail = new THREE.Mesh(new THREE.TubeGeometry(tailCurve, 10, 0.058, 8, false), furMat);
+      mg.add(tail);
+      mg.position.set(-1.95, 0, 5.1);
+      mg.rotation.y = 0.55;
+      scene.add(mg);
+      return { root: mg, tail: tail };
+    }
+    const mochi = buildSculptedMochi();
+
+    // =========================================================================
+    // 10. 14,000 BILLOWING CURVED 3D GRASS PATCHES + 1,400 SWAYING WILDFLOWERS
+    // =========================================================================
+    const hash01 = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+    const grassBlades = [
+      { a: 0.15, r0: 0.05, w: 0.054, h: 0.44, lean: 0.20 },
+      { a: 1.40, r0: 0.18, w: 0.050, h: 0.33, lean: 0.17 },
+      { a: 2.66, r0: 0.24, w: 0.056, h: 0.47, lean: 0.22 },
+      { a: 3.92, r0: 0.16, w: 0.050, h: 0.28, lean: 0.15 },
+      { a: 5.18, r0: 0.22, w: 0.052, h: 0.38, lean: 0.18 }
+    ];
+    const gPos = [], gUv = [];
+    grassBlades.forEach(b => {
+      const ca = Math.cos(b.a), sa = Math.sin(b.a), px = -sa, pz = ca;
+      const bx = ca * b.r0, bz = sa * b.r0;
+      const mx = bx + ca * b.lean * 0.42, mz = bz + sa * b.lean * 0.42;
+      const tx = bx + ca * b.lean, tz = bz + sa * b.lean;
+      const mh = b.h * 0.56, w0 = b.w, w1 = b.w * 0.55;
+      gPos.push(
+        bx - px * w0, 0, bz - pz * w0,  bx + px * w0, 0, bz + pz * w0,  mx + px * w1, mh, mz + pz * w1,
+        bx - px * w0, 0, bz - pz * w0,  mx + px * w1, mh, mz + pz * w1,  mx - px * w1, mh, mz - pz * w1,
+        mx - px * w1, mh, mz - pz * w1, mx + px * w1, mh, mz + pz * w1,  tx, b.h, tz
+      );
+      gUv.push(0,0, 1,0, 1,0.55, 0,0, 1,0.55, 0,0.55, 0,0.55, 1,0.55, 0.5,1.0);
+    });
+    const grassGeo = new THREE.BufferGeometry();
+    grassGeo.setAttribute('position', new THREE.Float32BufferAttribute(gPos, 3));
+    grassGeo.setAttribute('uv', new THREE.Float32BufferAttribute(gUv, 2));
+    grassGeo.computeVertexNormals();
+
+    const grassMat = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      uniforms: {
+        uTime: GLOBAL.uTime,
+        uTimeMode: GLOBAL.uTimeMode,
+        uFogCol: GLOBAL.uFogCol,
+        uFogDensity: GLOBAL.uFogDensity
+      },
+      vertexShader: [
+        'uniform float uTime;',
+        'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
+        'void main() {',
+        '  vH = uv.y;',
+        '  vec4 wb = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);',
+        '  vVar = fract(sin(dot(wb.xz, vec2(12.9898, 78.233))) * 43758.5453);',
+        '  float gust = sin(uTime * 1.55 + wb.x * 0.16 + wb.z * 0.12);',
+        '  float fl = sin(uTime * 3.2 + wb.x * 0.45 - wb.z * 0.35 + vVar * 6.28) * 0.35;',
+        '  float sway = gust * 0.16 + fl * 0.045;',
+        '  vGust = gust * 0.5 + 0.5;',
+        '  vec3 p = position;',
+        '  p.x += sway * vH * vH; p.z += sway * 0.55 * vH * vH; p.y -= abs(sway) * 0.18 * vH * vH;',
+        '  vec4 wp = modelMatrix * instanceMatrix * vec4(p, 1.0);',
+        '  vDist = length(cameraPosition - wp.xyz);',
+        '  gl_Position = projectionMatrix * viewMatrix * wp;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform float uTimeMode; uniform vec3 uFogCol; uniform float uFogDensity;',
+        'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
+        'void main() {',
+        '  vec3 rootC = vec3(0.24, 0.54, 0.28);',
+        '  vec3 midC  = vec3(0.42, 0.76, 0.34);',
+        '  vec3 tipC  = mix(vec3(0.76, 0.94, 0.46), vec3(0.92, 0.96, 0.52), vVar);',
+        '  vec3 col = vH < 0.42 ? mix(rootC, midC, vH / 0.42) : mix(midC, tipC, (vH - 0.42) / 0.58);',
+        '  col += vec3(0.14, 0.15, 0.06) * vGust * pow(vH, 1.6);',
+        '  if (uTimeMode > 1.5) col *= vec3(0.36, 0.50, 0.80);',
+        '  else if (uTimeMode > 0.5) col *= vec3(1.16, 0.84, 0.62);',
+        '  float fogF = 1.0 - exp(-pow(vDist * uFogDensity, 2.0));',
+        '  col = mix(col, uFogCol, clamp(fogF, 0.0, 1.0));',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+
+    const MAX_GRASS = 13500;
+    const grassMesh = new THREE.InstancedMesh(grassGeo, grassMat, MAX_GRASS);
+    const dummy = new THREE.Object3D();
+    let placedGrass = 0;
+    const flowerSpots = [];
+
+    for (let i = 0; i < MAX_GRASS * 3 && placedGrass < MAX_GRASS; i++) {
+      const x = -34 + hash01(i * 3.17 + 1.1) * 68;
+      const z = -26 + hash01(i * 5.73 + 2.9) * 54;
+      // Keep courtyard cobblestones, footpaths & villas clear!
+      if (Math.hypot(x, z - 0.5) < 9.95) continue;
+      if (Math.abs(x) < 3.1 && z > -14 && z < 23) continue;
+      if (Math.abs(z - 0.5) < 2.55 && Math.abs(x) < 18.5) continue;
+      if (x > -9.2 && x < 9.2 && z > -21.8 && z < -11.0) continue;
+      if (Math.hypot(x + 19.5, z + 9.5) < 6.4 || Math.hypot(x - 20.5, z + 8.8) < 6.4) continue;
+      const y = getTerrainHeight(x, z);
+      dummy.position.set(x, y - 0.02, z);
+      dummy.rotation.set(0, hash01(i * 7.1) * Math.PI * 2, 0);
+      const sxz = 1.08 + hash01(i * 9.3) * 0.72;
+      const sy = 0.78 + hash01(i * 2.3) * 0.62;
+      dummy.scale.set(sxz, sy, sxz);
+      dummy.updateMatrix();
+      grassMesh.setMatrixAt(placedGrass++, dummy.matrix);
+      if (flowerSpots.length < 1400 && (i % 8 === 0)) {
+        flowerSpots.push([x, y, z, hash01(i * 13.7)]);
+      }
+    }
+    grassMesh.count = placedGrass;
+    grassMesh.instanceMatrix.needsUpdate = true;
+    scene.add(grassMesh);
+
+    // Swaying 3D Wildflower Duos (White Daisies, Buttercups, Pink Clover & Bluebells!)
+    const fPos = [], fUv = [], fPart = [];
+    function addFlowerGeo(ox, oz, h, pr) {
+      fPos.push(ox - 0.014, 0, oz, ox + 0.014, 0, oz, ox, h, oz);
+      fUv.push(0,0, 1,0, 0.5,0.92); fPart.push(0, 0, 0);
+      for (let p = 0; p < 5; p++) {
+        const a0 = (p / 5) * Math.PI * 2;
+        fPos.push(ox, h, oz, ox + Math.cos(a0 + 0.56) * pr, h + pr * 0.44, oz + Math.sin(a0 + 0.56) * pr, ox + Math.cos(a0 - 0.56) * pr, h + pr * 0.44, oz + Math.sin(a0 - 0.56) * pr);
+        fUv.push(0.5,1, 1,1, 0,1); fPart.push(1, 1, 1);
+      }
+      const cr = pr * 0.38;
+      fPos.push(ox, h + 0.025, oz + cr, ox - cr * 0.88, h + 0.025, oz - cr * 0.55, ox + cr * 0.88, h + 0.025, oz - cr * 0.55);
+      fUv.push(0.5,1, 1,1, 0,1); fPart.push(2, 2, 2);
+    }
+    addFlowerGeo(0, 0, 0.42, 0.11);
+    addFlowerGeo(0.14, 0.09, 0.33, 0.085);
+    const flowerGeo = new THREE.BufferGeometry();
+    flowerGeo.setAttribute('position', new THREE.Float32BufferAttribute(fPos, 3));
+    flowerGeo.setAttribute('uv', new THREE.Float32BufferAttribute(fUv, 2));
+    flowerGeo.setAttribute('aPart', new THREE.Float32BufferAttribute(fPart, 1));
+    const flowerMat = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      uniforms: { uTime: GLOBAL.uTime, uTimeMode: GLOBAL.uTimeMode },
+      vertexShader: [
+        'attribute float aPart; uniform float uTime; varying float vPart; varying float vVar;',
+        'void main() {',
+        '  vPart = aPart; float h = uv.y;',
+        '  vec4 wb = modelMatrix * instanceMatrix * vec4(0.0,0.0,0.0,1.0);',
+        '  vVar = fract(sin(dot(wb.xz, vec2(37.13, 91.7))) * 43758.5453);',
+        '  float sway = sin(uTime * 1.55 + wb.x * 0.16 + wb.z * 0.12) * 0.16;',
+        '  vec3 p = position; p.x += sway * h * h; p.z += sway * 0.55 * h * h;',
+        '  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(p, 1.0);',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform float uTimeMode; varying float vPart; varying float vVar;',
+        'void main() {',
+        '  vec3 pCol = vVar < 0.32 ? vec3(1.0, 0.99, 0.96) : (vVar < 0.58 ? vec3(1.0, 0.88, 0.38) : (vVar < 0.82 ? vec3(1.0, 0.66, 0.78) : vec3(0.58, 0.80, 1.0)));',
+        '  vec3 col = vPart < 0.5 ? vec3(0.28, 0.60, 0.28) : (vPart > 1.5 ? vec3(1.0, 0.82, 0.22) : pCol);',
+        '  if (uTimeMode > 1.5) col *= vec3(0.45, 0.58, 0.84);',
+        '  else if (uTimeMode > 0.5) col *= vec3(1.12, 0.86, 0.66);',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+    const flowerMesh = new THREE.InstancedMesh(flowerGeo, flowerMat, flowerSpots.length);
+    flowerSpots.forEach((fs, idx) => {
+      dummy.position.set(fs[0], fs[1] - 0.01, fs[2]);
+      dummy.rotation.set(0, fs[3] * Math.PI * 2, 0);
+      const sc = 0.88 + fs[3] * 0.55;
+      dummy.scale.set(sc, sc, sc);
+      dummy.updateMatrix();
+      flowerMesh.setMatrixAt(idx, dummy.matrix);
+    });
+    flowerMesh.instanceMatrix.needsUpdate = true;
+    scene.add(flowerMesh);
+
+    // =========================================================================
+    // 11. DRIFTING SCULPTED SAKURA PETALS & SWALLOWTAIL BUTTERFLIES!
+    // =========================================================================
+    const driftingPetals = [];
+    const driftMat = new THREE.MeshBasicMaterial({ color: 0xffc0d8, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+    for (let i = 0; i < 65; i++) {
+      const p = new THREE.Mesh(sakuraPetalGeo, driftMat);
+      p.scale.setScalar(0.88 + hash01(i * 1.9) * 0.45);
+      p.userData = {
+        x: -16 + hash01(i * 4.3) * 32,
+        y: 1.0 + hash01(i * 8.1) * 7.5,
+        z: -13 + hash01(i * 6.7) * 20,
+        spd: 0.42 + hash01(i * 2.9) * 0.50,
+        phase: i * 1.3
+      };
+      scene.add(p);
+      driftingPetals.push(p);
+    }
+
+    const wingShape = new THREE.Shape();
+    wingShape.moveTo(0, 0);
+    wingShape.bezierCurveTo(0.06, 0.11, 0.14, 0.09, 0.11, 0.01);
+    wingShape.bezierCurveTo(0.13, -0.05, 0.06, -0.10, 0, -0.02);
+    const wingGeo = new THREE.ShapeGeometry(wingShape, 6);
+
+    const butterflies = [];
+    const bfCols = [0xffe066, 0x93c5fd, 0xff9ec2, 0xfff5d6];
+    for (let i = 0; i < 6; i++) {
+      const bg = new THREE.Group();
+      const bm = new THREE.MeshBasicMaterial({ color: bfCols[i % bfCols.length], side: THREE.DoubleSide });
+      const rw = new THREE.Mesh(wingGeo, bm); bg.add(rw);
+      const lw = new THREE.Mesh(wingGeo, bm); lw.scale.x = -1; bg.add(lw);
+      bg.userData = { cx: (i % 2 === 0 ? -1 : 1) * (5.2 + i * 1.4), cz: -1.5 + (i % 3) * 3.0, phase: i * 1.7, lw, rw };
+      scene.add(bg);
+      butterflies.push(bg);
+    }
+
+    // =========================================================================
+    // 12. INTERACTIVE CAMERA ORBIT, PRESETS, WASD STROLL & TIME-OF-DAY SWITCHER
+    // =========================================================================
+    const PRESETS = {
+      hero:     { yaw: 0.19, pitch: 0.145, dist: 16.4, tx: 0.0, ty: 2.85, tz: -1.6 },
+      sisters:  { yaw: 0.24, pitch: 0.14,  dist: 3.9,  tx: -0.1, ty: 1.02, tz: 5.55 },
+      fountain: { yaw: -0.56, pitch: 0.22, dist: 6.3,  tx: 0.0, ty: 1.38, tz: 0.5 },
+      sakura:   { yaw: 0.52, pitch: 0.14,  dist: 10.6, tx: -9.5, ty: 3.3, tz: -4.8 },
+      vista:    { yaw: -0.34, pitch: 0.20, dist: 24.5, tx: 0.0, ty: 3.2, tz: -2.5 }
+    };
+    const camState = Object.assign({}, PRESETS.hero);
+    const camTarget = Object.assign({}, PRESETS.hero);
+
+    let dragging = false, lastX = 0, lastY = 0;
+    canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+    window.addEventListener('pointerup', () => { dragging = false; });
+    window.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      camTarget.yaw -= (e.clientX - lastX) * 0.0055;
+      camTarget.pitch = Math.max(0.06, Math.min(0.88, camTarget.pitch + (e.clientY - lastY) * 0.0045));
+      lastX = e.clientX; lastY = e.clientY;
+    });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      camTarget.dist = Math.max(2.8, Math.min(34, camTarget.dist + e.deltaY * 0.012));
+    }, { passive: false });
+
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.code] = true; });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    function applyTimeMode(mode) {
+      if (mode === 'morning') {
+        GLOBAL.uTimeMode.value = 0.0;
+        sunLight.color.setHex(0xfff4d9); sunLight.intensity = 1.34; sunLight.position.set(22, 30, 18);
+        hemiLight.color.setHex(0x9bd7ff); hemiLight.groundColor.setHex(0x6b9e56); hemiLight.intensity = 0.68;
+        GLOBAL.uShadowTint.value.setHex(0x6e84c2);
+        GLOBAL.uRimCol.value.setHex(0xffe7a8);
+        GLOBAL.uFogCol.value.setHex(0xc8ecfb);
+        scene.fog.color.setHex(0xc8ecfb);
+        windowGlowMats.forEach(m => { m.emissiveIntensity = 0.14; });
+        lampBulbs.forEach(m => { m.emissiveIntensity = 0.55; });
+      } else if (mode === 'sunset') {
+        GLOBAL.uTimeMode.value = 1.0;
+        sunLight.color.setHex(0xffa65e); sunLight.intensity = 1.44; sunLight.position.set(-28, 12, 16);
+        hemiLight.color.setHex(0xffb58a); hemiLight.groundColor.setHex(0x6a4e68); hemiLight.intensity = 0.62;
+        GLOBAL.uShadowTint.value.setHex(0x7c5899);
+        GLOBAL.uRimCol.value.setHex(0xffba6b);
+        GLOBAL.uFogCol.value.setHex(0xf6be98);
+        scene.fog.color.setHex(0xf6be98);
+        windowGlowMats.forEach(m => { m.emissiveIntensity = 0.72; });
+        lampBulbs.forEach(m => { m.emissiveIntensity = 1.55; });
+      } else {
+        GLOBAL.uTimeMode.value = 2.0;
+        sunLight.color.setHex(0x88b4ff); sunLight.intensity = 0.65; sunLight.position.set(-14, 24, -18);
+        hemiLight.color.setHex(0x3a548c); hemiLight.groundColor.setHex(0x1f2e42); hemiLight.intensity = 0.58;
+        GLOBAL.uShadowTint.value.setHex(0x32467c);
+        GLOBAL.uRimCol.value.setHex(0x8cc2ff);
+        GLOBAL.uFogCol.value.setHex(0x253b68);
+        scene.fog.color.setHex(0x253b68);
+        windowGlowMats.forEach(m => { m.emissiveIntensity = 1.35; });
+        lampBulbs.forEach(m => { m.emissiveIntensity = 2.25; });
+      }
+      GLOBAL.uSunDir.value.copy(sunLight.position).normalize();
+    }
+
+    function syncActiveBtn(attr, val) {
+      document.querySelectorAll('[' + attr + ']').forEach(b => {
+        b.classList.toggle('active', b.getAttribute(attr) === val);
+      });
+    }
+
+    document.querySelectorAll('[data-cam]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        syncActiveBtn('data-cam', btn.dataset.cam);
+        Object.assign(camTarget, PRESETS[btn.dataset.cam]);
+      });
+    });
+    document.querySelectorAll('[data-time]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        syncActiveBtn('data-time', btn.dataset.time);
+        applyTimeMode(btn.dataset.time);
+      });
+    });
+    document.getElementById('tog-outlines').addEventListener('click', e => {
+      GLOBAL.outlinesOn = !GLOBAL.outlinesOn;
+      e.target.classList.toggle('toggle-on', GLOBAL.outlinesOn);
+      outlineMeshes.forEach(m => { m.visible = GLOBAL.outlinesOn; });
+    });
+    document.getElementById('tog-rim').addEventListener('click', e => {
+      const on = GLOBAL.uRimStrength.value < 0.1;
+      GLOBAL.uRimStrength.value = on ? 0.42 : 0.0;
+      e.target.classList.toggle('toggle-on', on);
+    });
+    document.getElementById('tog-bloom').addEventListener('click', e => {
+      GLOBAL.bloomOn = !GLOBAL.bloomOn;
+      e.target.classList.toggle('toggle-on', GLOBAL.bloomOn);
+      if (bloomPass) bloomPass.enabled = GLOBAL.bloomOn;
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      if (composer) composer.setSize(window.innerWidth, window.innerHeight);
+      if (fxaaPass) fxaaPass.uniforms.resolution.value.set(1 / window.innerWidth, 1 / window.innerHeight);
+    });
+
+    // Expose quick hook for automated inspection
+    window.GHIBLI_BENCH = {
+      setCam: name => {
+        if (PRESETS[name]) {
+          Object.assign(camState, PRESETS[name]);
+          Object.assign(camTarget, PRESETS[name]);
+          syncActiveBtn('data-cam', name);
+        }
+      },
+      setTime: mode => {
+        applyTimeMode(mode);
+        syncActiveBtn('data-time', mode);
+      }
+    };
+
+    // =========================================================================
+    // 13. MAIN ANIMATION LOOP
+    // =========================================================================
+    const clock = new THREE.Clock();
+    let fpsFrames = 0, fpsLast = performance.now();
+    const fpsEl = document.getElementById('fps-val');
+
+    setTimeout(() => {
+      const veil = document.getElementById('loading-veil');
+      if (veil) veil.classList.add('done');
+    }, 350);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, clock.getDelta());
+      const t = clock.elapsedTime;
+      GLOBAL.uTime.value = t;
+
+      // Optional WASD walking for Laila & Salma right inside the showcase!
+      let mx = 0, mz = 0;
+      if (keys.KeyW || keys.ArrowUp) mz -= 1;
+      if (keys.KeyS || keys.ArrowDown) mz += 1;
+      if (keys.KeyA || keys.ArrowLeft) mx -= 1;
+      if (keys.KeyD || keys.ArrowRight) mx += 1;
+      const walking = mx !== 0 || mz !== 0;
+      if (walking) {
+        const ang = Math.atan2(mx, mz) + camState.yaw;
+        const nx = Math.max(-16, Math.min(16, laila.root.position.x + Math.sin(ang) * 4.4 * dt));
+        const nz = Math.max(-9.5, Math.min(18, laila.root.position.z + Math.cos(ang) * 4.4 * dt));
+        if (Math.hypot(nx, nz - 0.5) > 3.95) {
+          laila.root.position.set(nx, getTerrainHeight(nx, nz), nz);
+          laila.root.rotation.y = ang;
+          camTarget.tx = nx; camTarget.tz = nz;
+        }
+        // Salma cheerfully follows behind Laila!
+        const dx = laila.root.position.x - salma.root.position.x;
+        const dz = laila.root.position.z - salma.root.position.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist > 1.35) {
+          const sx = salma.root.position.x + (dx / dist) * 4.1 * dt;
+          const sz = salma.root.position.z + (dz / dist) * 4.1 * dt;
+          salma.root.position.set(sx, getTerrainHeight(sx, sz), sz);
+          salma.root.rotation.y = Math.atan2(dx, dz);
+        }
+      }
+
+      // Smooth breathing, walk swing & hair breeze for Laila, Salma & Mochi!
+      [laila, salma].forEach((s, idx) => {
+        const sw = walking ? Math.sin(t * 9.5 + idx) * 0.52 : 0;
+        s.legs[0].rotation.x = sw;
+        s.legs[1].rotation.x = -sw;
+        s.arms[0].rotation.x = -sw * 0.7;
+        s.arms[1].rotation.x = sw * 0.7;
+        s.bodyPivot.position.y = walking ? Math.abs(Math.sin(t * 9.5 + idx)) * 0.06 : Math.sin(t * 2.2 + idx * 1.4) * 0.015;
+        s.headG.rotation.y = Math.sin(t * 0.9 + idx * 2.1) * 0.09;
+        s.swayHair.forEach(h => { h.rotation.z = Math.sin(t * 2.4 + idx) * 0.08; });
+      });
+      mochi.tail.rotation.z = Math.sin(t * 9.5) * 0.34;
+      mochi.root.position.y = getTerrainHeight(mochi.root.position.x, mochi.root.position.z) + Math.abs(Math.sin(t * 3.2)) * 0.02;
+
+      // Animate fountain droplets & floating sakura petals!
+      fountainDroplets.forEach(d => {
+        const u = d.userData;
+        const p = (t * 0.85 + u.phase) % 1.0;
+        const rad = 0.25 + p * 1.72;
+        const y = 2.88 + Math.sin(p * Math.PI) * 0.62 - p * p * 1.92;
+        d.position.set(Math.cos(u.a) * rad, y, Math.sin(u.a) * rad);
+      });
+      floatingPetals.forEach(p => {
+        const u = p.userData;
+        const a = u.angle + t * u.spd;
+        p.position.set(Math.cos(a) * u.rad, 0.985, Math.sin(a) * u.rad);
+        p.rotation.z = a * 2.0;
+      });
+
+      // Drifting airborne sakura petals & fluttering butterflies!
+      driftingPetals.forEach(p => {
+        const u = p.userData;
+        u.y -= u.spd * dt;
+        u.x += Math.sin(t * 0.9 + u.phase) * 0.45 * dt + 0.32 * dt;
+        if (u.y < 0.15) { u.y = 7.8; u.x = -16 + hash01(u.phase + t) * 32; }
+        p.position.set(u.x, u.y, u.z + Math.cos(t * 0.7 + u.phase) * 0.5);
+        p.rotation.set(t * 1.6 + u.phase, t * 1.1, t * 0.9);
+      });
+      butterflies.forEach(b => {
+        const u = b.userData;
+        const a = t * 0.75 + u.phase;
+        b.position.set(u.cx + Math.cos(a) * 2.1, 1.35 + Math.sin(a * 2.4) * 0.38, u.cz + Math.sin(a * 1.3) * 1.8);
+        b.rotation.y = -a + Math.PI / 2;
+        const flap = Math.sin(t * 18 + u.phase) * 0.85;
+        u.lw.rotation.y = flap; u.rw.rotation.y = -flap;
+      });
+
+      // Smoothly damp camera toward target preset / orbit
+      const damp = Math.min(1, dt * 6.5);
+      ['yaw', 'pitch', 'dist', 'tx', 'ty', 'tz'].forEach(k => {
+        camState[k] += (camTarget[k] - camState[k]) * damp;
+      });
+      const cx = camState.tx + Math.sin(camState.yaw) * Math.cos(camState.pitch) * camState.dist;
+      const cy = camState.ty + Math.sin(camState.pitch) * camState.dist;
+      const cz = camState.tz + Math.cos(camState.yaw) * Math.cos(camState.pitch) * camState.dist;
+      camera.position.set(cx, Math.max(0.5, cy), cz);
+      camera.lookAt(camState.tx, camState.ty, camState.tz);
+
+      if (composer && GLOBAL.bloomOn) composer.render();
+      else renderer.render(scene, camera);
+
+      fpsFrames++;
+      const now = performance.now();
+      if (now - fpsLast >= 600) {
+        if (fpsEl) fpsEl.textContent = Math.round((fpsFrames * 1000) / (now - fpsLast)) + ' FPS';
+        fpsFrames = 0; fpsLast = now;
+      }
+    }
+    animate();
+  })();
+  </script>
+</body>
+</html>
