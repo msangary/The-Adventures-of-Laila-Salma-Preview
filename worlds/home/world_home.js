@@ -1519,12 +1519,17 @@ window.LailaSalma = window.LailaSalma || {};
       }
     });
 
-    // Friendly Community NPCs (Ms. Nadia, Chef Mario, Uncle Tariq, Auntie Farah, Grandpa Sami, Little Maya!)
+    // Friendly Community NPCs (13 Lively Neighbors with Alternating Leader-Aware Phrases!)
     safeRun('npcs', () => {
       LS.spawnWorldNPCs(worldGroup, [
         {
           name: 'Ms. Nadia (Teacher)',
-          line: 'Good morning Laila & Salma! Ready for a fun quiz at Sunny Oaks School? 🏫✨',
+          line: 'Good morning {leader}! Ready for a fun quiz at Sunny Oaks School? 🏫✨',
+          lines: [
+            'Good morning {leader}! Ready for a fun quiz at Sunny Oaks School? 🏫✨',
+            'You are such a bright star, {leader}! Come try today\'s trivia challenge! ⭐📚',
+            'Bring {companion} along too, {leader} — learning is even more fun together! 💛'
+          ],
           pos: new THREE.Vector3(-23.2, 0, -10.0),
           baseRot: Math.PI / 2,
           waveOnNear: true,
@@ -1532,7 +1537,12 @@ window.LailaSalma = window.LailaSalma || {};
         },
         {
           name: 'Nana Omaima (Garden)',
-          line: "Ahlan ya Laila & Salma! Step right inside — Gedo Mahmoud and I made your favorite treats! 🏡💛",
+          line: 'Ahlan ya {leader}! Step right inside — Gedo Mahmoud and I made your favorite treats! 🏡💛',
+          lines: [
+            'Ahlan ya {leader}! Step right inside — Gedo Mahmoud and I made your favorite treats! 🏡💛',
+            'Habibati {leader}! Did you smell the warm sweet basbousa baking inside? 🍯✨',
+            'Gedo Mahmoud saved his very best adventure stories just for you, {leader}! ☕💛'
+          ],
           pos: new THREE.Vector3(24.2, 0, -5.8),
           baseRot: -Math.PI / 2,
           waveOnNear: true,
@@ -1540,7 +1550,12 @@ window.LailaSalma = window.LailaSalma || {};
         },
         {
           name: 'Uncle Tariq (Gate)',
-          line: 'Welcome home to Sunnyside Gated Community, Laila & Salma! Gate is open for you! 🛡️☀️',
+          line: 'Welcome home to Sunnyside Gated Community, {leader}! Gate is open for you! 🛡️☀️',
+          lines: [
+            'Welcome home to Sunnyside Gated Community, {leader}! Gate is open for you! 🛡️☀️',
+            'Off for a drive in the gray Qashqai, {leader}? Safe travels and have fun! 🚙✨',
+            'Everything is peaceful and sunny in our neighborhood today, {leader}! 🌳💛'
+          ],
           pos: new THREE.Vector3(6.2, 0, 32.5),
           baseRot: -Math.PI * 0.75,
           waveOnNear: true,
@@ -1548,7 +1563,12 @@ window.LailaSalma = window.LailaSalma || {};
         },
         {
           name: 'Auntie Farah',
-          line: 'I heard Laila playing the piano from the courtyard — it sounded magical! 🎹🌸',
+          line: 'I heard you playing the piano from the courtyard, {leader} — it sounded magical! 🎹🌸',
+          lines: [
+            'I heard you playing the piano from the courtyard, {leader} — it sounded magical! 🎹🌸',
+            'Look how lush the cherry blossoms and meadow wildflowers are today, {leader}! 🌼',
+            'Take a break by the sparkling fountain whenever you like, {leader}! ⛲✨'
+          ],
           pos: new THREE.Vector3(-8.2, 0, 12.0),
           baseRot: Math.PI * 0.35,
           patrol: { axis: 'z', center: 12.0, range: 5.5, speed: 1.1 },
@@ -1556,7 +1576,12 @@ window.LailaSalma = window.LailaSalma || {};
         },
         {
           name: 'Grandpa Sami',
-          line: 'Look at the little ducklings swimming in our garden pond, girls! 🦆🌿',
+          line: 'Look at the little ducklings swimming in our garden pond, {leader}! 🦆🌿',
+          lines: [
+            'Look at the little ducklings swimming in our garden pond, {leader}! 🦆🌿',
+            'The breeze across the tall grass reminds me of a storybook, {leader}! 🌾☀️',
+            'Have you spotted any playful puppies hiding near the pond, {leader}? 🐶'
+          ],
           pos: new THREE.Vector3(-15.8, 0, 23.2),
           baseRot: -Math.PI * 0.65,
           waveOnNear: true,
@@ -1564,11 +1589,107 @@ window.LailaSalma = window.LailaSalma || {};
         },
         {
           name: 'Maya (Neighbor)',
-          line: 'Yay! Laila & Salma! Come try the new spinning carousel and slide with me! 🎠🛝',
+          line: 'Yay, {leader}! Come try the spinning carousel and slide with me! 🎠🛝',
+          lines: [
+            'Yay, {leader}! Come try the spinning carousel and slide with me! 🎠🛝',
+            'Race you to the sandbox and swings, {leader}! 🏃‍♀️✨',
+            'I love playing in Sunnyside Park with you and {companion}, {leader}! 🌈'
+          ],
           pos: new THREE.Vector3(17.8, 0, 20.8),
           baseRot: Math.PI * 0.4,
           waveOnNear: true,
           char: { scale: 0.74, skinColor: 0xeab99a, hairColor: 0x3a2418, topColor: 0xff8fab, bottomColor: 0x457b9d, twinTails: true }
+        },
+        {
+          name: 'Hoda (Lemonade Stand) 🍋',
+          line: 'Fresh cold mint lemonade, {leader}! Sweet, sunny, and refreshing! 🍋🧊',
+          lines: [
+            'Fresh cold mint lemonade, {leader}! Sweet, sunny, and refreshing! 🍋🧊',
+            'Made with fresh garden mint and sunny lemons just for you, {leader}! 🌿✨',
+            'Stop by my yellow umbrella anytime you finish playing in the park, {leader}! ⛱️'
+          ],
+          pos: new THREE.Vector3(10.8, 0, 12.2),
+          baseRot: -Math.PI * 0.6,
+          waveOnNear: true,
+          char: { scale: 0.90, skinColor: 0xe2ae8b, hairColor: 0x2a1c14, topColor: 0xf4be44, bottomColor: 0x3d5a80, longHair: true }
+        },
+        {
+          name: 'Karim (Morning Jogger) 🏃',
+          line: 'Great morning for a jog around the fountain plaza, {leader}! 🏃‍♂️☀️',
+          lines: [
+            'Great morning for a jog around the fountain plaza, {leader}! 🏃‍♂️☀️',
+            'Hold Shift or tap RUN to sprint as fast as the wind, {leader}! 💨',
+            'Healthy snacks from your kitchen give awesome running energy, {leader}! 🍎⚡'
+          ],
+          pos: new THREE.Vector3(7.6, 0, 5.5),
+          baseRot: 0,
+          patrol: { axis: 'z', center: 5.5, range: 7.5, speed: 1.65 },
+          char: { scale: 0.97, skinColor: 0xd49c79, hairColor: 0x1c1614, topColor: 0x0ea5e9, bottomColor: 0x1e293b, pants: true }
+        },
+        {
+          name: 'Auntie Salwa (Gardener) 🌷',
+          line: 'Hi {leader}! I just watered the tulips and wildflowers along the lane! 🌷💧',
+          lines: [
+            'Hi {leader}! I just watered the tulips and wildflowers along the lane! 🌷💧',
+            'Did you see the golden butterflies dancing over the meadow, {leader}? 🦋✨',
+            'Our sakura and olive trees look so full and leafy this week, {leader}! 🌳'
+          ],
+          pos: new THREE.Vector3(-12.5, 0, -2.5),
+          baseRot: Math.PI * 0.3,
+          waveOnNear: true,
+          char: { scale: 0.91, skinColor: 0xdfb08e, hairColor: 0x3b2820, topColor: 0x4ca64a, bottomColor: 0x6d4c41, hatType: 'sunhat', hatColor: 0xf4d35e }
+        },
+        {
+          name: 'Yassin (Park Kid) ⚽',
+          line: 'Hey {leader}! Watch how high I can jump by the playground! 🤸‍♂️✨',
+          lines: [
+            'Hey {leader}! Watch how high I can jump by the playground! 🤸‍♂️✨',
+            'Did you see Mochi wagging his tail by the fountain, {leader}? 🐕💛',
+            'Let\'s play hide-and-seek and find all 5 neighborhood puppies, {leader}! 🐶'
+          ],
+          pos: new THREE.Vector3(14.5, 0, 26.2),
+          baseRot: -Math.PI * 0.35,
+          patrol: { axis: 'x', center: 14.5, range: 3.8, speed: 1.25 },
+          char: { scale: 0.72, skinColor: 0xd8a382, hairColor: 0x1e1612, topColor: 0x22c55e, bottomColor: 0x1e3a5f, pants: true }
+        },
+        {
+          name: 'Auntie Mona (Fountain) ⛲',
+          line: 'Isn\'t the sparkling community fountain so peaceful, {leader}? ⛲💙',
+          lines: [
+            'Isn\'t the sparkling community fountain so peaceful, {leader}? ⛲💙',
+            'Listen to the gentle splash of the water arcs in the sunshine, {leader}! ✨',
+            'You and {companion} always brighten up Sunnyside Courtyard, {leader}! 🌸'
+          ],
+          pos: new THREE.Vector3(-6.4, 0, -1.5),
+          baseRot: Math.PI * 0.45,
+          waveOnNear: true,
+          char: { scale: 0.92, skinColor: 0xe6b898, hairColor: 0x2a1d17, topColor: 0xa855f7, bottomColor: 0x334155, longHair: true }
+        },
+        {
+          name: 'Uncle Adel (Stroller) 🌿',
+          line: 'Good day, {leader}! What a lovely walk past the courtyard trees! 🌳☀️',
+          lines: [
+            'Good day, {leader}! What a lovely walk past the courtyard trees! 🌳☀️',
+            'Are you heading to the Airport in the Qashqai or visiting Gedo Mahmoud, {leader}? ✈️🏡',
+            'Say hello to Mom and Dad sipping coffee by the piano window, {leader}! ☕'
+          ],
+          pos: new THREE.Vector3(13.0, 0, -12.0),
+          baseRot: -Math.PI * 0.5,
+          patrol: { axis: 'x', center: 13.0, range: 6.0, speed: 0.95 },
+          char: { scale: 0.96, skinColor: 0xcf9b78, hairColor: 0x71717a, topColor: 0xd97706, bottomColor: 0x3f3f46, pants: true, faceOpts: { glasses: true } }
+        },
+        {
+          name: 'Jana (Student) 🎒',
+          line: 'Hi {leader}! Ms. Nadia has awesome new trivia questions at school! 🏫📖',
+          lines: [
+            'Hi {leader}! Ms. Nadia has awesome new trivia questions at school! 🏫📖',
+            'I love reading magical storybooks after school — do you, {leader}? 📚✨',
+            'See you in the courtyard after class, {leader}! 🎒🌸'
+          ],
+          pos: new THREE.Vector3(-15.5, 0, -13.5),
+          baseRot: Math.PI * 0.25,
+          patrol: { axis: 'x', center: -15.5, range: 4.5, speed: 1.15 },
+          char: { scale: 0.80, skinColor: 0xebba9b, hairColor: 0x2e1f18, topColor: 0xec4899, bottomColor: 0x1e3a5f, pigtails: true }
         }
       ]);
     });
@@ -1977,9 +2098,10 @@ window.LailaSalma = window.LailaSalma || {};
       );
       art.position.set(x, y, z); art.rotation.y = rotY; worldGroup.add(art);
     }
-    addWallPainting(1.4, 2.55, -7.82, 0, '🌸 Tokyo Sakura', '#ffeef4', '#e07a5f');
+    const showJapanArt = Boolean(LS.isWorldEnabled && LS.isWorldEnabled('tokyo'));
+    addWallPainting(1.4, 2.55, -7.82, 0, showJapanArt ? '🌸 Tokyo Sakura' : '🐪 Nile Sunset', '#ffeef4', '#e07a5f');
     addWallPainting(8.2, 2.55, -7.82, 0, '🦁 Savanna Sun', '#fff3d6', '#d97706');
-    addWallPainting(9.82, 2.40, 5.2, -Math.PI / 2, '⛩️ Kyoto Lake', '#eef7f2', '#2a9d8f');
+    addWallPainting(9.82, 2.40, 5.2, -Math.PI / 2, showJapanArt ? '⛩️ Kyoto Lake' : '🏮 Marrakech Riad', '#eef7f2', '#2a9d8f');
 
     // -----------------------------------------------------------------------
     // ROOM 1: KITCHEN (Northwest — Healthy Snacks!)
@@ -2089,26 +2211,26 @@ window.LailaSalma = window.LailaSalma || {};
     });
 
     // -----------------------------------------------------------------------
-    // ROOM 2: DINING ROOM + LAILA'S PIANO + MOM & DAD HAVING COFFEE (Northeast)
+    // ROOM 2: PIANO ROOM + MOM & DAD IN TWO COZY ARMCHAIRS BY THE WINDOW! (Northeast)
     // -----------------------------------------------------------------------
     const rugNE = new THREE.Mesh(
-      new THREE.PlaneGeometry(5.6, 4.2),
+      new THREE.CircleGeometry(2.75, 28),
       LS.makeSurfaceMat(LS.createWovenRugTexture('#f5e4c8', '#b85c48', '#e9c46a'))
     );
-    rugNE.rotation.x = -Math.PI / 2; rugNE.position.set(3.6, 0.015, -3.4); worldGroup.add(rugNE);
+    rugNE.rotation.x = -Math.PI / 2; rugNE.position.set(4.6, 0.016, -5.65); worldGroup.add(rugNE);
 
-    // Warm Wooden Dining Sideboard / Display Hutch along North Wall! (X=4.6, Z=-7.35)
-    const hutch = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.95, 0.72), trimMat);
-    hutch.position.set(4.6, 0.48, -7.35); hutch.castShadow = true; worldGroup.add(hutch);
+    // Compact Wooden Display Sideboard tucked neatly against the West Piano Room Accent Wall (X=0.65, Z=-5.4)
+    const hutch = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.95, 2.1), trimMat);
+    hutch.position.set(0.65, 0.48, -5.4); hutch.castShadow = true; worldGroup.add(hutch);
     const hPitcher = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.34, 10), LS.makeToonMat(0x4cc9f0));
-    hPitcher.position.set(3.9, 1.12, -7.35); worldGroup.add(hPitcher);
-    const hFrame = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.38, 0.05), LS.makeToonMat(0xe9c46a));
-    hFrame.position.set(5.1, 1.14, -7.35); hFrame.rotation.x = -0.18; worldGroup.add(hFrame);
-    addCol(4.6, -7.35, 1.35, 0.48);
+    hPitcher.position.set(0.65, 1.12, -5.9); worldGroup.add(hPitcher);
+    const hFrame = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.38, 0.32), LS.makeToonMat(0xe9c46a));
+    hFrame.position.set(0.65, 1.14, -4.95); hFrame.rotation.z = -0.18; worldGroup.add(hFrame);
+    addCol(0.65, -5.4, 0.46, 1.12);
 
     // Laila's Detailed Upright Mahogany Piano (brass pedals, gold decal, sheet music, metronome & flowers!)
     const pianoG = new THREE.Group();
-    pianoG.position.set(8.6, 0, -4.6);
+    pianoG.position.set(8.6, 0, -4.2);
     pianoG.rotation.y = -Math.PI / 2;
     const mahogMat = LS.makeToonMat(0x4a2518);
     const brassMat = LS.makeToonMat(0xe9c46a);
@@ -2141,7 +2263,7 @@ window.LailaSalma = window.LailaSalma || {};
     const bCush = new THREE.Mesh(new THREE.BoxGeometry(1.16, 0.09, 0.42), LS.makeToonMat(0xb8333a));
     bCush.position.set(0, 0.52, 1.18); pianoG.add(bCush);
     worldGroup.add(pianoG);
-    addCol(8.6, -4.6, 0.9, 1.35);
+    addCol(8.6, -4.2, 0.9, 1.35);
 
     const nePlant = createPottedTree(0xd9a773, 0x3b8a4e, null);
     nePlant.position.set(8.8, 0, -6.9); worldGroup.add(nePlant);
@@ -2149,68 +2271,109 @@ window.LailaSalma = window.LailaSalma || {};
     W.zones.push({
       id: 'home_piano',
       label: "Play Laila's Piano for Mom & Dad 🎹✨",
-      pos: new THREE.Vector3(6.6, 0, -4.6),
+      pos: new THREE.Vector3(6.6, 0, -4.2),
       radius: 2.3
     });
 
-    // Dining Table with Woven Runner, Steaming Coffee Mugs, Croissant Plate & Full-Back Chairs!
-    const dinG = new THREE.Group();
-    dinG.position.set(3.6, 0, -3.4);
-    const dTop = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.12, 1.72), trimMat);
-    dTop.position.y = 0.82; dTop.castShadow = true; dinG.add(dTop);
-    const dRun = new THREE.Mesh(new THREE.BoxGeometry(2.68, 0.02, 0.54), LS.makeToonMat(0xfff5e4));
-    dRun.position.y = 0.89; dinG.add(dRun);
-    [[-1.12, -0.7], [1.12, -0.7], [-1.12, 0.7], [1.12, 0.7]].forEach(leg => {
-      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.82, 8), trimMat);
-      l.position.set(leg[0], 0.41, leg[1]); dinG.add(l);
-    });
+    // TWO PLUSH STUDIO GHIBLI ARMCHAIRS NEXT TO THE SUNLIT WINDOW + SMALL ROUND COFFEE TABLE BETWEEN THEM!
+    function createCozyArmchair(x, z, rotY, fabricHex, pillowHex) {
+      const ag = new THREE.Group();
+      ag.position.set(x, 0, z);
+      ag.rotation.y = rotY;
+      const fab = LS.makeToonMat(fabricHex);
+      const legMat = LS.makeToonMat(0x6e472b);
+      // Tapered wooden legs
+      [[-0.36, -0.34], [0.36, -0.34], [-0.36, 0.34], [0.36, 0.34]].forEach(lp => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.24, 8), legMat);
+        leg.position.set(lp[0], 0.12, lp[1]); ag.add(leg);
+      });
+      // Plush upholstered base & thick seat cushion
+      const base = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.22, 0.90), fab);
+      base.position.set(0, 0.30, 0); base.castShadow = true; ag.add(base);
+      const cush = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.16, 0.78), LS.makeToonMat(0xfff5e4));
+      cush.position.set(0, 0.44, 0.04); ag.add(cush);
+      // Curved wingback padded backrest
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.92, 0.24), fab);
+      back.position.set(0, 0.80, -0.34); back.rotation.x = -0.10; back.castShadow = true; ag.add(back);
+      const backRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.94, 10), fab);
+      backRoll.rotation.z = Math.PI / 2; backRoll.position.set(0, 1.24, -0.39); ag.add(backRoll);
+      // Rolled armrests on left & right
+      [-0.44, 0.44].forEach(ax => {
+        const armWall = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.42, 0.84), fab);
+        armWall.position.set(ax, 0.56, 0); armWall.castShadow = true; ag.add(armWall);
+        const armTop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.86, 10), fab);
+        armTop.rotation.x = Math.PI / 2; armTop.position.set(ax, 0.78, 0); ag.add(armTop);
+      });
+      // Cozy accent throw pillow tucked in corner
+      const pil = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.30, 0.14), LS.makeToonMat(pillowHex));
+      pil.position.set(-0.22, 0.66, -0.16); pil.rotation.y = 0.25; pil.rotation.z = 0.15; ag.add(pil);
+      worldGroup.add(ag);
+      addCol(x, z, 0.65, 0.65);
+    }
+
+    // Mom's warm apricot-coral armchair (left of window) & Dad's cozy slate-teal armchair (right of window)!
+    createCozyArmchair(3.15, -6.15, 0.48, 0xd97d65, 0xfff3d6);
+    createCozyArmchair(6.05, -6.15, -0.48, 0x4b778d, 0xffd166);
+
+    // Small Round Warm-Oak Coffee Table right between Mom & Dad's Armchairs!
+    const coffeeG = new THREE.Group();
+    coffeeG.position.set(4.6, 0, -5.95);
+    const cTop = new THREE.Mesh(new THREE.CylinderGeometry(0.66, 0.64, 0.08, 22), trimMat);
+    cTop.position.y = 0.60; cTop.castShadow = true; coffeeG.add(cTop);
+    const cDoily = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.015, 18), LS.makeToonMat(0xfff7ec));
+    cDoily.position.y = 0.645; coffeeG.add(cDoily);
+    const cStem = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.54, 12), LS.makeToonMat(0x7c4e2e));
+    cStem.position.y = 0.30; coffeeG.add(cStem);
+    const cBase = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.40, 0.08, 16), LS.makeToonMat(0x7c4e2e));
+    cBase.position.y = 0.04; coffeeG.add(cBase);
+
     const mugMat = LS.makeToonMat(0xfff7ed);
-    [[-0.68, 0], [0.68, 0]].forEach((m, idx) => {
-      const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.11, 0.02, 10), mugMat);
-      saucer.position.set(m[0], 0.90, m[1]); dinG.add(saucer);
-      const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.14, 10), mugMat);
-      mug.position.set(m[0], 0.97, m[1]); dinG.add(mug);
-      const coffee = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.068, 0.02, 10), LS.makeToonMat(0x4a2c1d));
-      coffee.position.set(m[0], 1.04, m[1]); dinG.add(coffee);
-      const steam = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 6), LS.makeToonMat(0xffffff, { transparent: true, opacity: 0.48 }));
-      steam.position.set(3.6 + m[0], 1.18, -3.4 + m[1]);
-      steam.userData = { baseY: 1.18, phase: idx * 2.1 };
+    [[-0.32, 0.08], [0.32, 0.08]].forEach((m, idx) => {
+      const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.10, 0.02, 10), mugMat);
+      saucer.position.set(m[0], 0.65, m[1]); coffeeG.add(saucer);
+      const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.065, 0.13, 10), mugMat);
+      mug.position.set(m[0], 0.72, m[1]); coffeeG.add(mug);
+      const coffee = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.062, 0.02, 10), LS.makeToonMat(0x4a2c1d));
+      coffee.position.set(m[0], 0.79, m[1]); coffeeG.add(coffee);
+      const steam = new THREE.Mesh(new THREE.SphereGeometry(0.052, 6, 6), LS.makeToonMat(0xffffff, { transparent: true, opacity: 0.48 }));
+      steam.position.set(4.6 + m[0], 0.92, -5.95 + m[1]);
+      steam.userData = { baseY: 0.92, phase: idx * 2.1 };
       worldGroup.add(steam);
       W.coffeeSteams.push(steam);
     });
-    const pot = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), LS.makeToonMat(0xe07a5f));
-    pot.position.set(0, 1.02, -0.18); dinG.add(pot);
-    const pastryPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.19, 0.04, 12), mugMat);
-    pastryPlate.position.set(0, 0.91, 0.30); dinG.add(pastryPlate);
-    const croissant = new THREE.Mesh(new THREE.SphereGeometry(0.11, 7, 6), LS.makeToonMat(0xe9a954));
-    croissant.scale.set(1.4, 0.7, 0.8); croissant.position.set(0, 0.97, 0.30); dinG.add(croissant);
-    [[-1.54, 0], [1.54, 0]].forEach(ch => {
-      const seatTop = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.08, 0.54), LS.makeToonMat(0xb67d52));
-      seatTop.position.set(ch[0], 0.35, ch[1]); seatTop.castShadow = true; dinG.add(seatTop);
-      [[-0.21, -0.21], [0.21, -0.21], [-0.21, 0.21], [0.21, 0.21]].forEach(lg => {
-        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.34, 0.055), LS.makeToonMat(0x7c4e2e));
-        leg.position.set(ch[0] + lg[0], 0.17, ch[1] + lg[1]); dinG.add(leg);
-      });
-      const back = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.62, 0.52), LS.makeToonMat(0x8c5a3c));
-      back.position.set(ch[0] + (ch[0] < 0 ? -0.24 : 0.24), 0.70, ch[1]); dinG.add(back);
-    });
-    worldGroup.add(dinG);
-    addCol(3.6, -3.4, 1.6, 1.0);
+    const pot = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), LS.makeToonMat(0xe07a5f));
+    pot.position.set(0, 0.76, -0.22); coffeeG.add(pot);
+    const pastryPlate = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.15, 0.035, 12), mugMat);
+    pastryPlate.position.set(0, 0.66, 0.26); coffeeG.add(pastryPlate);
+    const croissant = new THREE.Mesh(new THREE.SphereGeometry(0.095, 7, 6), LS.makeToonMat(0xe9a954));
+    croissant.scale.set(1.4, 0.7, 0.8); croissant.position.set(0, 0.71, 0.26); coffeeG.add(croissant);
+    worldGroup.add(coffeeG);
+    addCol(4.6, -5.95, 0.72, 0.72);
 
     LS.spawnWorldNPCs(worldGroup, [
       {
         name: 'Mom ☕',
         line: 'Good morning {leader}! Play us a song on the piano — we love you! 💛🎹',
-        pos: new THREE.Vector3(2.04, 0.04, -3.4),
-        baseRot: Math.PI / 2,
+        lines: [
+          'Good morning {leader}! Play us a song on the piano — we love you! 💛🎹',
+          'Isn\'t the morning sunshine through our window so cozy, {leader}? ☀️☕',
+          'Grab a healthy snack from the kitchen whenever you feel hungry, {leader}! 🍎💛'
+        ],
+        pos: new THREE.Vector3(3.18, 0.14, -6.08),
+        baseRot: 0.48,
         seated: true,
         char: { scale: 0.90, skinColor: 0xe6b595, hairColor: 0x2c1e18, topColor: 0xf4a261, bottomColor: 0x3d5a80, longHair: true }
       },
       {
         name: 'Dad ☕',
-        line: 'Good morning {leader}! Drive the Qashqai to the Airport for flights, or open our Enchanted Bookshelf for Ancient Egypt! ✈️📚',
-        pos: new THREE.Vector3(5.16, 0.02, -3.4),
-        baseRot: -Math.PI / 2,
+        line: 'Good morning {leader}! Drive the Qashqai to the Airport for flights, or open our Enchanted Bookshelf! ✈️📚',
+        lines: [
+          'Good morning {leader}! Drive the Qashqai to the Airport for flights, or open our Enchanted Bookshelf! ✈️📚',
+          'Best coffee spot in the house right here by the window with Mom, {leader}! ☕☀️',
+          'I can\'t wait to hear your next piano recital, {leader}! 🎹💛'
+        ],
+        pos: new THREE.Vector3(6.02, 0.12, -6.08),
+        baseRot: -0.48,
         seated: true,
         char: { scale: 0.94, skinColor: 0xd9a480, hairColor: 0x241a16, topColor: 0x457b9d, bottomColor: 0x2b3a4a, pants: true, faceOpts: { glasses: true } }
       }

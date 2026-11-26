@@ -1366,6 +1366,90 @@ window.LailaSalma = window.LailaSalma || {};
           worldGroup.add(ch.root);
           W.strollers.push({ ch, rx: sd.rx, rz: sd.rz, cx: sd.cx, cz: sd.cz, speed: sd.speed, phase: sd.phase });
         });
+
+        // 11–16) Six Interactive Ancient Egyptian Locals with Alternating Leader-Aware Phrases!
+        if (LS.spawnWorldNPCs) {
+          LS.spawnWorldNPCs(worldGroup, [
+            {
+              name: 'Iset (Lotus Seller) 🪷',
+              line: 'Ahlan, {leader}! Fresh blue Nile lotus blossoms blooming by the river! 🪷💧',
+              lines: [
+                'Ahlan, {leader}! Fresh blue Nile lotus blossoms blooming by the river! 🪷💧',
+                'Watch the silver Nile fish leaping near the wooden felucca pier, {leader}! 🐟✨',
+                'Have you sailed out across the sparkling Nile with Captain Tarek yet, {leader}? ⛵'
+              ],
+              pos: new THREE.Vector3(16.2, 0, 7.6),
+              baseRot: -Math.PI * 0.55,
+              waveOnNear: true,
+              char: { scale: 0.92, hairColor: 0x1a1310, skinColor: 0xd09a72, topColor: 0x38bdf8, bottomColor: 0xfff8e7, longHair: true }
+            },
+            {
+              name: 'Djedi (Young Scribe) 📜',
+              line: 'Hi {leader}! I\'m learning to paint golden hieroglyphs at the Temple! 📜☀️',
+              lines: [
+                'Hi {leader}! I\'m learning to paint golden hieroglyphs at the Temple! 📜☀️',
+                'Step inside the Great Pyramid\'s glowing doorway to see the Golden Treasure Chamber, {leader}! 👑',
+                'Scribe Imhotep loves quizzing clever travelers like you and {companion}, {leader}! 🏛️'
+              ],
+              pos: new THREE.Vector3(-8.5, 0, -4.5),
+              baseRot: 0.45,
+              patrol: { axis: 'x', center: -8.5, range: 3.6, speed: 1.05 },
+              char: { scale: 0.80, hairColor: 0x201612, skinColor: 0xc99166, topColor: 0xf4c44e, bottomColor: 0x1f4f94, pants: true }
+            },
+            {
+              name: 'Senenmut (Oasis Keeper) 🌴',
+              line: 'Welcome to our Emerald Date-Palm Oasis, {leader}! Cool shade and sweet dates! 🌴🍯',
+              lines: [
+                'Welcome to our Emerald Date-Palm Oasis, {leader}! Cool shade and sweet dates! 🌴🍯',
+                'Look at the wildflowers swaying around the turquoise spring, {leader}! 🌼💧',
+                'Habibi and Shams the camels love taking you on a desert ride, {leader}! 🐪'
+              ],
+              pos: new THREE.Vector3(-17.8, 0, 16.5),
+              baseRot: 0.72,
+              waveOnNear: true,
+              char: { scale: 0.96, hairColor: 0x241a15, skinColor: 0xc28a5c, topColor: 0x2a9d8f, bottomColor: 0xf5e6c8, pants: true }
+            },
+            {
+              name: 'Baket (Nile Musician) 🎵',
+              line: 'Listen to the golden harp melody floating across the Pyramid Plaza, {leader}! 🎶☀️',
+              lines: [
+                'Listen to the golden harp melody floating across the Pyramid Plaza, {leader}! 🎶☀️',
+                'You look regal in our sunlit ancient city, {leader}! 👑✨',
+                'Have you spotted all 5 Royal Egyptian Mau Cats hiding nearby, {leader}? 🐱💛'
+              ],
+              pos: new THREE.Vector3(6.8, 0, 8.8),
+              baseRot: -0.6,
+              waveOnNear: true,
+              char: { scale: 0.92, hairColor: 0x1c1411, skinColor: 0xd49d74, topColor: 0xe05780, bottomColor: 0xfff5e0, hairBun: true }
+            },
+            {
+              name: 'Khafre (Pyramid Guide) 🔺',
+              line: 'Greetings, {leader}! The Great Pyramids gleam like pure gold in the sun! 🔺✨',
+              lines: [
+                'Greetings, {leader}! The Great Pyramids gleam like pure gold in the sun! 🔺✨',
+                'Look how friendly the Great Sphinx looks smiling over the courtyard, {leader}! 🦁',
+                'Guardian Bastet inside the Pyramid Chamber has a shiny surprise waiting for you, {leader}! 💎'
+              ],
+              pos: new THREE.Vector3(-3.8, 0, -16.8),
+              baseRot: 0.15,
+              patrol: { axis: 'x', center: -3.8, range: 4.5, speed: 0.95 },
+              char: { scale: 0.99, hairColor: 0x1f1713, skinColor: 0xc0885c, topColor: 0xfff8e7, bottomColor: 0xd97706, pants: true }
+            },
+            {
+              name: 'Neferu (Bakery Helper) 🍯',
+              line: 'Mmm! Smell the warm honey flatbread baking right over there, {leader}! 🍯🥖',
+              lines: [
+                'Mmm! Smell the warm honey flatbread baking right over there, {leader}! 🍯🥖',
+                'Try Artist Merit\'s Royal Gold-Collar Linen Boutique just across the plaza, {leader}! 👗✨',
+                'It\'s a joy welcoming time-travelers from the Enchanted Bookshelf, {leader}! 📚'
+              ],
+              pos: new THREE.Vector3(-11.2, 0, 17.5),
+              baseRot: 0.4,
+              waveOnNear: true,
+              char: { scale: 0.88, hairColor: 0x221814, skinColor: 0xd29c74, topColor: 0xf4a261, bottomColor: 0xfff8e7, longHair: true }
+            }
+          ]);
+        }
       });
 
       W.getZoneLabel = function (x, z) {

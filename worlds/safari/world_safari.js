@@ -1501,25 +1501,85 @@ window.LailaSalma = window.LailaSalma || {};
         });
       });
 
-      // 11. Friendly Safari NPCs (full anime faces!)
+      // 11. Friendly Safari NPCs (9 Lively Rangers, Photographers & Explorers with Alternating Phrases!)
       safeRun('safari_npcs', () => {
         LS.spawnWorldNPCs(worldGroup, [
           { name: 'Ranger Amara', pos: new THREE.Vector3(3.4, 0, 13.8), baseRot: -0.35, waveOnNear: true,
-            line: 'Jambo, Laila & Salma! Ride the Hot Air Balloon, snap wildlife photos with [P], or hop in our Safari Jeep!',
+            line: 'Jambo, {leader}! Ride the Hot Air Balloon, snap wildlife photos, or hop in our Safari Jeep!',
+            lines: [
+              'Jambo, {leader}! Ride the Hot Air Balloon, snap wildlife photos, or hop in our Safari Jeep!',
+              'Look how golden the Serengeti grass waves in the warm wind today, {leader}! 🌾☀️',
+              'Have you and {companion} heard the lion king roar from Pride Rock yet, {leader}? 🦁'
+            ],
             char: { scale: 0.98, hairColor: 0x1b1514, skinColor: 0x9c6644, topColor: 0xd4a359, bottomColor: 0x5c5346, pants: true, hatType: 'kinder', hatColor: 0xb08968,
               faceOpts: { eyeColor: '#3a2214', eyeHighlight: '#a66d3c', blush: 'rgba(214, 108, 92, 0.35)' } } },
           { name: 'Dr. Kofi', pos: new THREE.Vector3(7.6, 0, 15.2), baseRot: -Math.PI * 0.42, waveOnNear: true,
-            line: 'Welcome to Savanna Ranger Academy! Test your wildlife knowledge for coins & XP!',
+            line: 'Welcome to Savanna Ranger Academy, {leader}! Test your wildlife knowledge for coins & XP!',
+            lines: [
+              'Welcome to Savanna Ranger Academy, {leader}! Test your wildlife knowledge for coins & XP!',
+              'Did you know giraffes have the same number of neck bones as humans, {leader}? 🦒✨',
+              'You make an amazing Junior Wildlife Ranger, {leader}! 🌿🏆'
+            ],
             char: { scale: 1.0, hairColor: 0x1e1b18, skinColor: 0x8d5524, topColor: 0x4a7c59, bottomColor: 0x3b3a36, pants: true,
               faceOpts: { glasses: true, mustache: true, eyeColor: '#2c1e16', eyeHighlight: '#7c5c42', blush: 'rgba(196, 102, 88, 0.25)' } } },
           { name: 'Mama Nia', pos: new THREE.Vector3(7.2, 0, 23.6), baseRot: -Math.PI * 0.35, waveOnNear: true,
-            line: 'Fresh Mango Sunrise Smoothies! One sip gives you super savanna running speed — perfect for the Cheetah Sprint!',
+            line: 'Fresh Mango Sunrise Smoothies, {leader}! One sip gives you super savanna speed!',
+            lines: [
+              'Fresh Mango Sunrise Smoothies, {leader}! One sip gives you super savanna speed!',
+              'Sweet golden mangoes picked right under the savanna sun for you, {leader}! 🥭☀️',
+              'Perfect fuel before racing the speedy Cheetah Sprint, {leader}! 🐆⚡'
+            ],
             char: { scale: 0.94, hairColor: 0x1c1412, skinColor: 0x945b36, topColor: 0xe76f51, bottomColor: 0xf4a261, hairBun: true,
               faceOpts: { eyeColor: '#422416', eyeHighlight: '#b56e3e', blush: 'rgba(226, 114, 98, 0.42)' } } },
           { name: 'Keeper Zara', pos: new THREE.Vector3(-20.8, 0, 4.8), baseRot: Math.PI * 0.4, waveOnNear: true,
-            line: 'Walk right up the cedar ramp to our feeding deck — and visit the Hippo Lagoon just north of here!',
+            line: 'Walk right up the cedar ramp to our giraffe feeding deck, {leader}!',
+            lines: [
+              'Walk right up the cedar ramp to our giraffe feeding deck, {leader}!',
+              'The tall giraffes love munching fresh acacia leaves from up on the deck, {leader}! 🦒🌿',
+              'Don\'t forget to visit the splashing Hippo Lagoon just north of here, {leader}! 🦛💦'
+            ],
             char: { scale: 0.94, hairColor: 0x241814, skinColor: 0xa66e48, topColor: 0xe9c46a, bottomColor: 0x6b705c, pants: true, hatType: 'cap', hatColor: 0x4a7c59,
-              faceOpts: { eyeColor: '#2a4c36', eyeHighlight: '#6cc48c', blush: 'rgba(224, 118, 102, 0.38)' } } }
+              faceOpts: { eyeColor: '#2a4c36', eyeHighlight: '#6cc48c', blush: 'rgba(224, 118, 102, 0.38)' } } },
+          { name: 'Photographer Jabari 📷', pos: new THREE.Vector3(-12.5, 0, 12.0), baseRot: 0.5, patrol: { axis: 'z', center: 12.0, range: 5.5, speed: 1.0 },
+            line: 'Hi {leader}! Use the Wildlife Camera to snap amazing photos of elephants and flamingos! 📷🦩',
+            lines: [
+              'Hi {leader}! Use the Wildlife Camera to snap amazing photos of elephants and flamingos! 📷🦩',
+              'The golden sunlight on Mt. Kilimanjaro looks like a painting today, {leader}! 🏔️✨',
+              'Watch closely behind the umbrella acacias for hiding lion cubs, {leader}! 🦁'
+            ],
+            char: { scale: 0.96, hairColor: 0x1a1412, skinColor: 0x8d5524, topColor: 0xc9a259, bottomColor: 0x4b5563, pants: true, hatType: 'sunhat', hatColor: 0xb08968 } },
+          { name: 'Balloon Pilot Makena 🎈', pos: new THREE.Vector3(16.8, 0, 12.2), baseRot: -0.6, waveOnNear: true,
+            line: 'Ready to soar above the treetops in our rainbow Hot Air Balloon, {leader}? 🎈☀️',
+            lines: [
+              'Ready to soar above the treetops in our rainbow Hot Air Balloon, {leader}? 🎈☀️',
+              'From way up high you can see the entire Serengeti and zebras galloping below, {leader}! 🦓',
+              'The savanna breeze is super gentle for floating today, {leader}! 🌤️'
+            ],
+            char: { scale: 0.93, hairColor: 0x1c1412, skinColor: 0x9b6440, topColor: 0xef4444, bottomColor: 0x334155, longHair: true } },
+          { name: 'Birdwatcher Tunde 🔭', pos: new THREE.Vector3(-6.2, 0, -5.8), baseRot: 0.25, waveOnNear: true,
+            line: 'Jambo {leader}! Climb the wooden Watchtower to spot pink flamingos and wild zebras! 🔭🦩',
+            lines: [
+              'Jambo {leader}! Climb the wooden Watchtower to spot pink flamingos and wild zebras! 🔭🦩',
+              'Listen to the songbirds whistling from the giant baobab branches, {leader}! 🌳🎶',
+              'Can you count how many hippos are blowing bubbles in the lagoon, {leader}? 🦛'
+            ],
+            char: { scale: 0.97, hairColor: 0x1e1a18, skinColor: 0x7c4824, topColor: 0x2a9d8f, bottomColor: 0x3b3a36, pants: true, faceOpts: { glasses: true } } },
+          { name: 'Junior Explorer Aisha 🧭', pos: new THREE.Vector3(-15.5, 0, 22.8), baseRot: -0.4, patrol: { axis: 'x', center: -15.5, range: 4.0, speed: 1.15 },
+            line: 'Hi {leader}! Try the wooden savanna swing and slide by the camp playground! 🛝✨',
+            lines: [
+              'Hi {leader}! Try the wooden savanna swing and slide by the camp playground! 🛝✨',
+              'I already found 3 playful lion cubs hiding in the tall grass, {leader}! 🦁🌾',
+              'Let\'s go see the baby elephants splashing in the waterhole, {leader}! 🐘💧'
+            ],
+            char: { scale: 0.76, hairColor: 0x1d1412, skinColor: 0x9c6644, topColor: 0xfbbf24, bottomColor: 0x2563eb, pigtails: true } },
+          { name: 'Airstrip Pilot Samira ✈️', pos: new THREE.Vector3(24.5, 0, 24.5), baseRot: -Math.PI * 0.65, waveOnNear: true,
+            line: 'Hello {leader}! Whenever you\'re ready to fly home or to Marrakech, our Safari Airstrip is open! ✈️',
+            lines: [
+              'Hello {leader}! Whenever you\'re ready to fly home or to Marrakech, our Safari Airstrip is open! ✈️',
+              'The striped windsock shows a smooth tailwind for takeoff, {leader}! 🌬️🛫',
+              'Come back to visit the giraffes and lion cubs anytime, {leader}! 🦒💛'
+            ],
+            char: { scale: 0.94, hairColor: 0x1e1612, skinColor: 0x945b36, topColor: 0x0284c7, bottomColor: 0x1e293b, pants: true, hatType: 'cap', hatColor: 0x1e3a5f } }
         ]);
       });
 

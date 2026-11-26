@@ -1257,6 +1257,90 @@ window.LailaSalma = window.LailaSalma || {};
           radius: 3.4
         });
 
+        // B2) Six Interactive Marrakech Medina Locals & Artisans with Alternating Leader-Aware Phrases!
+        if (LS.spawnWorldNPCs) {
+          LS.spawnWorldNPCs(worldGroup, [
+            {
+              name: 'Omar (Fresh Mint Vendor) 🌿',
+              line: 'Marhaba, {leader}! Sweet fragrant Moroccan mint picked fresh this morning! 🌿🫖',
+              lines: [
+                'Marhaba, {leader}! Sweet fragrant Moroccan mint picked fresh this morning! 🌿🫖',
+                'Watch Tea Master Rashid pour steaming mint tea from high in the air, {leader}! ✨',
+                'The scent of Seville orange blossoms fills the whole courtyard today, {leader}! 🍊'
+              ],
+              pos: new THREE.Vector3(6.8, 0, -9.8),
+              baseRot: -0.65,
+              waveOnNear: true,
+              char: { scale: 0.96, hairColor: 0x1e1612, skinColor: 0xc99166, topColor: 0x15803d, bottomColor: 0xf5e6c8, pants: true }
+            },
+            {
+              name: 'Kenza (Lantern Polisher) 🏮',
+              line: 'Hi {leader}! Every stained-glass lantern glows like a rainbow jewel! 🏮✨',
+              lines: [
+                'Hi {leader}! Every stained-glass lantern glows like a rainbow jewel! 🏮✨',
+                'Visit Artisan Fatima\'s stall to design your very own colorful lantern, {leader}! 🎨',
+                'Switch to Sunset or Night mode to see the bazaar lanterns sparkle, {leader}! 🌙'
+              ],
+              pos: new THREE.Vector3(-8.6, 0, 1.8),
+              baseRot: 0.72,
+              patrol: { axis: 'z', center: 1.8, range: 4.0, speed: 0.95 },
+              char: { scale: 0.91, hairColor: 0x201511, skinColor: 0xd29c74, topColor: 0xe11d48, bottomColor: 0xfef3c7, longHair: true }
+            },
+            {
+              name: 'Farid (Oud Musician) 🎸',
+              line: 'Ahlan, {leader}! Feel the lively Marrakech rhythm echoing through the souk! 🥁🎶',
+              lines: [
+                'Ahlan, {leader}! Feel the lively Marrakech rhythm echoing through the souk! 🥁🎶',
+                'Join Storyteller Hassan\'s Sunset Drum Circle down in the south square, {leader}! ✨',
+                'Even the white doves love dancing above our Zellige fountain, {leader}! 🕊️⛲'
+              ],
+              pos: new THREE.Vector3(-6.2, 0, 11.4),
+              baseRot: 0.35,
+              waveOnNear: true,
+              char: { scale: 0.98, hairColor: 0x1c1412, skinColor: 0xc48b60, topColor: 0x0284c7, bottomColor: 0xf8fafc, pants: true }
+            },
+            {
+              name: 'Lina (Fountain Kid) 🕊️',
+              line: 'Look, {leader}! Rose petals are floating on the turquoise Zellige fountain! 🌹⛲',
+              lines: [
+                'Look, {leader}! Rose petals are floating on the turquoise Zellige fountain! 🌹⛲',
+                'Have you seen the cute big-eared Sahara Fennec Foxes hiding in the bazaar, {leader}? 🦊💛',
+                'Step up into the Moroccan Riad Rooftop Suite to decorate with rugs and lanterns, {leader}! 🏮'
+              ],
+              pos: new THREE.Vector3(6.4, 0, 5.2),
+              baseRot: -0.7,
+              patrol: { axis: 'z', center: 5.2, range: 3.2, speed: 1.15 },
+              char: { scale: 0.76, hairColor: 0x241814, skinColor: 0xd8a27c, topColor: 0xf59e0b, bottomColor: 0x7c3aed, pigtails: true }
+            },
+            {
+              name: 'Malika (Henna Artist) 🌸',
+              line: 'Welcome to Marrakech, {leader}! Intricate floral patterns inspired by Moroccan tiles! 🌸✨',
+              lines: [
+                'Welcome to Marrakech, {leader}! Intricate floral patterns inspired by Moroccan tiles! 🌸✨',
+                'Try on Tailor Zahara\'s Ruby, Emerald & Saffron Kaftans right nearby, {leader}! 👗',
+                'You and {companion} look right at home in the sunny Red City, {leader}! 🕌💛'
+              ],
+              pos: new THREE.Vector3(10.8, 0, -2.5),
+              baseRot: -Math.PI * 0.48,
+              waveOnNear: true,
+              char: { scale: 0.92, hairColor: 0x1a1210, skinColor: 0xce966e, topColor: 0x9333ea, bottomColor: 0xfde68a, hairBun: true }
+            },
+            {
+              name: 'Samir (Spice Taster) 🌶️',
+              line: 'Marhaba, {leader}! Can you smell the golden saffron, sweet cinnamon & warm cumin? ✨',
+              lines: [
+                'Marhaba, {leader}! Can you smell the golden saffron, sweet cinnamon & warm cumin? ✨',
+                'Check out the bright Chouara Dye Vats terrace in the northeast corner, {leader}! 🎨',
+                'Teacher Youssef by the fountain has a fun Morocco quiz for you, {leader}! 🕌'
+              ],
+              pos: new THREE.Vector3(9.2, 0, 9.8),
+              baseRot: -Math.PI * 0.65,
+              patrol: { axis: 'x', center: 9.2, range: 3.4, speed: 0.9 },
+              char: { scale: 0.95, hairColor: 0x211915, skinColor: 0xc68e63, topColor: 0xd97706, bottomColor: 0x334155, pants: true }
+            }
+          ]);
+        }
+
         // C) 5 Fluttering White Courtyard Doves Circling the Zellige Fountain!
         const doveMat = LS.makeToonMat(0xfffefb);
         for (let i = 0; i < 5; i++) {

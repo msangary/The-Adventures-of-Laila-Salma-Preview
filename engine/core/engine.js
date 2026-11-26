@@ -621,6 +621,8 @@ window.LailaSalma = window.LailaSalma || {};
     } else if (worldId === 'marrakech') {
       LS.setSalmaBubbleText('Ooh, Marrakech Lantern Bazaar!! Craft glowing stained-glass lanterns, sip mint tea & find Fennec Foxes! 🏮🦊🫖', 0);
       LS.unlockStamp('marrakech_arrival');
+    } else if (worldId === 'dest_airport') {
+      LS.setSalmaBubbleText('Ooh, Sunnyside International Airport! Look at that huge blue airplane outside Gate A1! ✈️✨', 0);
     } else if (worldId === 'kyoto') {
       LS.setSalmaBubbleText('Whoa, expanded Kyoto! Explore Gion Lantern Street, quiz with Sensei Kenji & feed the koi! ⛩️🦊', 0);
       LS.unlockStamp('kyoto_arrival');

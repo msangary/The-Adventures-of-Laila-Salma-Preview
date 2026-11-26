@@ -1061,9 +1061,63 @@ window.LailaSalma = window.LailaSalma || {};
     return c;
   }
 
+  const AUTO_ALT_LINES = [
+    'It is such a bright, wonderful day to explore, {leader}! ☀️✨',
+    'Have you spotted all the hidden animal friends nearby, {leader}? 🐾💛',
+    'So happy to see you and {companion} smiling today, {leader}! 🌸',
+    'Enjoy every moment of your adventure, {leader}! ✨'
+  ];
+
+  function resolveBubblePhrase(m) {
+    const rawList = (m.lines && m.lines.length > 0) ? m.lines : [m.rawText];
+    const chosen = rawList[m.lineIndex % rawList.length];
+    return LS.personalizeLeaderLine ? LS.personalizeLeaderLine(chosen, m.opts) : chosen;
+  }
+
+  function redrawBubbleSprite(sp, nextText) {
+    const m = sp.userData && sp.userData.speechMeta;
+    if (!m || nextText === m.resolvedText) return;
+    const prevMult = sp.scale.x / (m.origW || 3.45);
+    const c = renderSpeechBubbleCanvas(m.name, nextText);
+    const oldMap = sp.material && sp.material.map;
+    if (oldMap && oldMap.dispose) oldMap.dispose();
+    sp.material.map = new THREE.CanvasTexture(c);
+    sp.material.needsUpdate = true;
+    const nextH = 1.24 * (c.height / 180);
+    sp.scale.set(3.45 * prevMult, nextH * prevMult, 1);
+    m.origH = nextH;
+    m.resolvedText = nextText;
+  }
+
   LS.createSpeechBubbleSprite = function (name, text, opts) {
     const cfg = opts || {};
-    const resolved = LS.personalizeLeaderLine ? LS.personalizeLeaderLine(text, cfg) : text;
+    let lines = null;
+    if (Array.isArray(cfg.lines) && cfg.lines.length > 0) {
+      lines = cfg.lines.slice();
+    } else if (!cfg.skipAutoLeader && !cfg.fixedLine && cfg.lineLaila === undefined && text) {
+      // Automatically pair single-line NPCs with a warm, leader-aware alternating phrase!
+      let h = 0;
+      const key = String(name || '') + String(text || '');
+      for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) | 0;
+      const alt = AUTO_ALT_LINES[Math.abs(h) % AUTO_ALT_LINES.length];
+      lines = [text, alt];
+    }
+
+    const meta = {
+      name: name,
+      rawText: text,
+      lines: lines,
+      lineIndex: 0,
+      opts: cfg,
+      resolvedText: '',
+      origW: 3.45,
+      origH: 1.24,
+      wasVisible: false,
+      visTimer: 0
+    };
+    const resolved = resolveBubblePhrase(meta);
+    meta.resolvedText = resolved;
+
     const c = renderSpeechBubbleCanvas(name, resolved);
     const tex = new THREE.CanvasTexture(c);
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
@@ -1072,14 +1126,9 @@ window.LailaSalma = window.LailaSalma || {};
     const worldHeight = 1.24 * (c.height / 180);
     sprite.scale.set(3.45, worldHeight, 1);
     sprite.visible = false;
-    sprite.userData.speechMeta = {
-      name: name,
-      rawText: text,
-      opts: cfg,
-      resolvedText: resolved,
-      origW: 3.45,
-      origH: worldHeight
-    };
+    meta.origH = worldHeight;
+    sprite.userData.speechMeta = meta;
+
     if (!cfg.skipAutoLeader) {
       LS.runtime = LS.runtime || {};
       LS.runtime.dynamicBubbles = LS.runtime.dynamicBubbles || [];
@@ -1088,24 +1137,52 @@ window.LailaSalma = window.LailaSalma || {};
     return sprite;
   };
 
+  LS.cycleSpeechBubble = function (sp) {
+    if (!sp || !sp.userData || !sp.userData.speechMeta) return;
+    const m = sp.userData.speechMeta;
+    if (!m.lines || m.lines.length < 2) return;
+    m.lineIndex = (m.lineIndex + 1) % m.lines.length;
+    redrawBubbleSprite(sp, resolveBubblePhrase(m));
+  };
+
+  LS.updateDynamicBubbleCycling = function (dt) {
+    if (!LS.runtime || !LS.runtime.dynamicBubbles) return;
+    const list = LS.runtime.dynamicBubbles;
+    for (let i = 0; i < list.length; i++) {
+      const sp = list[i];
+      if (!sp || !sp.parent || !sp.userData || !sp.userData.speechMeta) continue;
+      const m = sp.userData.speechMeta;
+      if (!m.lines || m.lines.length < 2) continue;
+      if (sp.visible) {
+        if (!m.wasVisible) {
+          m.wasVisible = true;
+          m.visTimer = 0;
+          if (m.hasShownOnce) {
+            LS.cycleSpeechBubble(sp);
+          } else {
+            m.hasShownOnce = true;
+          }
+        } else {
+          m.visTimer += dt;
+          if (m.visTimer >= 5.2) {
+            m.visTimer = 0;
+            LS.cycleSpeechBubble(sp);
+          }
+        }
+      } else {
+        m.wasVisible = false;
+        m.visTimer = 0;
+      }
+    }
+  };
+
   LS.refreshSpeechBubblesForLeader = function () {
     if (!LS.runtime || !LS.runtime.dynamicBubbles || !LS.personalizeLeaderLine) return;
     LS.runtime.dynamicBubbles = LS.runtime.dynamicBubbles.filter(sp => sp && sp.parent);
     LS.runtime.dynamicBubbles.forEach(sp => {
       const m = sp.userData && sp.userData.speechMeta;
       if (!m) return;
-      const nextText = LS.personalizeLeaderLine(m.rawText, m.opts);
-      if (nextText === m.resolvedText) return;
-      const prevMult = sp.scale.x / (m.origW || 3.45);
-      const c = renderSpeechBubbleCanvas(m.name, nextText);
-      const oldMap = sp.material && sp.material.map;
-      if (oldMap && oldMap.dispose) oldMap.dispose();
-      sp.material.map = new THREE.CanvasTexture(c);
-      sp.material.needsUpdate = true;
-      const nextH = 1.24 * (c.height / 180);
-      sp.scale.set(3.45 * prevMult, nextH * prevMult, 1);
-      m.origH = nextH;
-      m.resolvedText = nextText;
+      redrawBubbleSprite(sp, resolveBubblePhrase(m));
     });
   };
 

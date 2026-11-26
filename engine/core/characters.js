@@ -1812,6 +1812,8 @@ window.LailaSalma = window.LailaSalma || {};
         if (LS.applyArticulatedPose) LS.applyArticulatedPose(model, 0, 'chair_sit', 0);
       }
       const bubble = LS.createSpeechBubbleSprite(cfg.name, cfg.line, {
+        lines: cfg.lines,
+        fixedLine: cfg.fixedLine,
         lineLaila: cfg.lineLaila,
         lineSalma: cfg.lineSalma,
         skipAutoLeader: cfg.skipAutoLeader
@@ -2205,6 +2207,8 @@ window.LailaSalma = window.LailaSalma || {};
         }
       }
     });
+
+    if (LS.updateDynamicBubbleCycling) LS.updateDynamicBubbleCycling(dt);
 
     if (LS.chars.mochiHeart) {
       if (LS.runtime.mochiHeartTimer > 0) {

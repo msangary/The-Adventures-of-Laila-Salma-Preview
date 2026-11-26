@@ -506,6 +506,11 @@ window.LailaSalma = window.LailaSalma || {};
     return Boolean(LS.RELEASE_CONFIG && LS.RELEASE_CONFIG.isPreview);
   };
 
+  // In the live public build, never reveal or spoil worlds that have not been released yet!
+  LS.shouldShowUpcomingWorlds = function () {
+    return LS.isPreviewBuild();
+  };
+
   LS.isWorldEnabled = function (worldId) {
     const w = LS.WORLDS[worldId];
     if (!w) return false;

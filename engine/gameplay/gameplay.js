@@ -424,12 +424,14 @@ window.LailaSalma = window.LailaSalma || {};
         worldsBox.appendChild(card);
       });
 
-      const airportNote = document.createElement('div');
-      airportNote.className = 'passport-world-card upcoming-world';
-      airportNote.innerHTML =
-        '<div class="pw-head"><div><strong>🌍 Magic Globe — Upcoming Worlds</strong></div><span class="pw-soon">' + LS.UPCOMING_WORLDS.length + ' Coming Soon</span></div>' +
-        '<p class="ramen-desc">Next destinations: ' + LS.UPCOMING_WORLDS.map(u => u.emoji + ' ' + u.title).join(' • ') + '</p>';
-      worldsBox.appendChild(airportNote);
+      if (LS.shouldShowUpcomingWorlds && LS.shouldShowUpcomingWorlds()) {
+        const airportNote = document.createElement('div');
+        airportNote.className = 'passport-world-card upcoming-world';
+        airportNote.innerHTML =
+          '<div class="pw-head"><div><strong>🌍 Magic Globe — Upcoming Worlds</strong></div><span class="pw-soon">' + LS.UPCOMING_WORLDS.length + ' Coming Soon</span></div>' +
+          '<p class="ramen-desc">Next destinations: ' + LS.UPCOMING_WORLDS.map(u => u.emoji + ' ' + u.title).join(' • ') + '</p>';
+        worldsBox.appendChild(airportNote);
+      }
     }
 
     if (stampsBox) {
@@ -458,6 +460,7 @@ window.LailaSalma = window.LailaSalma || {};
     LS.runtime.modalOpen = true;
     const curW = LS.state.currentWorld;
     const leader = LS.getLeaderName ? LS.getLeaderName() : 'Laila';
+    const showUpcoming = Boolean(LS.shouldShowUpcomingWorlds && LS.shouldShowUpcomingWorlds());
     if (curW === 'tokyo' && LS.isWorldEnabled && LS.isWorldEnabled('tokyo')) LS.unlockStamp('tokyo_airport');
 
     const titleEl = document.getElementById('airport-modal-title');
@@ -480,10 +483,10 @@ window.LailaSalma = window.LailaSalma || {};
       grid.appendChild(liveHdr);
 
       const allPresentDayFlights = [
-        { id: 'safari', emoji: '🦁', title: 'African Safari & Wildlife Zoo (Serengeti)', gate: 'Gate A1 • Wave 1', desc: 'Ride a zebra-striped Safari Jeep, feed tall giraffes & elephants, ride the Hot Air Balloon & find 5 playful lion cubs!' },
-        { id: 'marrakech', emoji: '🏮', title: 'Marrakech Lantern Bazaar (Morocco)', gate: 'Gate A2 • Wave 1', desc: 'Craft glowing stained-glass lanterns, sip high-poured Riad mint tea, decorate your rooftop suite & meet Fennec Foxes!' },
+        { id: 'safari', emoji: '🦁', title: 'African Safari & Wildlife Zoo (Serengeti)', gate: 'Gate A1 • Open', desc: 'Ride a zebra-striped Safari Jeep, feed tall giraffes & elephants, ride the Hot Air Balloon & find 5 playful lion cubs!' },
+        { id: 'marrakech', emoji: '🏮', title: 'Marrakech Lantern Bazaar (Morocco)', gate: 'Gate A2 • Open', desc: 'Craft glowing stained-glass lanterns, sip high-poured Riad mint tea, decorate your rooftop suite & meet Fennec Foxes!' },
         { id: 'home_neighborhood', emoji: '🏡', title: 'Home Community (Egypt)', gate: 'Gate H0 • Home', desc: 'Fly straight back home to your Apartment, Gedo Mahmoud & Nana Omaima\'s House, and the Gray Nissan Qashqai!' },
-        { id: 'tokyo', emoji: '🇯🇵', title: 'Japan (Tokyo & Kyoto)', gate: 'Gate J1 • Wave 2A', desc: 'Fly to Sakura-cho Tokyo and ride the Shinkansen Bullet Train straight to Kyoto\'s Shrine & Bamboo Grove!' }
+        { id: 'tokyo', emoji: '🇯🇵', title: 'Japan (Tokyo & Kyoto)', gate: 'Gate J1 • Open', desc: 'Fly to Sakura-cho Tokyo and ride the Shinkansen Bullet Train straight to Kyoto\'s Shrine & Bamboo Grove!' }
       ];
 
       const isHomeArea = curW === 'home_neighborhood' || curW === 'home_apartment' || curW.indexOf('dest_') === 0;
@@ -511,35 +514,37 @@ window.LailaSalma = window.LailaSalma || {};
         grid.appendChild(row);
       });
 
-      // Scheduled Present-Day Future Flights (exclude historical/non-present-day realms like Ancient Greece!)
-      const nonPresentIds = { greece: true, egypt: true, outer_space: true, dinosaurs: true };
-      const upcomingPresent = (LS.UPCOMING_WORLDS || []).filter(uw => !uw.bonus && !nonPresentIds[uw.id]);
-      if (upcomingPresent.length > 0) {
-        const upHdr = document.createElement('div');
-        upHdr.className = 'airport-section-hdr';
-        upHdr.textContent = '🌍 Upcoming Present-Day Flight Routes';
-        grid.appendChild(upHdr);
-        upcomingPresent.forEach(uw => {
-          const row = document.createElement('div');
-          row.className = 'ramen-item';
-          row.innerHTML =
-            '<div>' +
-              '<strong>' + uw.emoji + ' ' + uw.title + '</strong> ' +
-              '<span class="pw-soon">' + uw.gate + '</span>' +
-              '<div class="ramen-desc">' + uw.description + '</div>' +
-            '</div>' +
-            '<span class="pw-soon">Coming Soon ✈️</span>';
-          grid.appendChild(row);
-        });
+      // Only show upcoming unbuilt routes in Preview — never spoil future worlds in the Live version!
+      if (showUpcoming) {
+        const nonPresentIds = { greece: true, egypt: true, outer_space: true, dinosaurs: true };
+        const upcomingPresent = (LS.UPCOMING_WORLDS || []).filter(uw => !uw.bonus && !nonPresentIds[uw.id]);
+        if (upcomingPresent.length > 0) {
+          const upHdr = document.createElement('div');
+          upHdr.className = 'airport-section-hdr';
+          upHdr.textContent = '🌍 Upcoming Present-Day Flight Routes (Preview Roadmap)';
+          grid.appendChild(upHdr);
+          upcomingPresent.forEach(uw => {
+            const row = document.createElement('div');
+            row.className = 'ramen-item';
+            row.innerHTML =
+              '<div>' +
+                '<strong>' + uw.emoji + ' ' + uw.title + '</strong> ' +
+                '<span class="pw-soon">' + uw.gate + '</span>' +
+                '<div class="ramen-desc">' + uw.description + '</div>' +
+              '</div>' +
+              '<span class="pw-soon">Coming Soon ✈️</span>';
+            grid.appendChild(row);
+          });
+        }
       }
 
-      // Friendly pointer to the Enchanted Bookshelf for time-travel & outer space worlds!
+      // Friendly pointer to the Enchanted Bookshelf (never spoils unbuilt worlds in Live!)
       const tip = document.createElement('div');
       tip.className = 'ramen-item';
       tip.style.background = 'rgba(255, 244, 214, 0.72)';
       tip.innerHTML =
-        '<div><strong>📚 Looking for Ancient Egypt or Outer Space?</strong>' +
-        '<div class="ramen-desc">Airplanes only fly to present-day places! Open the <strong>Enchanted Bookshelf</strong> inside Laila\'s Apartment to travel back in time or blast off into space! ✨</div></div>';
+        '<div><strong>📚 Looking for Ancient Egypt &amp; Timeless Realms?</strong>' +
+        '<div class="ramen-desc">Airplanes only fly to present-day places! Open the <strong>Enchanted Bookshelf</strong> inside Laila\'s Apartment to step into storybooks you can\'t reach by plane! ✨</div></div>';
       grid.appendChild(tip);
     }
     document.getElementById('airport-modal').classList.remove('hidden');
@@ -549,9 +554,12 @@ window.LailaSalma = window.LailaSalma || {};
   LS.openBookshelfModal = function () {
     LS.runtime.modalOpen = true;
     const leader = LS.getLeaderName ? LS.getLeaderName() : 'Laila';
+    const showUpcoming = Boolean(LS.shouldShowUpcomingWorlds && LS.shouldShowUpcomingWorlds());
     const greet = document.getElementById('bookshelf-greeting');
     if (greet) {
-      greet.textContent = 'Hi ' + leader + '! Open a glowing storybook to transport to places that don\'t exist today or can\'t be reached by airplane — like Ancient Egypt or Outer Space! 📚✨';
+      greet.textContent = showUpcoming
+        ? ('Hi ' + leader + '! Open a glowing storybook to transport to places that don\'t exist today or can\'t be reached by airplane — like Ancient Egypt or Outer Space! 📚✨')
+        : ('Hi ' + leader + '! Open a glowing storybook to transport to timeless places you can\'t reach by airplane! 📚✨');
     }
     const list = document.getElementById('bookshelf-worlds-list');
     if (list) {
@@ -567,7 +575,7 @@ window.LailaSalma = window.LailaSalma || {};
         egyptRow.className = 'ramen-item featured';
         const info = document.createElement('div');
         info.innerHTML =
-          '<strong>🐪 The Golden Scrolls of Ancient Egypt</strong> <span class="pw-bonus">Wave 1 • Time-Travel</span>' +
+          '<strong>🐪 The Golden Scrolls of Ancient Egypt</strong> <span class="pw-bonus">Time-Travel</span>' +
           '<div class="ramen-desc">Step back 4,500 years to the Great Pyramids, Golden Treasure Chamber, smiling Sphinx, Oasis Camels & white-sailed Nile Feluccas!</div>';
         const btn = document.createElement('button');
         btn.className = 'btn-primary';
@@ -578,44 +586,52 @@ window.LailaSalma = window.LailaSalma || {};
         list.appendChild(egyptRow);
       }
 
-      const soonHdr = document.createElement('div');
-      soonHdr.className = 'airport-section-hdr';
-      soonHdr.textContent = '🌟 Enchanted Volumes Coming Soon';
-      list.appendChild(soonHdr);
+      if (showUpcoming) {
+        const soonHdr = document.createElement('div');
+        soonHdr.className = 'airport-section-hdr';
+        soonHdr.textContent = '🌟 Enchanted Volumes Coming Soon (Preview Roadmap)';
+        list.appendChild(soonHdr);
 
-      const futureBooks = [
-        {
-          emoji: '🚀',
-          title: 'Starlight Atlas: Outer Space & Moon Base',
-          tag: 'Space Adventure',
-          desc: 'Blast off past Saturn\'s sparkling rings, bounce in low gravity across the Moon Garden, and peek through a giant cosmic telescope!'
-        },
-        {
-          emoji: '🏺',
-          title: 'Myths of Ancient Greece',
-          tag: 'Wave 3A • Time-Travel',
-          desc: 'Step back in time to Acropolis Hill, play joyful mini Olympic games, paint terracotta pottery & connect glowing constellations!'
-        },
-        {
-          emoji: '🦕',
-          title: 'Lost Valley of Gentle Dinosaurs',
-          tag: 'Prehistoric Realm',
-          desc: 'Journey 70 million years into the past to feed friendly leaf-eating Brachiosaurs and discover glowing golden amber!'
-        }
-      ];
+        const futureBooks = [
+          {
+            emoji: '🚀',
+            title: 'Starlight Atlas: Outer Space & Moon Base',
+            tag: 'Space Adventure',
+            desc: 'Blast off past Saturn\'s sparkling rings, bounce in low gravity across the Moon Garden, and peek through a giant cosmic telescope!'
+          },
+          {
+            emoji: '🏺',
+            title: 'Myths of Ancient Greece',
+            tag: 'Wave 3A • Time-Travel',
+            desc: 'Step back in time to Acropolis Hill, play joyful mini Olympic games, paint terracotta pottery & connect glowing constellations!'
+          },
+          {
+            emoji: '🦕',
+            title: 'Lost Valley of Gentle Dinosaurs',
+            tag: 'Prehistoric Realm',
+            desc: 'Journey 70 million years into the past to feed friendly leaf-eating Brachiosaurs and discover glowing golden amber!'
+          }
+        ];
 
-      futureBooks.forEach(bk => {
-        const row = document.createElement('div');
-        row.className = 'ramen-item';
-        row.innerHTML =
-          '<div>' +
-            '<strong>' + bk.emoji + ' ' + bk.title + '</strong> ' +
-            '<span class="pw-soon">' + bk.tag + '</span>' +
-            '<div class="ramen-desc">' + bk.desc + '</div>' +
-          '</div>' +
-          '<span class="pw-soon">Coming Soon 📚</span>';
-        list.appendChild(row);
-      });
+        futureBooks.forEach(bk => {
+          const row = document.createElement('div');
+          row.className = 'ramen-item';
+          row.innerHTML =
+            '<div>' +
+              '<strong>' + bk.emoji + ' ' + bk.title + '</strong> ' +
+              '<span class="pw-soon">' + bk.tag + '</span>' +
+              '<div class="ramen-desc">' + bk.desc + '</div>' +
+            '</div>' +
+            '<span class="pw-soon">Coming Soon 📚</span>';
+          list.appendChild(row);
+        });
+      } else {
+        const myst = document.createElement('div');
+        myst.className = 'ramen-desc';
+        myst.style.marginTop = '10px';
+        myst.innerHTML = '✨ <em>More mysterious storybooks will magically appear on this shelf as new adventures arrive!</em>';
+        list.appendChild(myst);
+      }
     }
     const m = document.getElementById('bookshelf-modal');
     if (m) m.classList.remove('hidden');
@@ -2307,12 +2323,14 @@ window.LailaSalma = window.LailaSalma || {};
         row.appendChild(btn);
         list.appendChild(row);
       });
-      // Preview next phase worlds!
-      const up = document.createElement('div');
-      up.className = 'ramen-desc';
-      up.style.marginTop = '10px';
-      up.innerHTML = '<strong>✨ Coming Soon on the Magic Globe:</strong> ' + LS.UPCOMING_WORLDS.slice(0, 4).map(u => u.emoji + ' ' + u.title + ' (' + u.gate + ')').join(' • ');
-      list.appendChild(up);
+      // Preview next phase worlds ONLY in Preview build (never spoil unbuilt worlds in Live!)
+      if (LS.shouldShowUpcomingWorlds && LS.shouldShowUpcomingWorlds()) {
+        const up = document.createElement('div');
+        up.className = 'ramen-desc';
+        up.style.marginTop = '10px';
+        up.innerHTML = '<strong>✨ Coming Soon on the Magic Globe:</strong> ' + LS.UPCOMING_WORLDS.slice(0, 4).map(u => u.emoji + ' ' + u.title + ' (' + u.gate + ')').join(' • ');
+        list.appendChild(up);
+      }
     }
     const m = document.getElementById('globe-modal');
     if (m) m.classList.remove('hidden');

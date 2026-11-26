@@ -467,14 +467,45 @@ window.LailaSalma = window.LailaSalma || {};
     addIndoorPlant(worldGroup, -7.8, 5.6, 0x2a9d8f, false);
     addIndoorPlant(worldGroup, 7.8, 5.6, 0x2a9d8f, false);
 
-    LS.spawnWorldNPCs(worldGroup, [{
-      name: 'Chef Karim (Eatery)',
-      line: 'Ahlan Laila & Salma! Fresh green Molokhia with rice & chicken, or creamy pasta today? 🍲🍝',
-      pos: new THREE.Vector3(0, 0, -4.4),
-      baseRot: 0,
-      waveOnNear: true,
-      char: { scale: 0.96, skinColor: 0xd9a27e, hairColor: 0x1f1916, topColor: 0xffffff, bottomColor: 0x2b2d42, pants: true, faceOpts: { mustache: true } }
-    }]);
+    LS.spawnWorldNPCs(worldGroup, [
+      {
+        name: 'Chef Karim (Eatery)',
+        line: 'Ahlan {leader}! Fresh green Molokhia with rice & chicken, or creamy pasta today? 🍲🍝',
+        lines: [
+          'Ahlan {leader}! Fresh green Molokhia with rice & chicken, or creamy pasta today? 🍲🍝',
+          'Our roasted chicken and fluffy rice just came out piping hot, {leader}! 🍗✨',
+          'Always so happy to cook for you and {companion}, {leader}! 💛'
+        ],
+        pos: new THREE.Vector3(0, 0, -4.4),
+        baseRot: 0,
+        waveOnNear: true,
+        char: { scale: 0.96, skinColor: 0xd9a27e, hairColor: 0x1f1916, topColor: 0xffffff, bottomColor: 0x2b2d42, pants: true, faceOpts: { mustache: true } }
+      },
+      {
+        name: 'Nour (Eatery Guest) 🍲',
+        line: 'Hi {leader}! You HAVE to try the emerald-green Molokhia here — it\'s delicious! 🍲✨',
+        lines: [
+          'Hi {leader}! You HAVE to try the emerald-green Molokhia here — it\'s delicious! 🍲✨',
+          'This warm dining hall smells amazing today, {leader}! 🍝💛'
+        ],
+        pos: new THREE.Vector3(-5.8, 0, 2.2),
+        baseRot: 0.75,
+        waveOnNear: true,
+        char: { scale: 0.91, skinColor: 0xe4b292, hairColor: 0x2b1d17, topColor: 0xe07a5f, bottomColor: 0x334155, longHair: true }
+      },
+      {
+        name: 'Hassan (Server) 🍽️',
+        line: 'Right this way to your cozy family table, {leader}! 🍽️☀️',
+        lines: [
+          'Right this way to your cozy family table, {leader}! 🍽️☀️',
+          'Eatery pasta gives awesome running energy for your next adventure, {leader}! ⚡'
+        ],
+        pos: new THREE.Vector3(5.6, 0, -1.8),
+        baseRot: -0.75,
+        patrol: { axis: 'z', center: -1.8, range: 2.0, speed: 0.85 },
+        char: { scale: 0.95, skinColor: 0xd29c74, hairColor: 0x1e1815, topColor: 0x2a9d8f, bottomColor: 0x1e293b, pants: true }
+      }
+    ]);
 
     W.zones.push({ id: 'eatery_order', label: 'Order at Eatery (Molokhia, Rice & Chicken or Pasta) 🍲🍝', pos: new THREE.Vector3(0, 0, 1.1), radius: 2.8 });
     W.zones.push({ id: 'home_qashqai', label: 'Hop in Gray Nissan Qashqai (Drive Home or Elsewhere) 🚙', pos: new THREE.Vector3(0, 0, 5.7), radius: 2.3 });
@@ -652,14 +683,45 @@ window.LailaSalma = window.LailaSalma || {};
       });
     });
 
-    LS.spawnWorldNPCs(worldGroup, [{
-      name: 'Chef Mei (Yiwan)',
-      line: 'Welcome to Yiwan, Laila & Salma! Dumplings, Sweet & Sour Chicken, Jasmine Rice, or a Combo Feast? 🥟🍚',
-      pos: new THREE.Vector3(0, 0, -4.4),
-      baseRot: 0,
-      waveOnNear: true,
-      char: { scale: 0.92, skinColor: 0xf4d2bc, hairColor: 0x1e1817, topColor: 0x9e2a2b, bottomColor: 0x22262e, hairBun: true }
-    }]);
+    LS.spawnWorldNPCs(worldGroup, [
+      {
+        name: 'Chef Mei (Yiwan)',
+        line: 'Welcome to Yiwan, {leader}! Dumplings, Sweet & Sour Chicken, Jasmine Rice, or a Combo Feast? 🥟🍚',
+        lines: [
+          'Welcome to Yiwan, {leader}! Dumplings, Sweet & Sour Chicken, Jasmine Rice, or a Combo Feast? 🥟🍚',
+          'Our bamboo steamers are bubbling with fresh handmade dumplings, {leader}! 🥟✨',
+          'Mix and match your own red lacquer combination tray, {leader}! 🍱💛'
+        ],
+        pos: new THREE.Vector3(0, 0, -4.4),
+        baseRot: 0,
+        waveOnNear: true,
+        char: { scale: 0.92, skinColor: 0xf4d2bc, hairColor: 0x1e1817, topColor: 0x9e2a2b, bottomColor: 0x22262e, hairBun: true }
+      },
+      {
+        name: 'Sora (Yiwan Guest) 🥟',
+        line: 'Hi {leader}! The Sweet & Sour Chicken with Jasmine Rice is my all-time favorite! 🍗🍍',
+        lines: [
+          'Hi {leader}! The Sweet & Sour Chicken with Jasmine Rice is my all-time favorite! 🍗🍍',
+          'Look at the warm red lanterns gently swaying overhead, {leader}! 🏮✨'
+        ],
+        pos: new THREE.Vector3(-5.8, 0, 2.2),
+        baseRot: 0.72,
+        waveOnNear: true,
+        char: { scale: 0.90, skinColor: 0xf0cbb2, hairColor: 0x1c1716, topColor: 0xf4a261, bottomColor: 0x1e293b, longHair: true }
+      },
+      {
+        name: 'Ken (Dumpling Helper) 🍱',
+        line: 'Fresh jasmine rice coming right out for you, {leader}! 🍚✨',
+        lines: [
+          'Fresh jasmine rice coming right out for you, {leader}! 🍚✨',
+          'Try ordering the 3-item Combination Feast to share with {companion}, {leader}! 🥟'
+        ],
+        pos: new THREE.Vector3(5.6, 0, -1.6),
+        baseRot: -0.7,
+        patrol: { axis: 'z', center: -1.6, range: 2.0, speed: 0.85 },
+        char: { scale: 0.94, skinColor: 0xedd0ba, hairColor: 0x1e1817, topColor: 0xd97706, bottomColor: 0x1e293b, pants: true }
+      }
+    ]);
 
     W.zones.push({ id: 'yiwan_order', label: 'Order at Yiwan (Dumplings, Sweet & Sour, Rice or Combo!) 🥟🍗', pos: new THREE.Vector3(0, 0, 1.2), radius: 2.8 });
     W.zones.push({ id: 'home_qashqai', label: 'Hop in Gray Nissan Qashqai (Drive Home or Elsewhere) 🚙', pos: new THREE.Vector3(0, 0, 5.7), radius: 2.3 });
@@ -851,14 +913,45 @@ window.LailaSalma = window.LailaSalma || {};
     const exitMat = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.04, 1.15), LS.makeToonMat(0x4b5563));
     exitMat.position.set(0, 0.02, 7.0); worldGroup.add(exitMat);
 
-    LS.spawnWorldNPCs(worldGroup, [{
-      name: 'Leo (Cosmo Host)',
-      line: 'Welcome to Cosmo City, Laila & Salma! Try all 3 glowing arcade machines to win coins & prizes! 🚀🎮',
-      pos: new THREE.Vector3(6.6, 0, 0.6),
-      baseRot: -Math.PI / 2,
-      waveOnNear: true,
-      char: { scale: 0.92, skinColor: 0xe6b595, hairColor: 0x2c1d16, topColor: 0x6d28d9, bottomColor: 0x1e293b, pants: true, hatType: 'cap', hatColor: 0x38bdf8 }
-    }]);
+    LS.spawnWorldNPCs(worldGroup, [
+      {
+        name: 'Leo (Cosmo Host)',
+        line: 'Welcome to Cosmo City, {leader}! Try all 3 glowing arcade machines to win coins & prizes! 🚀🎮',
+        lines: [
+          'Welcome to Cosmo City, {leader}! Try all 3 glowing arcade machines to win coins & prizes! 🚀🎮',
+          'The Space Meteor Catcher and Claw Grabber are charged up and ready, {leader}! 🛸🧸',
+          'Win big tokens for your outfits and travel adventures, {leader}! ⭐✨'
+        ],
+        pos: new THREE.Vector3(6.6, 0, 0.6),
+        baseRot: -Math.PI / 2,
+        waveOnNear: true,
+        char: { scale: 0.92, skinColor: 0xe6b595, hairColor: 0x2c1d16, topColor: 0x6d28d9, bottomColor: 0x1e293b, pants: true, hatType: 'cap', hatColor: 0x38bdf8 }
+      },
+      {
+        name: 'Talia (Arcade Champ) 🕹️',
+        line: 'Whoa, {leader}! I just grabbed a giant plushie from the Cosmo Claw machine! 🧸✨',
+        lines: [
+          'Whoa, {leader}! I just grabbed a giant plushie from the Cosmo Claw machine! 🧸✨',
+          'See if you can beat my high score on Cosmo Color Memory, {leader}! 🎨🌟'
+        ],
+        pos: new THREE.Vector3(-6.4, 0, -0.5),
+        baseRot: 0.65,
+        patrol: { axis: 'z', center: -0.5, range: 2.4, speed: 1.05 },
+        char: { scale: 0.78, skinColor: 0xeab99a, hairColor: 0x3a2418, topColor: 0xec4899, bottomColor: 0x3b82f6, twinTails: true }
+      },
+      {
+        name: 'Zein (Meteor Pilot) 🛸',
+        line: 'Hey {leader}! Catch the glowing golden meteors for super bonus points! 🌠🚀',
+        lines: [
+          'Hey {leader}! Catch the glowing golden meteors for super bonus points! 🌠🚀',
+          'Cosmo City feels like our own starship game deck, {leader}! ✨'
+        ],
+        pos: new THREE.Vector3(3.2, 0, 3.2),
+        baseRot: -0.6,
+        waveOnNear: true,
+        char: { scale: 0.76, skinColor: 0xd8a382, hairColor: 0x1e1612, topColor: 0x0ea5e9, bottomColor: 0x1e293b, pants: true }
+      }
+    ]);
 
     W.zones.push({ id: 'cosmo_meteors', label: 'Play Space Meteor Catcher 🛸⭐', pos: new THREE.Vector3(-5.4, 0, -4.0), radius: 2.3 });
     W.zones.push({ id: 'cosmo_memory', label: 'Play Cosmo Color Memory 🎨✨', pos: new THREE.Vector3(0, 0, -4.0), radius: 2.3 });
@@ -1971,11 +2064,16 @@ window.LailaSalma = window.LailaSalma || {};
       addCol(-5.6, 10.2, 2.2, 1.4);
     }
 
-    // Friendly NGSC Coach & Lifeguard NPCs!
+    // Friendly NGSC Coaches & Club Members (6 Lively NPCs with Alternating Leader-Aware Phrases!)
     LS.spawnWorldNPCs(worldGroup, [
       {
         name: 'Coach Karim (Squash) 🎾',
-        line: "Ready to hit the court, Laila? Let's practice your winning squash rally! 🎾🏆",
+        line: "Ready to hit the glass court, {leader}? Let's practice your winning squash rally! 🎾🏆",
+        lines: [
+          "Ready to hit the glass court, {leader}? Let's practice your winning squash rally! 🎾🏆",
+          'Great footwork and super crisp forehand swings today, {leader}! 💪✨',
+          'Step into the Squash Court zone to rally with {companion}, {leader}! 🎾'
+        ],
         pos: new THREE.Vector3(-4.2, 0, 4.2),
         baseRot: 0.4,
         waveOnNear: true,
@@ -1983,11 +2081,68 @@ window.LailaSalma = window.LailaSalma || {};
       },
       {
         name: 'Coach Dina (Swim) 🏊‍♀️',
-        line: 'The pool water is sparkling warm today, Laila & Salma — jump in and swim together! 🏊‍♀️💦',
+        line: 'The pool water is sparkling warm today, {leader} — jump in and swim! 🏊‍♀️💦',
+        lines: [
+          'The pool water is sparkling warm today, {leader} — jump in and swim! 🏊‍♀️💦',
+          'Kick smooth and glide like a dolphin across the turquoise lanes, {leader}! 🐬✨',
+          'You and {companion} make an unstoppable swim team, {leader}! 🏅'
+        ],
         pos: new THREE.Vector3(3.6, 0, 4.4),
         baseRot: -0.4,
         waveOnNear: true,
         char: { scale: 0.92, skinColor: 0xdca886, hairColor: 0x261a14, topColor: 0xf97316, bottomColor: 0x0f172a, longHair: true }
+      },
+      {
+        name: 'Farida (Squash Player) 🎾',
+        line: 'Hi {leader}! Your squash drop-shots look awesome on that glass court! 🎾✨',
+        lines: [
+          'Hi {leader}! Your squash drop-shots look awesome on that glass court! 🎾✨',
+          'NGSC is the best sports club in town for squash and swimming, {leader}! 🏆',
+          'Catch you for a friendly match after your swim, {leader}! 😄'
+        ],
+        pos: new THREE.Vector3(-10.5, 0, 5.2),
+        baseRot: 0.55,
+        patrol: { axis: 'x', center: -10.5, range: 2.8, speed: 1.0 },
+        char: { scale: 0.84, skinColor: 0xe4b292, hairColor: 0x2e1f18, topColor: 0xec4899, bottomColor: 0x1e3a5f, pigtails: true }
+      },
+      {
+        name: 'Adam (Junior Swimmer) 🥽',
+        line: 'Hey {leader}! I just swam four full laps in the pool! 🏊‍♂️💧',
+        lines: [
+          'Hey {leader}! I just swam four full laps in the pool! 🏊‍♂️💧',
+          'The turquoise water feels super refreshing under the striped umbrellas, {leader}! ⛱️',
+          'Race you to the pool wall, {leader}! 💦✨'
+        ],
+        pos: new THREE.Vector3(10.8, 0, 4.6),
+        baseRot: -0.6,
+        patrol: { axis: 'z', center: 4.6, range: 2.6, speed: 1.05 },
+        char: { scale: 0.76, skinColor: 0xd8a382, hairColor: 0x1e1612, topColor: 0x22c55e, bottomColor: 0x0284c7, pants: true }
+      },
+      {
+        name: 'Coach Sherif (Lifeguard) 🛟',
+        line: 'All clear and sunny at the NGSC pool, {leader}! Have a safe, splashy swim! 🛟☀️',
+        lines: [
+          'All clear and sunny at the NGSC pool, {leader}! Have a safe, splashy swim! 🛟☀️',
+          'Remember to stretch before squash and drink plenty of water, {leader}! 💧',
+          'You\'re both champion athletes today, {leader}! 🏅✨'
+        ],
+        pos: new THREE.Vector3(12.2, 0, -4.5),
+        baseRot: -Math.PI * 0.55,
+        waveOnNear: true,
+        char: { scale: 0.98, skinColor: 0xc99166, hairColor: 0x1c1512, topColor: 0xef4444, bottomColor: 0x1e293b, pants: true, hatType: 'cap', hatColor: 0xef4444 }
+      },
+      {
+        name: 'Auntie Dalia (Club Lounge) 🥤',
+        line: 'Hello {leader}! Watching you play squash and swim from the shady pergola! ⛱️💛',
+        lines: [
+          'Hello {leader}! Watching you play squash and swim from the shady pergola! ⛱️💛',
+          'The gray Qashqai is parked right by the club gate whenever you\'re ready to head home, {leader}! 🚙',
+          'What a cheerful afternoon at NGSC, {leader}! 🌴☀️'
+        ],
+        pos: new THREE.Vector3(-0.2, 0, 7.6),
+        baseRot: Math.PI,
+        waveOnNear: true,
+        char: { scale: 0.92, skinColor: 0xe6b898, hairColor: 0x3b2418, topColor: 0xa855f7, bottomColor: 0x334155, longHair: true, hatType: 'sunhat', hatColor: 0xfef08a }
       }
     ]);
 

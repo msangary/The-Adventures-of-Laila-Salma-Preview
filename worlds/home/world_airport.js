@@ -19,12 +19,23 @@ window.LailaSalma = window.LailaSalma || {};
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(24, 60); ctx.lineTo(488, 60); ctx.stroke();
 
+    const showUpcoming = Boolean(LS.shouldShowUpcomingWorlds && LS.shouldShowUpcomingWorlds());
     const rows = [
       { gate: 'A1', dest: 'AFRICAN SAFARI (SERENGETI)', status: 'BOARDING', col: '#6ee7b7' },
-      { gate: 'A2', dest: 'MARRAKECH (MOROCCO)', status: 'BOARDING', col: '#6ee7b7' },
-      { gate: 'B1', dest: 'TOKYO & KYOTO (JAPAN)', status: 'WAVE 2A', col: '#fde68a' },
-      { gate: 'B2', dest: 'CHINA • PARIS • LONDON', status: 'UPCOMING', col: '#93c5fd' }
+      { gate: 'A2', dest: 'MARRAKECH (MOROCCO)', status: 'BOARDING', col: '#6ee7b7' }
     ];
+    if (LS.isWorldEnabled && LS.isWorldEnabled('tokyo')) {
+      rows.push({ gate: 'J1', dest: 'TOKYO & KYOTO (JAPAN)', status: 'BOARDING', col: '#6ee7b7' });
+    } else if (showUpcoming) {
+      rows.push({ gate: 'B1', dest: 'TOKYO & KYOTO (JAPAN)', status: 'WAVE 2A', col: '#fde68a' });
+    } else {
+      rows.push({ gate: 'H0', dest: 'SUNNYSIDE HOME COMMUNITY', status: 'ARRIVALS', col: '#93c5fd' });
+    }
+    if (showUpcoming) {
+      rows.push({ gate: 'B2', dest: 'CHINA • PARIS • LONDON', status: 'UPCOMING', col: '#93c5fd' });
+    } else {
+      rows.push({ gate: 'G1', dest: 'CHECK IN AT GATE A1 DESK', status: 'OPEN NOW', col: '#fde68a' });
+    }
     ctx.font = 'bold 20px monospace';
     rows.forEach((r, i) => {
       const y = 98 + i * 38;
@@ -505,11 +516,16 @@ window.LailaSalma = window.LailaSalma || {};
       radius: 3.1
     });
 
-    // 8. Friendly Airport Crew NPCs who warmly address whoever is leading!
+    // 8. Friendly Airport Crew & Travelers (7 Lively NPCs with Alternating Leader-Aware Phrases!)
     LS.spawnWorldNPCs(worldGroup, [
       {
         name: 'Captain Omar 👨‍✈️',
-        line: 'Welcome aboard, {leader}! Our plane at Gate A1 is fueled and ready for any present-day destination! ✈️🌍',
+        line: 'Welcome aboard, {leader}! Our plane at Gate A1 is fueled and ready for takeoff! ✈️🌍',
+        lines: [
+          'Welcome aboard, {leader}! Our plane at Gate A1 is fueled and ready for takeoff! ✈️🌍',
+          'Clear blue skies on the radar today, {leader} — smooth flying ahead! ☀️✈️',
+          'Step right up to Gate A1 whenever you and {companion} want to board, {leader}! 🛫'
+        ],
         pos: new THREE.Vector3(-2.6, 0.08, -3.8),
         baseRot: 0.32,
         waveOnNear: true,
@@ -517,11 +533,81 @@ window.LailaSalma = window.LailaSalma || {};
       },
       {
         name: 'Attendant Hana ✈️',
-        line: 'Hi {leader}! Check the Departures Board at Gate A1 to fly to present-day countries — or visit the Bookshelf at home for time travel! ✈️📚',
+        line: 'Hi {leader}! Check the Departures Board at Gate A1 to fly to present-day countries! ✈️🌍',
+        lines: [
+          'Hi {leader}! Check the Departures Board at Gate A1 to fly to present-day countries! ✈️🌍',
+          'Need a magical trip you can\'t take by plane, {leader}? Try the Bookshelf in your Apartment! 📚✨',
+          'Your passport stamps look amazing, {leader} — bon voyage! 🛂💛'
+        ],
         pos: new THREE.Vector3(2.8, 0.08, -3.8),
         baseRot: -0.32,
         waveOnNear: true,
         char: { scale: 0.92, skinColor: 0xe4b292, hairColor: 0x261a14, topColor: 0x0284c7, bottomColor: 0x1e3a5f, longHair: true }
+      },
+      {
+        name: 'Ziad (Plane Spotter) 🛩️',
+        line: 'Whoa, {leader}! Look through the glass at that huge blue-and-gold airplane! ✈️✨',
+        lines: [
+          'Whoa, {leader}! Look through the glass at that huge blue-and-gold airplane! ✈️✨',
+          'Watch the flashing red and green lights on the wingtips, {leader}! 🌟',
+          'I want to fly a jumbo jet just like Captain Omar one day, {leader}! 👨‍✈️'
+        ],
+        pos: new THREE.Vector3(7.6, 0.08, -5.2),
+        baseRot: Math.PI,
+        waveOnNear: true,
+        char: { scale: 0.74, skinColor: 0xdeb08f, hairColor: 0x241914, topColor: 0xf59e0b, bottomColor: 0x1e3a5f, pants: true }
+      },
+      {
+        name: 'Nadia (Traveler Mom) 🧳',
+        line: 'Excited for your next adventure, {leader}? Airports are so much fun! ✈️💛',
+        lines: [
+          'Excited for your next adventure, {leader}? Airports are so much fun! ✈️💛',
+          'Ziad can\'t stop staring at the airliner and the spinning radar tower, {leader}! 📡',
+          'Safe travels to you and {companion}, {leader}! 🌍✨'
+        ],
+        pos: new THREE.Vector3(9.1, 0.08, -4.6),
+        baseRot: -Math.PI * 0.7,
+        waveOnNear: true,
+        char: { scale: 0.92, skinColor: 0xe4b292, hairColor: 0x2b1d17, topColor: 0xec4899, bottomColor: 0x334155, longHair: true }
+      },
+      {
+        name: 'Sami (Baggage Crew) 🧳',
+        line: 'Hi {leader}! All the colorful suitcases are gliding smoothly on the carousel! 🧳✨',
+        lines: [
+          'Hi {leader}! All the colorful suitcases are gliding smoothly on the carousel! 🧳✨',
+          'Don\'t worry, {leader} — your outfits and passport stamps always travel safely with you! 🎒',
+          'Every suitcase gets a first-class spin before takeoff, {leader}! 😄'
+        ],
+        pos: new THREE.Vector3(-6.4, 0.08, 1.2),
+        baseRot: Math.PI * 0.45,
+        waveOnNear: true,
+        char: { scale: 0.96, skinColor: 0xcf9b78, hairColor: 0x1f1916, topColor: 0xf97316, bottomColor: 0x1e293b, pants: true, hatType: 'cap', hatColor: 0xf97316 }
+      },
+      {
+        name: 'Rami (Skyview Lounge) ☕',
+        line: 'Welcome to the Skyview Travelers Lounge, {leader}! Have a cozy seat before boarding! ☕✨',
+        lines: [
+          'Welcome to the Skyview Travelers Lounge, {leader}! Have a cozy seat before boarding! ☕✨',
+          'Fresh warm croissants and apple juice for every young explorer, {leader}! 🥐🍎',
+          'You can see the Air Traffic Control tower spinning right from here, {leader}! 🗼'
+        ],
+        pos: new THREE.Vector3(11.4, 0.08, 3.6),
+        baseRot: -Math.PI * 0.4,
+        waveOnNear: true,
+        char: { scale: 0.94, skinColor: 0xdca886, hairColor: 0x221915, topColor: 0x0d9488, bottomColor: 0x1e293b, pants: true }
+      },
+      {
+        name: 'Layla (Jet-Setter) 🌍',
+        line: 'Hi {leader}! Are you flying to Marrakech or the African Safari today? 🦁🕌',
+        lines: [
+          'Hi {leader}! Are you flying to Marrakech or the African Safari today? 🦁🕌',
+          'I just flew back from Morocco — the mint tea and orange trees were dreamy, {leader}! 🍊🫖',
+          'Don\'t forget the gray Qashqai is parked right outside whenever you head home, {leader}! 🚙'
+        ],
+        pos: new THREE.Vector3(2.5, 0.08, 4.6),
+        baseRot: Math.PI * 0.5,
+        patrol: { axis: 'x', center: 2.5, range: 5.5, speed: 1.05 },
+        char: { scale: 0.91, skinColor: 0xe6b898, hairColor: 0x3b2418, topColor: 0xa855f7, bottomColor: 0x1e293b, longHair: true, hatType: 'sunhat', hatColor: 0xfde68a }
       }
     ]);
 
