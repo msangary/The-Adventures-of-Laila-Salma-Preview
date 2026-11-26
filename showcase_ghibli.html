@@ -69,6 +69,14 @@
       color: #ffffff; border-color: #1f7a70;
       box-shadow: 0 2px 8px rgba(42, 157, 143, 0.35);
     }
+    .pill-btn.leader-btn {
+      background: linear-gradient(135deg, #4f79c9, #35589e);
+      color: #ffffff; border-color: #35589e;
+    }
+    .pill-btn.leader-btn.is-salma {
+      background: linear-gradient(135deg, #e05b71, #c23e55);
+      border-color: #b8384e;
+    }
     .pill-btn.toggle-on {
       background: linear-gradient(135deg, #e07a5f, #c85a3d);
       color: #ffffff; border-color: #c85a3d;
@@ -82,11 +90,65 @@
     }
     #hint-strip {
       position: fixed; top: 52px; right: 14px;
-      background: rgba(42, 28, 18, 0.56); color: #fff8eb;
+      background: rgba(42, 28, 18, 0.60); color: #fff8eb;
       padding: 4px 11px; border-radius: 999px; font-size: 10.5px;
       pointer-events: none; z-index: 15; white-space: nowrap;
       backdrop-filter: blur(6px);
     }
+    #action-pill {
+      position: fixed; bottom: 64px; left: 50%; transform: translateX(-50%) translateY(10px);
+      z-index: 25; opacity: 0; pointer-events: none;
+      background: linear-gradient(135deg, #fff9ec, #ffe8be);
+      border: 2px solid #d4883a; color: #3d2412;
+      padding: 9px 18px; border-radius: 999px;
+      font-size: 13px; font-weight: 800; cursor: pointer;
+      box-shadow: 0 8px 24px rgba(48, 28, 12, 0.28);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #action-pill.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    #action-pill:hover { background: linear-gradient(135deg, #fffdf5, #ffdfa0); transform: translateX(-50%) translateY(-2px); }
+    #action-pill .kbd {
+      background: #4a2e1b; color: #fff8eb; font-size: 10.5px; font-weight: 800;
+      padding: 2px 7px; border-radius: 6px;
+    }
+    #dialog-toast {
+      position: fixed; top: 76px; left: 50%; transform: translateX(-50%) translateY(-8px);
+      z-index: 26; opacity: 0; pointer-events: none;
+      max-width: min(520px, calc(100vw - 32px));
+      background: rgba(255, 250, 239, 0.94);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 2px solid rgba(196, 134, 68, 0.72);
+      border-radius: 18px; padding: 11px 18px;
+      box-shadow: 0 12px 32px rgba(42, 24, 10, 0.24);
+      color: #3a2414; text-align: center;
+      transition: opacity 0.24s ease, transform 0.24s ease;
+    }
+    #dialog-toast.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+    #dialog-speaker { font-size: 11.5px; font-weight: 800; color: #c45d36; letter-spacing: 0.03em; margin-bottom: 3px; }
+    #dialog-text { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+    #area-fade {
+      position: fixed; inset: 0; z-index: 40;
+      background: #fff6e6; opacity: 0; pointer-events: none;
+      transition: opacity 0.34s ease;
+    }
+    #area-fade.on { opacity: 1; }
+    #joy-pad {
+      position: fixed; bottom: 72px; left: 18px; z-index: 24;
+      width: 96px; height: 96px; border-radius: 50%;
+      background: rgba(254, 249, 238, 0.38);
+      border: 2px solid rgba(185, 139, 82, 0.55);
+      backdrop-filter: blur(6px);
+      display: none; touch-action: none;
+    }
+    #joy-knob {
+      position: absolute; top: 50%; left: 50%;
+      width: 38px; height: 38px; margin: -19px 0 0 -19px; border-radius: 50%;
+      background: linear-gradient(135deg, #2a9d8f, #1f7a70);
+      border: 2px solid #fffdf8; box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+      pointer-events: none;
+    }
+    @media (pointer: coarse), (max-width: 900px) { #joy-pad { display: block; } }
     #loading-veil {
       position: fixed; inset: 0; z-index: 50;
       background: linear-gradient(160deg, #56b4e9 0%, #a5def5 55%, #fff3d6 100%);
@@ -94,7 +156,7 @@
       color: #3a2618; transition: opacity 0.55s ease;
     }
     #loading-veil.done { opacity: 0; pointer-events: none; }
-    @media (max-width: 1100px) {
+    @media (max-width: 1180px) {
       #controls-dock { flex-wrap: wrap; border-radius: 18px; }
     }
     @media (max-width: 720px) {
@@ -116,16 +178,17 @@
 </head>
 <body>
   <div id="loading-veil">
-    <div style="font-size:38px;">🌸✨🏡</div>
-    <div style="font-size:20px;font-weight:800;">Painting Studio Ghibli Courtyard...</div>
-    <div style="font-size:13px;opacity:0.8;">Compiling custom GLSL shaders, sculpted characters &amp; painted textures</div>
+    <div style="font-size:38px;">🌸🎹🏡</div>
+    <div style="font-size:20px;font-weight:800;">Painting Sunnyside Courtyard &amp; Home Apartment...</div>
+    <div style="font-size:13px;opacity:0.8;">Compiling Studio Ghibli shaders, botanical foliage &amp; interactive apartment</div>
   </div>
+  <div id="area-fade"></div>
 
   <div id="top-banner" class="hud-card">
-    <span class="badge">WebGL2 Next-Gen</span>
+    <span class="badge">Playable Next-Gen</span>
     <div>
-      <h1>Studio Ghibli Graphics Benchmark — Home Courtyard</h1>
-      <p>Custom Miyazaki GLSL Shading • Hand-Inked Outlines • Painted Gouache Textures • Normal-Transferred Foliage • Reflective Water</p>
+      <h1 id="area-title">Sunnyside Courtyard — Playable Studio Ghibli Preview</h1>
+      <p id="area-sub">Walk up to Sunnyside Apartments or tap Inside Apartment • WASD / Click-to-Walk • Switch Leader • Play Piano &amp; Chat!</p>
     </div>
   </div>
 
@@ -135,15 +198,29 @@
     <span>WebGL2</span>
   </div>
 
-  <div id="hint-strip">Drag to Orbit • Scroll to Zoom • WASD to Walk</div>
+  <div id="hint-strip">WASD / Tap Floor to Walk • Drag to Orbit • E to Interact • Tab to Switch Sister</div>
+
+  <div id="dialog-toast" onclick="this.classList.remove('show')">
+    <div id="dialog-speaker">Mom ☕</div>
+    <div id="dialog-text">Good morning Laila! Play us a song on the piano!</div>
+  </div>
+
+  <button id="action-pill"><span class="kbd">E</span><span id="action-label">Enter Laila's Apartment 🚪</span></button>
+
+  <div id="joy-pad"><div id="joy-knob"></div></div>
 
   <div id="controls-dock" class="hud-card">
     <div class="dock-group">
-      <button class="pill-btn active" data-cam="hero">🏡 Courtyard</button>
-      <button class="pill-btn" data-cam="sisters">👧 Laila &amp; Salma</button>
-      <button class="pill-btn" data-cam="fountain">⛲ Fountain</button>
+      <button class="pill-btn active" data-area="courtyard">🏡 Courtyard</button>
+      <button class="pill-btn" data-area="apartment">🏠 Inside Apartment</button>
+      <button class="pill-btn leader-btn" id="btn-leader">👧 Leading: Laila</button>
+    </div>
+    <div class="dock-group" id="cam-group">
+      <button class="pill-btn active" data-cam="play">🎮 Follow</button>
+      <button class="pill-btn" data-cam="hero">📷 Wide</button>
+      <button class="pill-btn" data-cam="sisters">👧 Sisters</button>
+      <button class="pill-btn" data-cam="fountain">⛲ Detail</button>
       <button class="pill-btn" data-cam="sakura">🌸 Trees</button>
-      <button class="pill-btn" data-cam="vista">🌄 Vista</button>
     </div>
     <div class="dock-group">
       <button class="pill-btn active" data-time="morning">☀️ Morning</button>
@@ -241,12 +318,15 @@
       meadow: loadPaintedTex('assets/ghibli_showcase/meadow_ground.jpg', 12, 12),
       bark: loadPaintedTex('assets/ghibli_showcase/bark_ghibli.jpg', 1.6, 2.8),
       sakuraBough: loadPaintedTex('assets/ghibli_showcase/sakura_bough.png', 1, 1),
-      leafBough: loadPaintedTex('assets/ghibli_showcase/leaf_bough.png', 1, 1)
+      leafBough: loadPaintedTex('assets/ghibli_showcase/leaf_bough.png', 1, 1),
+      woodFloor: loadPaintedTex('assets/ghibli_showcase/wood_floor_ghibli.jpg', 4.5, 3.6),
+      wovenRug: loadPaintedTex('assets/ghibli_showcase/woven_rug_ghibli.jpg', 1, 1)
     };
     TEX.sky.wrapS = THREE.RepeatWrapping;
     TEX.sky.wrapT = THREE.ClampToEdgeWrapping;
     TEX.sakuraBough.wrapS = TEX.sakuraBough.wrapT = THREE.ClampToEdgeWrapping;
     TEX.leafBough.wrapS = TEX.leafBough.wrapT = THREE.ClampToEdgeWrapping;
+    TEX.wovenRug.wrapS = TEX.wovenRug.wrapT = THREE.ClampToEdgeWrapping;
 
     // Shared global uniforms for time-of-day, rim light, ink outlines, wind
     const GLOBAL = {
@@ -2045,34 +2125,857 @@
     }
 
     // =========================================================================
-    // 12. INTERACTIVE CAMERA ORBIT, PRESETS, WASD STROLL & TIME-OF-DAY SWITCHER
+    // 12. GROUP EXTERIOR COURTYARD + BUILD PLAYABLE NEXT-GEN STUDIO GHIBLI HOME APARTMENT!
     // =========================================================================
-    const PRESETS = {
-      hero:     { yaw: 0.19, pitch: 0.145, dist: 16.4, tx: 0.0, ty: 2.85, tz: -1.6 },
-      sisters:  { yaw: 0.24, pitch: 0.14,  dist: 3.9,  tx: -0.1, ty: 1.02, tz: 5.55 },
-      fountain: { yaw: -0.56, pitch: 0.22, dist: 6.3,  tx: 0.0, ty: 1.38, tz: 0.5 },
-      sakura:   { yaw: 0.52, pitch: 0.14,  dist: 10.6, tx: -9.5, ty: 3.3, tz: -4.8 },
-      vista:    { yaw: -0.14, pitch: 0.34, dist: 24.0, tx: 0.0, ty: 2.2, tz: -2.0 }
-    };
-    const camState = Object.assign({}, PRESETS.hero);
-    const camTarget = Object.assign({}, PRESETS.hero);
+    const exteriorGroup = new THREE.Group();
+    const interiorGroup = new THREE.Group();
+    interiorGroup.visible = false;
 
-    let dragging = false, lastX = 0, lastY = 0;
-    canvas.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
-    window.addEventListener('pointerup', () => { dragging = false; });
+    const sharedObjs = new Set([skyDome, sunLight, hemiLight, bounceLight, laila.root, salma.root, mochi.root]);
+    scene.children.slice().forEach(ch => {
+      if (!sharedObjs.has(ch)) exteriorGroup.add(ch);
+    });
+    scene.add(exteriorGroup);
+    scene.add(interiorGroup);
+
+    // Inviting glowing doorstep beacon at Sunnyside Apartments front porch in Courtyard!
+    const porchBeacon = new THREE.Mesh(
+      new THREE.RingGeometry(0.75, 0.96, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffe082, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+    );
+    porchBeacon.rotation.x = -Math.PI / 2;
+    porchBeacon.position.set(0, 0.045, -9.95);
+    exteriorGroup.add(porchBeacon);
+
+    // Warm indoor lights (active only when inside Home Apartment)
+    const indoorWarmLight = new THREE.PointLight(0xffcf82, 0.0, 22, 1.4);
+    indoorWarmLight.position.set(1.5, 4.4, -0.5);
+    interiorGroup.add(indoorWarmLight);
+
+    const indoorLampLight = new THREE.PointLight(0xffb85c, 0.0, 14, 1.5);
+    indoorLampLight.position.set(-5.8, 2.8, 3.2);
+    interiorGroup.add(indoorLampLight);
+
+    // Helper: Equirectangular-compensated warm adult Studio Ghibli face (Mom & Dad!)
+    function createAdultFaceTex(isDad) {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(256, 250, 40, 256, 256, 260);
+      g.addColorStop(0, isDad ? '#f6cdb4' : '#ffe1cd');
+      g.addColorStop(0.78, isDad ? '#e4b396' : '#f2c1a4');
+      g.addColorStop(1, '#d69e80');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+
+      ctx.save();
+      ctx.translate(256, 0); ctx.scale(0.52, 1.0); ctx.translate(-256, 0);
+
+      // Gentle rosy cheek warmth
+      [-84, 84].forEach(bx => {
+        const bg = ctx.createRadialGradient(256 + bx, 322, 5, 256 + bx, 322, 38);
+        bg.addColorStop(0, isDad ? 'rgba(220, 128, 118, 0.30)' : 'rgba(240, 124, 138, 0.44)');
+        bg.addColorStop(1, 'rgba(240, 124, 138, 0.0)');
+        ctx.fillStyle = bg; ctx.beginPath(); ctx.ellipse(256 + bx, 322, 40, 22, 0, 0, Math.PI * 2); ctx.fill();
+      });
+
+      // Warm kind Studio Ghibli eyes
+      [-58, 58].forEach(ex => {
+        const cx = 256 + ex, cy = 272;
+        ctx.fillStyle = '#fffdf9';
+        ctx.beginPath(); ctx.ellipse(cx, cy, 32, 32, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = isDad ? '#362116' : '#4a2819';
+        ctx.beginPath(); ctx.ellipse(cx, cy + 1, 21, 24, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#180d08';
+        ctx.beginPath(); ctx.ellipse(cx, cy + 1, 11, 13, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(cx - 7, cy - 7, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#281610'; ctx.lineWidth = 7.5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(cx, cy + 5, 33, Math.PI * 1.14, Math.PI * 1.86); ctx.stroke();
+        ctx.lineWidth = isDad ? 7 : 5; ctx.strokeStyle = '#331e14';
+        ctx.beginPath(); ctx.arc(cx, cy - 22, 30, Math.PI * 1.24, Math.PI * 1.76); ctx.stroke();
+      });
+
+      // Warm smile (+ subtle neat mustache/chin contour on Dad)
+      if (isDad) {
+        ctx.fillStyle = 'rgba(72, 46, 34, 0.20)';
+        ctx.beginPath(); ctx.ellipse(256, 366, 46, 20, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.strokeStyle = '#863c34'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(256, 340, 26, 0.16 * Math.PI, 0.84 * Math.PI); ctx.stroke();
+      ctx.restore();
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
+    // Helper: Build Sculpted Studio Ghibli Plush Armchair + Seated Parent (Mom or Dad!)
+    const seatedParents = [];
+    function buildArmchairAndParent(x, z, rotY, chairHex, isDad) {
+      const g = new THREE.Group();
+      g.position.set(x, 0, z);
+      g.rotation.y = rotY;
+
+      const fabricMat = makeGhibliMat(chairHex, { roughness: 0.88, rimBoost: 1.05, aoGround: 0.30 });
+      const woodLegMat = makeGhibliMat(0x6e452b, { map: TEX.bark, roughness: 0.78 });
+      // 4 tapered oak chair legs
+      [[-0.44, -0.40], [0.44, -0.40], [-0.44, 0.40], [0.44, 0.40]].forEach(lp => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.30, 8), woodLegMat);
+        leg.position.set(lp[0], 0.15, lp[1]); leg.castShadow = true; g.add(leg);
+      });
+      // Plush rounded seat cushion
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.28, 1.00), fabricMat);
+      seat.position.set(0, 0.42, 0.02); seat.castShadow = true; seat.receiveShadow = true;
+      addInkOutline(seat, 0.022); g.add(seat);
+      // Tall plush curved wing-backrest
+      const back = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.02, 0.24), fabricMat);
+      back.position.set(0, 0.96, -0.40); back.rotation.x = -0.10; back.castShadow = true;
+      addInkOutline(back, 0.022); g.add(back);
+      const topRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.08, 12), fabricMat);
+      topRoll.rotation.z = Math.PI / 2; topRoll.position.set(0, 1.46, -0.45); g.add(topRoll);
+      // Rolled padded armrests
+      [-0.50, 0.50].forEach(ax => {
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.42, 0.94), fabricMat);
+        arm.position.set(ax, 0.64, 0.0); arm.castShadow = true; g.add(arm);
+        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.96, 10), fabricMat);
+        roll.rotation.x = Math.PI / 2; roll.position.set(ax, 0.85, 0.0); g.add(roll);
+      });
+
+      // Sculpted Seated Mom or Dad!
+      const pG = new THREE.Group();
+      pG.position.set(0, 0.54, 0.02);
+      const skinMat = makeGhibliMat(isDad ? 0xeab99c : 0xf7cdb5, { roughness: 0.72, rimBoost: 0.85, aoGround: 0.05 });
+      const topMat = makeGhibliMat(isDad ? 0x3b6e8c : 0xd9687c, { roughness: 0.78, rimBoost: 1.0 });
+      const pantsMat = makeGhibliMat(isDad ? 0x364457 : 0x5c4668, { roughness: 0.82 });
+      const hairMat = makeGhibliMat(isDad ? 0x261a14 : 0x382018, { roughness: 0.52, rimBoost: 1.2 });
+
+      // Seated thighs, smooth rounded knees & lower legs resting naturally on floor
+      [-0.14, 0.14].forEach(lx => {
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.078, 0.44, 12), pantsMat);
+        thigh.rotation.x = Math.PI / 2; thigh.position.set(lx, 0.08, 0.22); pG.add(thigh);
+        const knee = new THREE.Mesh(new THREE.SphereGeometry(0.078, 12, 10), pantsMat);
+        knee.position.set(lx, 0.08, 0.44); pG.add(knee);
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.058, 0.50, 12), pantsMat);
+        shin.position.set(lx, -0.17, 0.45); pG.add(shin);
+        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), makeGhibliMat(0x4b3224));
+        shoe.scale.set(0.95, 0.65, 1.45); shoe.position.set(lx, -0.45, 0.52); pG.add(shoe);
+      });
+      // Sculpted upper torso
+      const torsoPts = [
+        new THREE.Vector2(0.22, 0.06), new THREE.Vector2(0.25, 0.28),
+        new THREE.Vector2(0.26, 0.52), new THREE.Vector2(0.18, 0.66), new THREE.Vector2(0.09, 0.72)
+      ];
+      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 20), topMat);
+      torso.scale.set(isDad ? 1.15 : 1.02, 1.0, 0.84); torso.castShadow = true;
+      addInkOutline(torso, 0.025); pG.add(torso);
+      // Relaxed arms resting on chair armrests
+      [-0.31, 0.31].forEach(ax => {
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.056, 0.44, 10), topMat);
+        arm.position.set(ax, 0.40, 0.08); arm.rotation.x = -0.58; arm.rotation.z = ax < 0 ? -0.18 : 0.18;
+        pG.add(arm);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.058, 10, 8), skinMat);
+        hand.position.set(ax * 1.12, 0.22, 0.26); pG.add(hand);
+      });
+      // Head + sculpted hair
+      const headG = new THREE.Group();
+      headG.position.set(0, 0.94, 0.02);
+      const hMesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.255, 24, 20),
+        makeGhibliMat(0xffffff, { map: createAdultFaceTex(isDad), roughness: 0.68, rimBoost: 0.85, aoGround: 0.02 })
+      );
+      hMesh.rotation.y = -Math.PI / 2; hMesh.scale.set(0.96, 1.05, 0.96);
+      hMesh.castShadow = true; addInkOutline(hMesh, 0.025); headG.add(hMesh);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.272, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.50), hairMat);
+      cap.position.set(0, 0.04, -0.02); cap.rotation.x = -0.32; headG.add(cap);
+      if (!isDad) {
+        // Mom's warm soft chignon bun & shoulder-framing waves
+        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 12), hairMat);
+        bun.position.set(0, 0.08, -0.26); headG.add(bun);
+        [-0.22, 0.22].forEach(sx => {
+          const wave = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), hairMat);
+          wave.scale.set(0.75, 1.65, 0.9); wave.position.set(sx, -0.08, -0.04); headG.add(wave);
+        });
+      }
+      pG.add(headG);
+      g.add(pG);
+      interiorGroup.add(g);
+      seatedParents.push({ headG, pG, phase: isDad ? 1.8 : 0.0 });
+      return g;
+    }
+
+    // Build Complete Playable Next-Gen Studio Ghibli Home Apartment!
+    const aptSunbeams = [];
+    const aptSteamWisps = [];
+    const aptMagicMotes = [];
+    let aptGlobeSphere = null;
+    let aptGlobeSpinBoost = 0;
+    let aptPianoNotes = [];
+
+    function buildHomeApartment() {
+      const W = 18.0, D = 13.5, H = 5.4;
+      const woodMat = makeGhibliMat(0xfff4e0, { map: TEX.woodFloor, roughness: 0.68, rimBoost: 0.5, aoGround: 0.06 });
+      const wallMat = makeGhibliMat(0xfff3e2, { map: TEX.plaster, roughness: 0.88, rimBoost: 0.45, aoGround: 0.22 });
+      const wainscotMat = makeGhibliMat(0xf7efe0, { roughness: 0.78, aoGround: 0.20 });
+      const oakMat = makeGhibliMat(0xc8925c, { map: TEX.woodFloor, roughness: 0.66, rimBoost: 0.72, aoGround: 0.22 });
+      const mahoganyMat = makeGhibliMat(0x52281c, { roughness: 0.36, metalness: 0.12, rimBoost: 1.15, aoGround: 0.24 });
+      const sageCabMat = makeGhibliMat(0x5b9b8a, { roughness: 0.72, rimBoost: 0.9, aoGround: 0.26 });
+
+      // 1. Hand-painted honey-oak floor + woven floral medallion rug + soft bedroom rug!
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), woodMat);
+      floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true;
+      interiorGroup.add(floor);
+
+      const livingRug = new THREE.Mesh(
+        new THREE.PlaneGeometry(5.6, 4.6),
+        makeGhibliMat(0xffffff, { map: TEX.wovenRug, roughness: 0.94, rimBoost: 0.3, aoGround: 0.0 })
+      );
+      livingRug.rotation.x = -Math.PI / 2; livingRug.position.set(2.8, 0.014, -2.0); livingRug.receiveShadow = true;
+      interiorGroup.add(livingRug);
+
+      const bedRug = new THREE.Mesh(
+        new THREE.CircleGeometry(2.15, 32),
+        makeGhibliMat(0xfde8c8, { roughness: 0.94, aoGround: 0.0 })
+      );
+      bedRug.rotation.x = -Math.PI / 2; bedRug.position.set(-6.0, 0.012, 3.2); bedRug.receiveShadow = true;
+      interiorGroup.add(bedRug);
+
+      // 2. Three enclosing walls (West, East, and Windowed North Wall; South open for dollhouse play camera!)
+      const westWall = new THREE.Mesh(new THREE.BoxGeometry(0.32, H, D), wallMat);
+      westWall.position.set(-W / 2, H / 2, 0); westWall.receiveShadow = true; interiorGroup.add(westWall);
+      const eastWall = new THREE.Mesh(new THREE.BoxGeometry(0.32, H, D), wallMat);
+      eastWall.position.set(W / 2, H / 2, 0); eastWall.receiveShadow = true; interiorGroup.add(eastWall);
+
+      // North wall built cleanly around TWO HUGE SUNNY FRENCH WINDOW CUTOUTS (x=-3.2 and x=+3.2)!
+      const nZ = -D / 2;
+      const nSegments = [
+        [-9.0, -5.0, 0, H],   // Far-left wall
+        [-1.4,  1.0, 0, H],   // Center pier between windows
+        [ 5.4,  9.0, 0, H],   // Far-right wall
+        [-5.0, -1.4, 0, 1.05], [-5.0, -1.4, 4.15, H], // Under & over Kitchen/Living West window
+        [ 1.0,  5.4, 0, 1.05], [ 1.0,  5.4, 4.15, H]  // Under & over Mom & Dad's Piano Window!
+      ];
+      nSegments.forEach(seg => {
+        const sw = seg[1] - seg[0], sh = seg[3] - seg[2];
+        const m = new THREE.Mesh(new THREE.BoxGeometry(sw, sh, 0.34), wallMat);
+        m.position.set((seg[0] + seg[1]) / 2, (seg[2] + seg[3]) / 2, nZ);
+        m.receiveShadow = true; m.castShadow = true;
+        interiorGroup.add(m);
+      });
+
+      // Crisp ivory wood wainscoting & clean warm-oak perimeter crown molding (zero floating beams blocking view!)
+      const wWest = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.10, D - 0.2), wainscotMat);
+      wWest.position.set(-W / 2 + 0.18, 0.55, 0); interiorGroup.add(wWest);
+      const wEast = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.10, D - 0.2), wainscotMat);
+      wEast.position.set(W / 2 - 0.18, 0.55, 0); interiorGroup.add(wEast);
+      const wNorth = new THREE.Mesh(new THREE.BoxGeometry(W - 0.2, 1.06, 0.08), wainscotMat);
+      wNorth.position.set(0, 0.53, nZ + 0.18); interiorGroup.add(wNorth);
+
+      const crownN = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.22, 0.26), oakMat);
+      crownN.position.set(0, H - 0.10, nZ + 0.14); interiorGroup.add(crownN);
+      const crownW = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, D), oakMat);
+      crownW.position.set(-W / 2 + 0.14, H - 0.10, 0); interiorGroup.add(crownW);
+      const crownE = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.22, D), oakMat);
+      crownE.position.set(W / 2 - 0.14, H - 0.10, 0); interiorGroup.add(crownE);
+
+      // 3. Sunny French Windows + Curtains + Outdoor Blooming Cherry Blossoms + Golden Volumetric Sunbeams!
+      const curtainMat = makeGhibliMat(0xfff9ee, { roughness: 0.90, rimBoost: 0.8 });
+      const sunbeamMat = new THREE.MeshBasicMaterial({
+        color: 0xfff0be, transparent: true, opacity: 0.17, depthWrite: false, side: THREE.DoubleSide
+      });
+      [[-3.2, 3.6], [3.2, 4.4]].forEach(([wx, ww]) => {
+        // Window frame, sill, mullions & soft sheer curtains
+        const sill = new THREE.Mesh(new THREE.BoxGeometry(ww + 0.36, 0.14, 0.52), wainscotMat);
+        sill.position.set(wx, 1.05, nZ + 0.10); interiorGroup.add(sill);
+        const topF = new THREE.Mesh(new THREE.BoxGeometry(ww + 0.30, 0.14, 0.42), wainscotMat);
+        topF.position.set(wx, 4.16, nZ + 0.04); interiorGroup.add(topF);
+        [-ww / 2, 0, ww / 2].forEach(mx => {
+          const bar = new THREE.Mesh(new THREE.BoxGeometry(0.09, 3.12, 0.14), wainscotMat);
+          bar.position.set(wx + mx, 2.60, nZ); interiorGroup.add(bar);
+        });
+        const hBar = new THREE.Mesh(new THREE.BoxGeometry(ww, 0.08, 0.12), wainscotMat);
+        hBar.position.set(wx, 2.85, nZ); interiorGroup.add(hBar);
+        // Flowing left & right cream curtains
+        [-ww / 2 - 0.16, ww / 2 + 0.16].forEach(cx => {
+          const curt = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.26, 3.35, 10), curtainMat);
+          curt.scale.set(1.0, 1.0, 0.55); curt.position.set(wx + cx, 2.55, nZ + 0.28); interiorGroup.add(curt);
+        });
+        // Potted fern/blossom right on the sunny sill!
+        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.24, 12), makeGhibliMat(0xc86240));
+        pot.position.set(wx - ww * 0.28, 1.24, nZ + 0.18); interiorGroup.add(pot);
+        const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), new THREE.MeshStandardMaterial({
+          map: TEX.leafBough, alphaTest: 0.45, side: THREE.DoubleSide
+        }));
+        leaf.position.set(wx - ww * 0.28, 1.56, nZ + 0.18); interiorGroup.add(leaf);
+
+        // REAL hand-painted Cherry Blossom branches swaying right outside the window glass!
+        for (let b = 0; b < 4; b++) {
+          const sb = new THREE.Mesh(
+            new THREE.PlaneGeometry(2.6, 2.6),
+            new THREE.MeshBasicMaterial({ map: TEX.sakuraBough, alphaTest: 0.45, side: THREE.DoubleSide })
+          );
+          sb.position.set(wx + (b - 1.5) * 1.05, 2.45 + (b % 2) * 0.75, nZ - 1.4 - (b % 2) * 0.6);
+          sb.rotation.z = b * 0.6;
+          interiorGroup.add(sb);
+        }
+
+        // Translucent volumetric golden sunbeam shaft slanting across the room!
+        const beam = new THREE.Mesh(new THREE.PlaneGeometry(ww * 0.92, 6.2), sunbeamMat.clone());
+        beam.position.set(wx + 0.3, 1.85, nZ + 2.65);
+        beam.rotation.x = -0.82;
+        beam.rotation.y = 0.08;
+        interiorGroup.add(beam);
+        aptSunbeams.push(beam);
+      });
+
+      // 4. MOM & DAD IN TWO PLUSH ARMCHAIRS NEXT TO THE WINDOW + SMALL ROUND COFFEE TABLE BETWEEN THEM!
+      buildArmchairAndParent(1.85, -4.45, 0.26, 0xe88b6d, false);  // Mom in warm apricot-coral armchair!
+      buildArmchairAndParent(4.55, -4.45, -0.26, 0x528894, true);  // Dad in cozy slate-teal armchair!
+
+      const coffeeG = new THREE.Group();
+      coffeeG.position.set(3.20, 0, -4.10);
+      const ctTop = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.07, 32), oakMat);
+      ctTop.position.y = 0.56; ctTop.castShadow = true; ctTop.receiveShadow = true;
+      addInkOutline(ctTop, 0.02); coffeeG.add(ctTop);
+      const ctStem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.14, 0.54, 14), oakMat);
+      ctStem.position.y = 0.27; coffeeG.add(ctStem);
+      const ctFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.40, 0.06, 24), oakMat);
+      ctFoot.position.y = 0.03; coffeeG.add(ctFoot);
+      // Two porcelain coffee mugs + saucer + croissants + rising animated steam wisps!
+      [-0.24, 0.24].forEach((mx, mi) => {
+        const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.09, 0.02, 16), marbleMat);
+        saucer.position.set(mx, 0.605, mi === 0 ? -0.06 : 0.08); coffeeG.add(saucer);
+        const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.058, 0.11, 14), makeGhibliMat(mi === 0 ? 0xf6b092 : 0x89c2d9));
+        mug.position.set(mx, 0.67, mi === 0 ? -0.06 : 0.08); coffeeG.add(mug);
+        const steam = new THREE.Mesh(
+          new THREE.SphereGeometry(0.045, 8, 6),
+          new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.42 })
+        );
+        steam.userData = { bx: 3.20 + mx, bz: -4.10 + (mi === 0 ? -0.06 : 0.08), phase: mi * 2.2 };
+        interiorGroup.add(steam);
+        aptSteamWisps.push(steam);
+      });
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.025, 18), marbleMat);
+      plate.position.set(0, 0.608, 0.18); coffeeG.add(plate);
+      const pastry = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.038, 8, 12, Math.PI * 1.25), makeGhibliMat(0xd99242));
+      pastry.rotation.x = Math.PI / 2; pastry.position.set(0, 0.64, 0.18); coffeeG.add(pastry);
+      interiorGroup.add(coffeeG);
+
+      // 5. LAILA'S PLAYABLE MAHOGANY UPRIGHT PIANO (East Wall, facing Mom & Dad + Room!)
+      const pianoG = new THREE.Group();
+      pianoG.position.set(7.65, 0, -1.10);
+      pianoG.rotation.y = -Math.PI / 2;
+      const pBody = new THREE.Mesh(new THREE.BoxGeometry(2.15, 1.52, 0.72), mahoganyMat);
+      pBody.position.y = 0.76; pBody.castShadow = true; addInkOutline(pBody, 0.018); pianoG.add(pBody);
+      const pTop = new THREE.Mesh(new THREE.BoxGeometry(2.26, 0.09, 0.80), mahoganyMat);
+      pTop.position.y = 1.56; pianoG.add(pTop);
+      const pKeyBed = new THREE.Mesh(new THREE.BoxGeometry(2.10, 0.14, 0.46), mahoganyMat);
+      pKeyBed.position.set(0, 0.80, 0.50); pKeyBed.castShadow = true; pianoG.add(pKeyBed);
+      const whiteKeys = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.06, 0.34), makeGhibliMat(0xfffdf5));
+      whiteKeys.position.set(0, 0.89, 0.52); pianoG.add(whiteKeys);
+      for (let k = -0.82; k <= 0.84; k += 0.13) {
+        if (Math.abs((k + 0.82) % 0.39 - 0.26) < 0.06) continue;
+        const bk = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.07, 0.20), ironMat);
+        bk.position.set(k, 0.93, 0.45); pianoG.add(bk);
+      }
+      [-0.22, 0, 0.22].forEach(px => {
+        const ped = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, 0.16), brassMat);
+        ped.position.set(px, 0.09, 0.42); pianoG.add(ped);
+      });
+      // Sheet music + brass metronome + cherry blossom vase!
+      const sheet = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.42, 0.025), makeGhibliMat(0xfffaf0));
+      sheet.position.set(0, 1.24, 0.38); sheet.rotation.x = -0.18; pianoG.add(sheet);
+      const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.13, 0.28, 14), makeGhibliMat(0x74b3a8));
+      vase.position.set(0.76, 1.74, 0); pianoG.add(vase);
+      const pBlossom = new THREE.Mesh(new THREE.PlaneGeometry(0.68, 0.68), new THREE.MeshBasicMaterial({
+        map: TEX.sakuraBough, alphaTest: 0.45, side: THREE.DoubleSide
+      }));
+      pBlossom.position.set(0.76, 2.02, 0); pianoG.add(pBlossom);
+      // Cushioned Piano Bench
+      const bench = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.42, 0.46), mahoganyMat);
+      bench.position.set(0, 0.21, 1.15); bench.castShadow = true; pianoG.add(bench);
+      const bCush = new THREE.Mesh(new THREE.BoxGeometry(1.02, 0.10, 0.44), makeGhibliMat(0xc44d58));
+      bCush.position.set(0, 0.46, 1.15); pianoG.add(bCush);
+      interiorGroup.add(pianoG);
+
+      // 6. ENCHANTED STORYBOOK BOOKSHELF (Southeast Wall — Ancient Egypt & Timeless Realms!)
+      const shelfG = new THREE.Group();
+      shelfG.position.set(7.90, 0, 3.45);
+      shelfG.rotation.y = -Math.PI / 2;
+      const sFrame = new THREE.Mesh(new THREE.BoxGeometry(2.35, 3.15, 0.64), oakMat);
+      sFrame.position.y = 1.575; sFrame.castShadow = true; addInkOutline(sFrame, 0.015); shelfG.add(sFrame);
+      const bookCols = [0xc84b59, 0x3b6ea5, 0xd99b38, 0x458f64, 0x7b529c, 0xd96b43, 0x2d8a8a];
+      for (let row = 0; row < 4; row++) {
+        const ry = 0.56 + row * 0.68;
+        const plank = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.08, 0.66), oakMat);
+        plank.position.set(0, ry - 0.24, 0.02); shelfG.add(plank);
+        for (let b = 0; b < 9; b++) {
+          const isMagic = (row === 2 && b === 4);
+          const bh = 0.36 + ((b + row) % 3) * 0.06;
+          const bMat = isMagic
+            ? new THREE.MeshStandardMaterial({ color: 0xffe082, emissive: 0x4fd1c5, emissiveIntensity: 1.25, roughness: 0.3 })
+            : makeGhibliMat(bookCols[(b * 3 + row) % bookCols.length]);
+          const bk = new THREE.Mesh(new THREE.BoxGeometry(0.16, bh, 0.38), bMat);
+          bk.position.set(-0.88 + b * 0.22, ry - 0.02 + bh * 0.25, 0.14);
+          shelfG.add(bk);
+        }
+      }
+      interiorGroup.add(shelfG);
+      // Orbiting golden-turquoise fairy sparkles floating around the Enchanted Bookshelf!
+      for (let m = 0; m < 8; m++) {
+        const mote = new THREE.Mesh(
+          new THREE.SphereGeometry(0.055, 8, 6),
+          new THREE.MeshBasicMaterial({ color: m % 2 === 0 ? 0xffe082 : 0x7ce8df })
+        );
+        mote.userData = { cx: 7.35, cy: 1.95, cz: 3.45, phase: m * 0.82, rad: 0.55 + (m % 3) * 0.22 };
+        interiorGroup.add(mote);
+        aptMagicMotes.push(mote);
+      }
+
+      // 7. SPINNING ILLUMINATED WORLD GLOBE (Carved Oak Tripod + Hand-Painted Earth!)
+      const globeG = new THREE.Group();
+      globeG.position.set(4.95, 0, 4.75);
+      const gStand = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.28, 0.96, 12), oakMat);
+      gStand.position.y = 0.48; gStand.castShadow = true; globeG.add(gStand);
+      const gArc = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.032, 8, 24, Math.PI), brassMat);
+      gArc.position.y = 1.38; gArc.rotation.z = -Math.PI / 2 + 0.3; globeG.add(gArc);
+      const gc = document.createElement('canvas'); gc.width = 512; gc.height = 256;
+      const gctx = gc.getContext('2d');
+      gctx.fillStyle = '#4aa8c8'; gctx.fillRect(0, 0, 512, 256);
+      gctx.fillStyle = '#7bbf6a';
+      [[95, 90, 55, 45], [140, 165, 38, 48], [260, 88, 68, 40], [275, 155, 48, 52], [385, 100, 62, 42], [420, 182, 34, 24]]
+        .forEach(c => { gctx.beginPath(); gctx.ellipse(c[0], c[1], c[2], c[3], 0.2, 0, Math.PI * 2); gctx.fill(); });
+      gctx.fillStyle = '#e8cf86';
+      gctx.beginPath(); gctx.ellipse(275, 130, 38, 16, 0.1, 0, Math.PI * 2); gctx.fill();
+      const globeTex = new THREE.CanvasTexture(gc); globeTex.encoding = THREE.sRGBEncoding;
+      aptGlobeSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.42, 24, 18),
+        makeGhibliMat(0xffffff, { map: globeTex, roughness: 0.45, rimBoost: 1.25 })
+      );
+      aptGlobeSphere.position.y = 1.38; aptGlobeSphere.castShadow = true; addInkOutline(aptGlobeSphere, 0.025);
+      globeG.add(aptGlobeSphere);
+      interiorGroup.add(globeG);
+
+      // 8. COZY STUDIO GHIBLI KITCHENETTE & BREAKFAST TABLE (Northwest Corner!)
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.96, 1.05), sageCabMat);
+      counter.position.set(-6.7, 0.48, -5.95); counter.castShadow = true; counter.receiveShadow = true; interiorGroup.add(counter);
+      const cTop = new THREE.Mesh(new THREE.BoxGeometry(3.92, 0.08, 1.14), oakMat);
+      cTop.position.set(-6.7, 0.99, -5.95); interiorGroup.add(cTop);
+      const kettle = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), makeGhibliMat(0xd47a42, { metalness: 0.35, roughness: 0.38 }));
+      kettle.position.set(-5.6, 1.15, -5.95); interiorGroup.add(kettle);
+      // Warm Ghibli Dining / Breakfast Table with Pastry Basket & Teapot
+      const dTab = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 0.09, 28), oakMat);
+      dTab.position.set(-5.7, 0.82, -2.55); dTab.castShadow = true; addInkOutline(dTab, 0.015); interiorGroup.add(dTab);
+      const dLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, 0.80, 14), oakMat);
+      dLeg.position.set(-5.7, 0.40, -2.55); interiorGroup.add(dLeg);
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.20, 0.14, 14), makeGhibliMat(0xd9a760));
+      basket.position.set(-5.7, 0.94, -2.55); interiorGroup.add(basket);
+      [-0.08, 0.08, 0].forEach((bx, bi) => {
+        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), makeGhibliMat(0xe5a44d));
+        bun.position.set(-5.7 + bx, 1.04, -2.55 + (bi === 2 ? 0.09 : -0.05)); interiorGroup.add(bun);
+      });
+      // Hanging warm amber pendant lamp over breakfast table + 2 cozy honey-oak breakfast chairs!
+      [-1.35, 1.35].forEach((cx, ci) => {
+        const ch = new THREE.Group();
+        ch.position.set(-5.7 + cx, 0, -2.55);
+        ch.rotation.y = ci === 0 ? Math.PI / 2 : -Math.PI / 2;
+        const cSeat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.07, 0.56), oakMat);
+        cSeat.position.y = 0.46; cSeat.castShadow = true; ch.add(cSeat);
+        const cBack = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.54, 0.07), oakMat);
+        cBack.position.set(0, 0.76, -0.25); ch.add(cBack);
+        [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]].forEach(lp => {
+          const cl = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.46, 6), oakMat);
+          cl.position.set(lp[0], 0.23, lp[1]); ch.add(cl);
+        });
+        interiorGroup.add(ch);
+      });
+      // Upper sage kitchen display shelf with pastel ceramic teacups & canisters!
+      const kShelf = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.09, 0.42), oakMat);
+      kShelf.position.set(-6.9, 2.35, -6.38); interiorGroup.add(kShelf);
+      [0xf6b092, 0x89c2d9, 0xffe082, 0xf492b5, 0x95d5b2].forEach((col, ji) => {
+        const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.24 + (ji % 2) * 0.08, 12), makeGhibliMat(col));
+        jar.position.set(-8.0 + ji * 0.55, 2.52, -6.36); interiorGroup.add(jar);
+      });
+
+      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 2.0, 6), ironMat);
+      cord.position.set(-5.7, 4.35, -2.55); interiorGroup.add(cord);
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.28, 16, 1, true), makeGhibliMat(0xf4a261, { side: THREE.DoubleSide }));
+      shade.position.set(-5.7, 3.25, -2.55); interiorGroup.add(shade);
+      const pBulb = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshStandardMaterial({
+        color: 0xfff5d6, emissive: 0xffc655, emissiveIntensity: 1.4
+      }));
+      pBulb.position.set(-5.7, 3.16, -2.55); interiorGroup.add(pBulb); lampBulbs.push(pBulb.material);
+
+      // 9. LAILA & SALMA'S COZY STORYBOOK BEDROOM NOOK (Southwest Corner!)
+      [
+        { x: -7.25, z: 2.35, quilt: 0x5c8ad6, pillow: 0xfff9ee }, // Laila's sky-blue bed
+        { x: -7.25, z: 4.55, quilt: 0xe67285, pillow: 0xfff3c4 }  // Salma's coral-rose bed
+      ].forEach(bd => {
+        const bFrame = new THREE.Mesh(new THREE.BoxGeometry(2.25, 0.36, 1.28), oakMat);
+        bFrame.position.set(bd.x, 0.22, bd.z); bFrame.castShadow = true; interiorGroup.add(bFrame);
+        const hBoard = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.05, 1.32), oakMat);
+        hBoard.position.set(bd.x - 1.10, 0.58, bd.z); interiorGroup.add(hBoard);
+        const quilt = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.26, 1.22), makeGhibliMat(bd.quilt, { roughness: 0.88 }));
+        quilt.position.set(bd.x + 0.18, 0.46, bd.z); quilt.castShadow = true; addInkOutline(quilt, 0.02); interiorGroup.add(quilt);
+        const pil = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.18, 0.78), makeGhibliMat(bd.pillow));
+        pil.position.set(bd.x - 0.72, 0.50, bd.z); interiorGroup.add(pil);
+      });
+      // Cozy nightstand + warm bedside lamp between beds
+      const nStand = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.62, 0.62), oakMat);
+      nStand.position.set(-8.15, 0.31, 3.45); interiorGroup.add(nStand);
+      const lShade = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.26, 14), new THREE.MeshStandardMaterial({
+        color: 0xfff2cc, emissive: 0xffb84d, emissiveIntensity: 1.15
+      }));
+      lShade.position.set(-8.15, 0.88, 3.45); interiorGroup.add(lShade); lampBulbs.push(lShade.material);
+
+      // 10. Hand-Painted Framed Travel Art on West Wall + Cozy Entry Welcome Mat at South Exit (x=0, z=5.8)
+      [[-8.80, 2.75, -1.6, TEX.sky], [-8.80, 2.75, 0.6, TEX.meadow]].forEach(fp => {
+        const frm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.12, 1.48), oakMat);
+        frm.position.set(fp[0], fp[1], fp[2]); interiorGroup.add(frm);
+        const pic = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.90, 1.26), new THREE.MeshBasicMaterial({ map: fp[3] }));
+        pic.position.set(fp[0] + 0.02, fp[1], fp[2]); interiorGroup.add(pic);
+      });
+
+      const welcomeMat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.04, 1.1), makeGhibliMat(0xc8884e, { roughness: 0.95 }));
+      welcomeMat.position.set(0, 0.02, 5.85); interiorGroup.add(welcomeMat);
+      const exitRing = new THREE.Mesh(
+        new THREE.RingGeometry(0.72, 0.90, 32),
+        new THREE.MeshBasicMaterial({ color: 0x7ce8df, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+      );
+      exitRing.rotation.x = -Math.PI / 2; exitRing.position.set(0, 0.045, 5.85);
+      interiorGroup.add(exitRing);
+    }
+    buildHomeApartment();
+
+    // =========================================================================
+    // 13. PLAYABLE ENGINE: AREA SWITCHER, LEADER SWAP, CLICK-TO-WALK, WEB AUDIO PIANO & DIALOGUE!
+    // =========================================================================
+    let currentArea = 'courtyard'; // 'courtyard' | 'apartment'
+    let activeLeader = 'laila';    // 'laila' | 'salma'
+    let camMode = 'play';          // 'play' | 'preset'
+    let walkGoal = null;           // { x, z } for click/tap-to-walk!
+    let dialogTimer = null;
+    let momDadIdx = 0;
+
+    // Glowing click-to-walk target ring on ground/floor
+    const walkMarker = new THREE.Mesh(
+      new THREE.RingGeometry(0.24, 0.36, 24),
+      new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.85, side: THREE.DoubleSide })
+    );
+    walkMarker.rotation.x = -Math.PI / 2;
+    walkMarker.visible = false;
+    scene.add(walkMarker);
+
+    function getLeaderName() { return activeLeader === 'salma' ? 'Salma' : 'Laila'; }
+    function getLeaderObj() { return activeLeader === 'salma' ? salma : laila; }
+    function getFollowerObj() { return activeLeader === 'salma' ? laila : salma; }
+
+    function showDialog(speaker, text) {
+      const box = document.getElementById('dialog-toast');
+      document.getElementById('dialog-speaker').textContent = speaker;
+      document.getElementById('dialog-text').textContent = text;
+      box.classList.add('show');
+      clearTimeout(dialogTimer);
+      dialogTimer = setTimeout(() => box.classList.remove('show'), 5200);
+    }
+
+    // Lush Web Audio Studio Ghibli Piano Melody (Joe Hisaishi-inspired pentatonic arpeggio!)
+    let audioCtx = null;
+    function playGhibliPianoMelody() {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        if (!audioCtx) audioCtx = new AC();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const notes = [523.25, 659.25, 783.99, 987.77, 880.00, 783.99, 659.25, 587.33, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          const t0 = audioCtx.currentTime + i * 0.19;
+          const osc = audioCtx.createOscillator();
+          const osc2 = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(freq, t0);
+          osc2.type = 'sine'; osc2.frequency.setValueAtTime(freq * 2, t0);
+          gain.gain.setValueAtTime(0.001, t0);
+          gain.gain.linearRampToValueAtTime(0.14, t0 + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0008, t0 + 1.15);
+          const g2 = audioCtx.createGain(); g2.gain.value = 0.22;
+          osc.connect(gain); osc2.connect(g2); g2.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(t0); osc2.start(t0);
+          osc.stop(t0 + 1.2); osc2.stop(t0 + 1.2);
+        });
+      } catch (e) {}
+      // Spawn floating glowing musical sparkles above the piano!
+      for (let i = 0; i < 12; i++) {
+        const nm = new THREE.Mesh(
+          new THREE.SphereGeometry(0.075, 8, 6),
+          new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffe066 : 0xff9ec2, transparent: true, opacity: 0.95 })
+        );
+        nm.position.set(7.1 + (Math.random() - 0.5) * 0.7, 1.3 + Math.random() * 0.4, -1.1 + (Math.random() - 0.5) * 1.4);
+        nm.userData = { vy: 0.65 + Math.random() * 0.45, life: 2.6 + Math.random() * 0.8, phase: i * 0.8 };
+        interiorGroup.add(nm);
+        aptPianoNotes.push(nm);
+      }
+    }
+
+    // Playable Camera Presets per Area
+    const AREA_PRESETS = {
+      courtyard: {
+        hero:     { yaw: 0.19, pitch: 0.145, dist: 16.4, tx: 0.0, ty: 2.85, tz: -1.6 },
+        sisters:  { yaw: 0.24, pitch: 0.14,  dist: 3.9,  tx: -0.1, ty: 1.02, tz: 5.55 },
+        fountain: { yaw: -0.56, pitch: 0.22, dist: 6.3,  tx: 0.0, ty: 1.38, tz: 0.5 },
+        sakura:   { yaw: 0.52, pitch: 0.14,  dist: 10.6, tx: -9.5, ty: 3.3, tz: -4.8 }
+      },
+      apartment: {
+        hero:     { yaw: 0.05, pitch: 0.34, dist: 14.8, tx: 0.4, ty: 1.55, tz: -0.6 },
+        sisters:  { yaw: 0.18, pitch: 0.22, dist: 6.2,  tx: 3.2, ty: 1.35, tz: -4.1 }, // Mom & Dad armchairs!
+        fountain: { yaw: -0.62, pitch: 0.24, dist: 5.8, tx: 6.8, ty: 1.35, tz: -1.0 }, // Laila's Piano!
+        sakura:   { yaw: -0.55, pitch: 0.26, dist: 6.2, tx: 6.2, ty: 1.55, tz: 3.8 }   // Bookshelf & Globe!
+      }
+    };
+
+    const camState = { yaw: 0.18, pitch: 0.22, dist: 13.5, tx: 0.0, ty: 1.6, tz: 4.5 };
+    const camTarget = Object.assign({}, camState);
+
+    function syncActiveBtn(attr, val) {
+      document.querySelectorAll('[' + attr + ']').forEach(b => {
+        b.classList.toggle('active', b.getAttribute(attr) === val);
+      });
+    }
+
+    function updateCamLabelsForArea() {
+      const labels = currentArea === 'apartment'
+        ? { play: '🎮 Follow', hero: '🏠 Room', sisters: '☕ Mom & Dad', fountain: '🎹 Piano', sakura: '📚 Bookshelf' }
+        : { play: '🎮 Follow', hero: '📷 Wide', sisters: '👧 Sisters', fountain: '⛲ Fountain', sakura: '🌸 Trees' };
+      document.querySelectorAll('[data-cam]').forEach(btn => {
+        const k = btn.dataset.cam;
+        if (labels[k]) btn.textContent = labels[k];
+      });
+    }
+
+    function applyAreaLighting() {
+      const isApt = (currentArea === 'apartment');
+      const tm = GLOBAL.uTimeMode.value;
+      indoorWarmLight.intensity = isApt ? (tm > 1.5 ? 1.45 : (tm > 0.5 ? 0.95 : 0.48)) : 0.0;
+      indoorLampLight.intensity = isApt ? (tm > 1.5 ? 1.15 : (tm > 0.5 ? 0.72 : 0.35)) : 0.0;
+      aptSunbeams.forEach(b => {
+        b.visible = isApt && tm < 1.5;
+        if (tm > 0.5 && tm < 1.5) { b.material.color.setHex(0xffb86c); b.material.opacity = 0.22; }
+        else { b.material.color.setHex(0xfff0be); b.material.opacity = 0.16; }
+      });
+      scene.fog.density = isApt ? 0.0022 : 0.0082;
+    }
+
+    function switchArea(area, instant) {
+      if (area !== 'courtyard' && area !== 'apartment') return;
+      const fade = document.getElementById('area-fade');
+      const doSwap = () => {
+        currentArea = area;
+        walkGoal = null; walkMarker.visible = false;
+        exteriorGroup.visible = (area === 'courtyard');
+        interiorGroup.visible = (area === 'apartment');
+        const lead = getLeaderObj(), fol = getFollowerObj();
+        if (area === 'apartment') {
+          lead.root.position.set(0.0, 0, 4.3); lead.root.rotation.y = Math.PI;
+          fol.root.position.set(-1.1, 0, 4.7); fol.root.rotation.y = Math.PI;
+          mochi.root.position.set(1.25, 0, 4.5); mochi.root.rotation.y = Math.PI;
+          camMode = 'play';
+          camTarget.yaw = 0.04; camTarget.pitch = 0.34; camTarget.dist = 10.6;
+          camTarget.tx = 0.0; camTarget.ty = 1.35; camTarget.tz = 2.6;
+          if (instant) Object.assign(camState, camTarget);
+          document.getElementById('area-title').textContent = "Laila & Salma's Home Apartment — Sunnyside";
+          document.getElementById('area-sub').textContent = "Walk around! Chat with Mom & Dad, Play the Piano, Spin the Globe, or Open the Enchanted Bookshelf!";
+          showDialog('Mom ☕', 'Welcome home, ' + getLeaderName() + '! Come say hi by the sunny window or play us a song on the piano! 🎹💛');
+        } else {
+          lead.root.position.set(0.0, 0, -8.8); lead.root.rotation.y = 0;
+          fol.root.position.set(-1.1, 0, -9.2); fol.root.rotation.y = 0;
+          mochi.root.position.set(1.2, 0, -9.0); mochi.root.rotation.y = 0;
+          camMode = 'play';
+          camTarget.yaw = 0.16; camTarget.pitch = 0.22; camTarget.dist = 12.2;
+          camTarget.tx = 0.0; camTarget.ty = 1.5; camTarget.tz = -7.5;
+          if (instant) Object.assign(camState, camTarget);
+          document.getElementById('area-title').textContent = 'Sunnyside Courtyard — Playable Studio Ghibli Preview';
+          document.getElementById('area-sub').textContent = 'Walk up to Sunnyside Apartments or tap Inside Apartment • WASD / Click-to-Walk • Switch Leader!';
+        }
+        syncActiveBtn('data-area', area);
+        syncActiveBtn('data-cam', 'play');
+        updateCamLabelsForArea();
+        applyAreaLighting();
+      };
+      if (instant) { doSwap(); return; }
+      fade.classList.add('on');
+      setTimeout(() => { doSwap(); setTimeout(() => fade.classList.remove('on'), 120); }, 260);
+    }
+
+    function toggleLeader() {
+      activeLeader = (activeLeader === 'laila') ? 'salma' : 'laila';
+      const btn = document.getElementById('btn-leader');
+      btn.textContent = activeLeader === 'salma' ? '👒 Leading: Salma' : '👧 Leading: Laila';
+      btn.classList.toggle('is-salma', activeLeader === 'salma');
+      showDialog('Leader Switched ✨', getLeaderName() + ' is now leading the adventure!');
+    }
+
+    // Interactive Zones (Dynamic Leader-Aware Prompts & Responses!)
+    function getActiveZones() {
+      const L = getLeaderName();
+      if (currentArea === 'courtyard') {
+        return [
+          {
+            id: 'enter_apt', x: 0, z: -10.0, r: 2.8,
+            label: "Enter Laila's Home Apartment 🚪",
+            run: () => switchArea('apartment', false)
+          },
+          {
+            id: 'fountain_wish', x: 0, z: 0.5, r: 4.8,
+            label: 'Make a Wish at the Fountain ⛲✨',
+            run: () => showDialog('Courtyard Fountain ✨', L + ' tossed a sparkling wish into the turquoise water — ripples danced across the sakura petals!')
+          },
+          {
+            id: 'pet_mochi', x: mochi.root.position.x, z: mochi.root.position.z, r: 2.1,
+            label: 'Pet Mochi 🐕💛',
+            run: () => showDialog('Mochi 🐕', 'Woof! *Mochi wags his fluffy tail excitedly at ' + L + '!* 💛')
+          }
+        ];
+      }
+      return [
+        {
+          id: 'mom_dad', x: 3.2, z: -3.6, r: 2.7,
+          label: 'Chat with Mom & Dad ☕',
+          run: () => {
+            const lines = [
+              ['Mom ☕', 'Good morning ' + L + '! Play us a song on the piano — we love listening from our sunny armchairs! 💛🎹'],
+              ['Dad ☕', 'Best coffee spot in the house right here by the window with Mom, ' + L + '! Have you checked the Enchanted Bookshelf? ☕📚'],
+              ['Mom ☕', 'Look at the cherry blossoms blooming right outside our window, ' + L + '! Grab a warm croissant from the kitchen! 🌸🥐'],
+              ['Dad ☕', 'Ready for another big adventure today, ' + L + '? Spin the World Globe or pick a storybook! 🌍✨']
+            ];
+            const pick = lines[momDadIdx++ % lines.length];
+            showDialog(pick[0], pick[1]);
+          }
+        },
+        {
+          id: 'piano', x: 6.5, z: -1.1, r: 2.4,
+          label: "Play Laila's Piano 🎹✨",
+          run: () => {
+            playGhibliPianoMelody();
+            showDialog('Grand Piano Recital 🎹', L + ' played a sparkling Studio Ghibli melody! Mom & Dad smiled and clapped from their armchairs! ♪✨');
+          }
+        },
+        {
+          id: 'bookshelf', x: 7.0, z: 3.45, r: 2.3,
+          label: 'Open Enchanted Bookshelf 📚✨',
+          run: () => showDialog('Enchanted Storybook Bookshelf 📚✨', 'A glowing golden tome hums softly for ' + L + ': "Ancient Egypt & Timeless Realms" — step through storybooks to worlds beyond airplanes!')
+        },
+        {
+          id: 'globe', x: 4.95, z: 4.75, r: 2.0,
+          label: 'Spin the World Globe 🌍',
+          run: () => {
+            aptGlobeSpinBoost = 12.0;
+            showDialog('Illuminated World Globe 🌍', 'Whoosh! ' + L + ' spun the glowing globe — Marrakech, African Safari, and sunlit oceans shimmered past! ✈️✨');
+          }
+        },
+        {
+          id: 'kitchen', x: -5.7, z: -2.55, r: 2.3,
+          label: 'Taste Warm Ghibli Pastries 🥐☕',
+          run: () => showDialog('Sunnyside Kitchen 🥐', 'Mmm! Warm buttery croissants and honey tea — ' + L + ' & ' + (activeLeader === 'laila' ? 'Salma' : 'Laila') + ' feel energized for adventure! ✨')
+        },
+        {
+          id: 'exit_apt', x: 0.0, z: 5.85, r: 2.1,
+          label: 'Step Outside to Courtyard 🌸',
+          run: () => switchArea('courtyard', false)
+        },
+        {
+          id: 'pet_mochi_in', x: mochi.root.position.x, z: mochi.root.position.z, r: 1.9,
+          label: 'Pet Mochi 🐕💛',
+          run: () => showDialog('Mochi 🐕', 'Arf! *Mochi happily trots around the woven rug beside ' + L + '!* 💛')
+        }
+      ];
+    }
+
+    let currentAction = null;
+    function triggerCurrentAction() {
+      if (currentAction && currentAction.run) currentAction.run();
+    }
+    document.getElementById('action-pill').addEventListener('click', triggerCurrentAction);
+
+    // Pointer Orbit + Click/Tap-to-Walk Raycasting!
+    const raycaster = new THREE.Raycaster();
+    const pointerNDC = new THREE.Vector2();
+    const walkPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    let dragging = false, pointerMoved = 0, downX = 0, downY = 0, lastX = 0, lastY = 0;
+
+    canvas.addEventListener('pointerdown', e => {
+      dragging = true; pointerMoved = 0;
+      downX = lastX = e.clientX; downY = lastY = e.clientY;
+    });
     window.addEventListener('pointermove', e => {
       if (!dragging) return;
-      camTarget.yaw -= (e.clientX - lastX) * 0.0055;
-      camTarget.pitch = Math.max(0.06, Math.min(0.88, camTarget.pitch + (e.clientY - lastY) * 0.0045));
+      const dx = e.clientX - lastX, dy = e.clientY - lastY;
+      pointerMoved += Math.hypot(dx, dy);
+      camTarget.yaw -= dx * 0.0052;
+      camTarget.pitch = Math.max(0.08, Math.min(0.86, camTarget.pitch + dy * 0.0042));
       lastX = e.clientX; lastY = e.clientY;
+    });
+    window.addEventListener('pointerup', e => {
+      if (!dragging) return;
+      dragging = false;
+      // Short click/tap on the 3D viewport -> Click-to-Walk!
+      if (pointerMoved < 8 && e.target === canvas) {
+        pointerNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointerNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        raycaster.setFromCamera(pointerNDC, camera);
+        const hit = new THREE.Vector3();
+        if (raycaster.ray.intersectPlane(walkPlane, hit)) {
+          walkGoal = { x: hit.x, z: hit.z };
+          const wy = currentArea === 'courtyard' ? getTerrainHeight(hit.x, hit.z) + 0.05 : 0.05;
+          walkMarker.position.set(hit.x, wy, hit.z);
+          walkMarker.visible = true;
+          camMode = 'play';
+          syncActiveBtn('data-cam', 'play');
+        }
+      }
     });
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
-      camTarget.dist = Math.max(2.8, Math.min(34, camTarget.dist + e.deltaY * 0.012));
+      camTarget.dist = Math.max(3.2, Math.min(30, camTarget.dist + e.deltaY * 0.011));
     }, { passive: false });
 
+    // Mobile Touch Virtual Joystick!
+    const joyVec = { x: 0, z: 0 };
+    const joyPad = document.getElementById('joy-pad');
+    const joyKnob = document.getElementById('joy-knob');
+    let joyActiveId = null;
+    if (joyPad) {
+      const updateJoy = (clientX, clientY) => {
+        const rect = joyPad.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+        let dx = clientX - cx, dy = clientY - cy;
+        const maxR = 34;
+        const d = Math.hypot(dx, dy);
+        if (d > maxR) { dx = (dx / d) * maxR; dy = (dy / d) * maxR; }
+        joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+        joyVec.x = dx / maxR; joyVec.z = dy / maxR;
+      };
+      joyPad.addEventListener('pointerdown', e => {
+        e.stopPropagation(); joyActiveId = e.pointerId; joyPad.setPointerCapture(e.pointerId);
+        updateJoy(e.clientX, e.clientY);
+      });
+      joyPad.addEventListener('pointermove', e => {
+        if (e.pointerId !== joyActiveId) return;
+        e.stopPropagation(); updateJoy(e.clientX, e.clientY);
+      });
+      const resetJoy = e => {
+        if (e.pointerId !== joyActiveId) return;
+        joyActiveId = null; joyVec.x = 0; joyVec.z = 0;
+        joyKnob.style.transform = 'translate(0, 0)';
+      };
+      joyPad.addEventListener('pointerup', resetJoy);
+      joyPad.addEventListener('pointercancel', resetJoy);
+    }
+
     const keys = {};
-    window.addEventListener('keydown', e => { keys[e.code] = true; });
+    window.addEventListener('keydown', e => {
+      keys[e.code] = true;
+      if (e.code === 'KeyE' || e.code === 'Space') { e.preventDefault(); triggerCurrentAction(); }
+      if (e.code === 'Tab') { e.preventDefault(); toggleLeader(); }
+    });
     window.addEventListener('keyup', e => { keys[e.code] = false; });
 
     function applyTimeMode(mode) {
@@ -2085,7 +2988,7 @@
         GLOBAL.uFogCol.value.setHex(0xc8ecfb);
         scene.fog.color.setHex(0xc8ecfb);
         windowGlowMats.forEach(m => { m.emissiveIntensity = 0.14; });
-        lampBulbs.forEach(m => { m.emissiveIntensity = 0.55; });
+        lampBulbs.forEach(m => { m.emissiveIntensity = 0.65; });
       } else if (mode === 'sunset') {
         GLOBAL.uTimeMode.value = 1.0;
         sunLight.color.setHex(0xffa65e); sunLight.intensity = 1.44; sunLight.position.set(-28, 12, 16);
@@ -2108,18 +3011,27 @@
         lampBulbs.forEach(m => { m.emissiveIntensity = 2.25; });
       }
       GLOBAL.uSunDir.value.copy(sunLight.position).normalize();
+      applyAreaLighting();
     }
 
-    function syncActiveBtn(attr, val) {
-      document.querySelectorAll('[' + attr + ']').forEach(b => {
-        b.classList.toggle('active', b.getAttribute(attr) === val);
-      });
-    }
+    document.querySelectorAll('[data-area]').forEach(btn => {
+      btn.addEventListener('click', () => switchArea(btn.dataset.area, false));
+    });
+    document.getElementById('btn-leader').addEventListener('click', toggleLeader);
 
     document.querySelectorAll('[data-cam]').forEach(btn => {
       btn.addEventListener('click', () => {
-        syncActiveBtn('data-cam', btn.dataset.cam);
-        Object.assign(camTarget, PRESETS[btn.dataset.cam]);
+        const k = btn.dataset.cam;
+        syncActiveBtn('data-cam', k);
+        if (k === 'play') {
+          camMode = 'play';
+          camTarget.dist = currentArea === 'apartment' ? 10.2 : 11.8;
+          camTarget.pitch = currentArea === 'apartment' ? 0.34 : 0.22;
+        } else {
+          camMode = 'preset';
+          const p = (AREA_PRESETS[currentArea] || AREA_PRESETS.courtyard)[k];
+          if (p) Object.assign(camTarget, p);
+        }
       });
     });
     document.querySelectorAll('[data-time]').forEach(btn => {
@@ -2152,23 +3064,29 @@
       if (fxaaPass) fxaaPass.uniforms.resolution.value.set(1 / window.innerWidth, 1 / window.innerHeight);
     });
 
-    // Expose quick hook for automated inspection
+    // Expose quick hook for automated inspection & testing
     window.GHIBLI_BENCH = {
+      setArea: area => switchArea(area, true),
+      setLeader: who => { if ((who === 'salma') !== (activeLeader === 'salma')) toggleLeader(); },
       setCam: name => {
-        if (PRESETS[name]) {
-          Object.assign(camState, PRESETS[name]);
-          Object.assign(camTarget, PRESETS[name]);
-          syncActiveBtn('data-cam', name);
-        }
+        if (name === 'play') { camMode = 'play'; syncActiveBtn('data-cam', 'play'); return; }
+        const p = (AREA_PRESETS[currentArea] || AREA_PRESETS.courtyard)[name];
+        if (p) { camMode = 'preset'; Object.assign(camState, p); Object.assign(camTarget, p); syncActiveBtn('data-cam', name); }
       },
-      setTime: mode => {
-        applyTimeMode(mode);
-        syncActiveBtn('data-time', mode);
+      setTime: mode => { applyTimeMode(mode); syncActiveBtn('data-time', mode); },
+      triggerAction: id => {
+        const z = getActiveZones().find(item => item.id === id);
+        if (z) z.run();
       }
     };
 
+    // Start in playable Follow view facing Sunnyside Courtyard & Laila/Salma!
+    camTarget.yaw = 0.19; camTarget.pitch = 0.16; camTarget.dist = 14.8;
+    camTarget.tx = 0.0; camTarget.ty = 2.4; camTarget.tz = -1.2;
+    Object.assign(camState, camTarget);
+
     // =========================================================================
-    // 13. MAIN ANIMATION LOOP
+    // 14. MAIN ANIMATION & GAMEPLAY LOOP
     // =========================================================================
     const clock = new THREE.Clock();
     let fpsFrames = 0, fpsLast = performance.now();
@@ -2179,88 +3097,212 @@
       if (veil) veil.classList.add('done');
     }, 350);
 
+    function canStandAt(x, z) {
+      if (currentArea === 'courtyard') {
+        if (x < -16.5 || x > 16.5 || z < -10.8 || z > 18.5) return false;
+        if (Math.hypot(x, z - 0.5) < 4.05) return false; // Fountain collision
+        return true;
+      }
+      // Apartment bounds & furniture collision
+      if (x < -8.2 || x > 8.2 || z < -5.9 || z > 6.1) return false;
+      if (x > 6.5 && z > -2.5 && z < 0.2) return false;    // Piano
+      if (x > 6.7 && z > 2.2 && z < 4.7) return false;     // Bookshelf
+      if (x < -4.5 && z < -4.9) return false;              // Kitchen counter
+      if (Math.hypot(x + 5.7, z + 2.55) < 1.35) return false; // Dining table
+      if (x < -5.8 && z > 1.4 && z < 5.5) return false;    // Beds
+      if (x > 1.1 && x < 5.2 && z < -3.5) return false;    // Mom & Dad armchairs + coffee table
+      return true;
+    }
+
     function animate() {
       requestAnimationFrame(animate);
       const dt = Math.min(0.05, clock.getDelta());
       const t = clock.elapsedTime;
       GLOBAL.uTime.value = t;
 
-      // Optional WASD walking for Laila & Salma right inside the showcase!
-      let mx = 0, mz = 0;
+      const lead = getLeaderObj();
+      const fol = getFollowerObj();
+
+      // Gather movement from WASD/Arrows, Touch Joystick, OR Click-to-Walk!
+      let mx = joyVec.x, mz = joyVec.z;
       if (keys.KeyW || keys.ArrowUp) mz -= 1;
       if (keys.KeyS || keys.ArrowDown) mz += 1;
       if (keys.KeyA || keys.ArrowLeft) mx -= 1;
       if (keys.KeyD || keys.ArrowRight) mx += 1;
-      const walking = mx !== 0 || mz !== 0;
-      if (walking) {
-        const ang = Math.atan2(mx, mz) + camState.yaw;
-        const nx = Math.max(-16, Math.min(16, laila.root.position.x + Math.sin(ang) * 4.4 * dt));
-        const nz = Math.max(-9.5, Math.min(18, laila.root.position.z + Math.cos(ang) * 4.4 * dt));
-        if (Math.hypot(nx, nz - 0.5) > 3.95) {
-          laila.root.position.set(nx, getTerrainHeight(nx, nz), nz);
-          laila.root.rotation.y = ang;
-          camTarget.tx = nx; camTarget.tz = nz;
-        }
-        // Salma cheerfully follows behind Laila!
-        const dx = laila.root.position.x - salma.root.position.x;
-        const dz = laila.root.position.z - salma.root.position.z;
-        const dist = Math.hypot(dx, dz);
-        if (dist > 1.35) {
-          const sx = salma.root.position.x + (dx / dist) * 4.1 * dt;
-          const sz = salma.root.position.z + (dz / dist) * 4.1 * dt;
-          salma.root.position.set(sx, getTerrainHeight(sx, sz), sz);
-          salma.root.rotation.y = Math.atan2(dx, dz);
+      if (Math.hypot(mx, mz) > 0.08) {
+        walkGoal = null; walkMarker.visible = false;
+        camMode = 'play';
+      }
+
+      let walking = false;
+      let moveAng = lead.root.rotation.y;
+      const moveSpd = currentArea === 'apartment' ? 3.8 : 4.6;
+
+      if (Math.hypot(mx, mz) > 0.08) {
+        walking = true;
+        moveAng = Math.atan2(mx, mz) + camState.yaw;
+      } else if (walkGoal) {
+        const gx = walkGoal.x - lead.root.position.x;
+        const gz = walkGoal.z - lead.root.position.z;
+        const gd = Math.hypot(gx, gz);
+        if (gd > 0.26) {
+          walking = true;
+          moveAng = Math.atan2(gx, gz);
+        } else {
+          walkGoal = null; walkMarker.visible = false;
         }
       }
 
-      // Smooth breathing, walk swing & hair breeze for Laila, Salma & Mochi!
-      [laila, salma].forEach((s, idx) => {
-        const sw = walking ? Math.sin(t * 9.5 + idx) * 0.52 : 0;
+      if (walking) {
+        const stepX = Math.sin(moveAng) * moveSpd * dt;
+        const stepZ = Math.cos(moveAng) * moveSpd * dt;
+        let nx = lead.root.position.x + stepX;
+        let nz = lead.root.position.z + stepZ;
+        if (canStandAt(nx, nz)) {
+          lead.root.position.set(nx, currentArea === 'courtyard' ? getTerrainHeight(nx, nz) : 0, nz);
+        } else if (canStandAt(nx, lead.root.position.z)) {
+          lead.root.position.set(nx, currentArea === 'courtyard' ? getTerrainHeight(nx, lead.root.position.z) : 0, lead.root.position.z);
+        } else if (canStandAt(lead.root.position.x, nz)) {
+          lead.root.position.set(lead.root.position.x, currentArea === 'courtyard' ? getTerrainHeight(lead.root.position.x, nz) : 0, nz);
+        } else {
+          walkGoal = null; walkMarker.visible = false;
+        }
+        lead.root.rotation.y = moveAng;
+      }
+
+      // Follower sister & Mochi cheerfully trot behind the active leader!
+      let folWalking = false;
+      const fdx = lead.root.position.x - fol.root.position.x;
+      const fdz = lead.root.position.z - fol.root.position.z;
+      const fDist = Math.hypot(fdx, fdz);
+      if (fDist > 1.32) {
+        folWalking = true;
+        const sx = fol.root.position.x + (fdx / fDist) * (moveSpd * 0.94) * dt;
+        const sz = fol.root.position.z + (fdz / fDist) * (moveSpd * 0.94) * dt;
+        fol.root.position.set(sx, currentArea === 'courtyard' ? getTerrainHeight(sx, sz) : 0, sz);
+        fol.root.rotation.y = Math.atan2(fdx, fdz);
+      }
+
+      const mdx = fol.root.position.x - mochi.root.position.x;
+      const mdz = fol.root.position.z - mochi.root.position.z;
+      const mDist = Math.hypot(mdx, mdz);
+      if (mDist > 1.45) {
+        const msx = mochi.root.position.x + (mdx / mDist) * (moveSpd * 0.92) * dt;
+        const msz = mochi.root.position.z + (mdz / mDist) * (moveSpd * 0.92) * dt;
+        mochi.root.position.set(msx, currentArea === 'courtyard' ? getTerrainHeight(msx, msz) : 0, msz);
+        mochi.root.rotation.y = Math.atan2(mdx, mdz);
+      }
+
+      // Update context-sensitive glowing action pill (doorways & furniture always take priority over Pet Mochi!)
+      const zones = getActiveZones();
+      let nearest = null, bestScore = 9999;
+      zones.forEach(z => {
+        const d = Math.hypot(lead.root.position.x - z.x, lead.root.position.z - z.z);
+        if (d < z.r) {
+          const isMochi = (z.id === 'pet_mochi' || z.id === 'pet_mochi_in');
+          const score = (isMochi ? 100 : 0) + d;
+          if (score < bestScore) { bestScore = score; nearest = z; }
+        }
+      });
+      currentAction = nearest;
+      const actPill = document.getElementById('action-pill');
+      if (nearest) {
+        document.getElementById('action-label').textContent = nearest.label;
+        actPill.classList.add('show');
+      } else {
+        actPill.classList.remove('show');
+      }
+
+      // Smooth breathing, walk swing & hair breeze for Laila, Salma, Mochi & Seated Parents!
+      [[lead, walking, 0], [fol, folWalking, 1]].forEach(([s, isW, idx]) => {
+        const sw = isW ? Math.sin(t * 9.5 + idx) * 0.52 : 0;
         s.legs[0].rotation.x = sw;
         s.legs[1].rotation.x = -sw;
         s.arms[0].rotation.x = -sw * 0.7;
         s.arms[1].rotation.x = sw * 0.7;
-        s.bodyPivot.position.y = walking ? Math.abs(Math.sin(t * 9.5 + idx)) * 0.06 : Math.sin(t * 2.2 + idx * 1.4) * 0.015;
+        s.bodyPivot.position.y = isW ? Math.abs(Math.sin(t * 9.5 + idx)) * 0.06 : Math.sin(t * 2.2 + idx * 1.4) * 0.015;
         s.headG.rotation.y = Math.sin(t * 0.9 + idx * 2.1) * 0.09;
         s.swayHair.forEach(h => { h.rotation.z = Math.sin(t * 2.4 + idx) * 0.08; });
       });
       mochi.tail.rotation.z = Math.sin(t * 9.5) * 0.34;
-      mochi.root.position.y = getTerrainHeight(mochi.root.position.x, mochi.root.position.z) + Math.abs(Math.sin(t * 3.2)) * 0.02;
+      const mochiBaseY = currentArea === 'courtyard' ? getTerrainHeight(mochi.root.position.x, mochi.root.position.z) : 0;
+      mochi.root.position.y = mochiBaseY + Math.abs(Math.sin(t * 3.8)) * 0.025;
 
-      // Animate fountain droplets & floating sakura petals!
-      fountainDroplets.forEach(d => {
-        const u = d.userData;
-        const p = (t * 0.85 + u.phase) % 1.0;
-        const rad = 0.25 + p * 1.72;
-        const y = 2.88 + Math.sin(p * Math.PI) * 0.62 - p * p * 1.92;
-        d.position.set(Math.cos(u.a) * rad, y, Math.sin(u.a) * rad);
-      });
-      floatingPetals.forEach(p => {
-        const u = p.userData;
-        const a = u.angle + t * u.spd;
-        p.position.set(Math.cos(a) * u.rad, 0.985, Math.sin(a) * u.rad);
-        p.rotation.z = a * 2.0;
-      });
+      if (walkMarker.visible) {
+        const sPulse = 0.85 + Math.sin(t * 6.0) * 0.16;
+        walkMarker.scale.set(sPulse, sPulse, 1);
+      }
 
-      // Drifting airborne sakura petals & fluttering butterflies!
-      driftingPetals.forEach(p => {
-        const u = p.userData;
-        u.y -= u.spd * dt;
-        u.x += Math.sin(t * 0.9 + u.phase) * 0.45 * dt + 0.32 * dt;
-        if (u.y < 0.15) { u.y = 7.8; u.x = -16 + hash01(u.phase + t) * 32; }
-        p.position.set(u.x, u.y, u.z + Math.cos(t * 0.7 + u.phase) * 0.5);
-        p.rotation.set(t * 1.6 + u.phase, t * 1.1, t * 0.9);
-      });
-      butterflies.forEach(b => {
-        const u = b.userData;
-        const a = t * 0.75 + u.phase;
-        b.position.set(u.cx + Math.cos(a) * 2.1, 1.35 + Math.sin(a * 2.4) * 0.38, u.cz + Math.sin(a * 1.3) * 1.8);
-        b.rotation.y = -a + Math.PI / 2;
-        const flap = Math.sin(t * 18 + u.phase) * 0.85;
-        u.lw.rotation.y = flap; u.rw.rotation.y = -flap;
-      });
+      // Exterior vs Interior ambient animations
+      if (currentArea === 'courtyard') {
+        porchBeacon.scale.setScalar(0.92 + Math.sin(t * 3.2) * 0.08);
+        fountainDroplets.forEach(d => {
+          const u = d.userData;
+          const p = (t * 0.85 + u.phase) % 1.0;
+          const rad = 0.25 + p * 1.72;
+          const y = 2.88 + Math.sin(p * Math.PI) * 0.62 - p * p * 1.92;
+          d.position.set(Math.cos(u.a) * rad, y, Math.sin(u.a) * rad);
+        });
+        floatingPetals.forEach(p => {
+          const u = p.userData;
+          const a = u.angle + t * u.spd;
+          p.position.set(Math.cos(a) * u.rad, 0.985, Math.sin(a) * u.rad);
+          p.rotation.z = a * 2.0;
+        });
+        driftingPetals.forEach(p => {
+          const u = p.userData;
+          u.y -= u.spd * dt;
+          u.x += Math.sin(t * 0.9 + u.phase) * 0.45 * dt + 0.32 * dt;
+          if (u.y < 0.15) { u.y = 7.8; u.x = -16 + hash01(u.phase + t) * 32; }
+          p.position.set(u.x, u.y, u.z + Math.cos(t * 0.7 + u.phase) * 0.5);
+          p.rotation.set(t * 1.6 + u.phase, t * 1.1, t * 0.9);
+        });
+        butterflies.forEach(b => {
+          const u = b.userData;
+          const a = t * 0.75 + u.phase;
+          b.position.set(u.cx + Math.cos(a) * 2.1, 1.35 + Math.sin(a * 2.4) * 0.38, u.cz + Math.sin(a * 1.3) * 1.8);
+          b.rotation.y = -a + Math.PI / 2;
+          const flap = Math.sin(t * 18 + u.phase) * 0.85;
+          u.lw.rotation.y = flap; u.rw.rotation.y = -flap;
+        });
+      } else {
+        // Gentle apartment life: Mom & Dad breathing/nodding, coffee steam, globe spin, fairy motes, piano notes!
+        seatedParents.forEach(p => {
+          p.headG.rotation.y = Math.sin(t * 0.75 + p.phase) * 0.14;
+          p.headG.rotation.x = Math.sin(t * 1.1 + p.phase) * 0.04;
+        });
+        aptSteamWisps.forEach(st => {
+          const u = st.userData;
+          const cyc = (t * 0.48 + u.phase) % 1.0;
+          st.position.set(u.bx + Math.sin(t * 2.5 + u.phase) * 0.04, 0.76 + cyc * 0.42, u.bz);
+          st.scale.setScalar(0.55 + cyc * 0.95);
+          st.material.opacity = (1.0 - cyc) * 0.42;
+        });
+        aptMagicMotes.forEach(m => {
+          const u = m.userData;
+          const a = t * 1.25 + u.phase;
+          m.position.set(u.cx + Math.cos(a) * u.rad * 0.45, u.cy + Math.sin(a * 1.6) * 0.45, u.cz + Math.sin(a) * u.rad);
+        });
+        if (aptGlobeSphere) {
+          aptGlobeSpinBoost = Math.max(0, aptGlobeSpinBoost - dt * 5.0);
+          aptGlobeSphere.rotation.y += (0.35 + aptGlobeSpinBoost) * dt;
+        }
+        for (let i = aptPianoNotes.length - 1; i >= 0; i--) {
+          const nm = aptPianoNotes[i];
+          nm.userData.life -= dt;
+          nm.position.y += nm.userData.vy * dt;
+          nm.position.x += Math.sin(t * 4.0 + nm.userData.phase) * 0.22 * dt;
+          nm.material.opacity = Math.max(0, nm.userData.life / 2.6);
+          if (nm.userData.life <= 0) { interiorGroup.remove(nm); aptPianoNotes.splice(i, 1); }
+        }
+      }
 
-      // Smoothly damp camera toward target preset / orbit
+      // Smooth Play Mode Follow Camera vs Preset Orbit Camera
+      if (camMode === 'play') {
+        camTarget.tx = lead.root.position.x;
+        camTarget.ty = lead.root.position.y + (currentArea === 'apartment' ? 1.35 : 1.65);
+        camTarget.tz = lead.root.position.z;
+      }
       const damp = Math.min(1, dt * 6.5);
       ['yaw', 'pitch', 'dist', 'tx', 'ty', 'tz'].forEach(k => {
         camState[k] += (camTarget[k] - camState[k]) * damp;
@@ -2268,7 +3310,7 @@
       const cx = camState.tx + Math.sin(camState.yaw) * Math.cos(camState.pitch) * camState.dist;
       const cy = camState.ty + Math.sin(camState.pitch) * camState.dist;
       const cz = camState.tz + Math.cos(camState.yaw) * Math.cos(camState.pitch) * camState.dist;
-      camera.position.set(cx, Math.max(0.5, cy), cz);
+      camera.position.set(cx, Math.max(0.65, cy), cz);
       camera.lookAt(camState.tx, camState.ty, camState.tz);
 
       if (composer && GLOBAL.bloomOn) composer.render();
