@@ -636,18 +636,33 @@ window.LailaSalma = window.LailaSalma || {};
     c.width = 2048; c.height = 1024;
     const ctx = c.getContext('2d');
     const isSafari = worldId === 'safari';
+    const isEgypt = worldId === 'egypt';
+    const isMarrakech = worldId === 'marrakech';
+    const isWarmAfrica = isSafari || isEgypt || isMarrakech;
 
     const grad = ctx.createLinearGradient(0, 0, 0, 1024);
     if (mode === 1) {
-      grad.addColorStop(0.0, isSafari ? '#261e4a' : '#1c2854');
-      grad.addColorStop(0.32, isSafari ? '#78425e' : '#5a4876');
-      grad.addColorStop(0.58, isSafari ? '#e86a3a' : '#df7a52');
-      grad.addColorStop(0.78, isSafari ? '#ffb84d' : '#ffbc68');
-      grad.addColorStop(1.0, '#fff0c4');
+      grad.addColorStop(0.0, isMarrakech ? '#321c4a' : (isWarmAfrica ? '#261e4a' : '#1c2854'));
+      grad.addColorStop(0.32, isMarrakech ? '#a8425e' : (isEgypt ? '#9e4c52' : (isSafari ? '#78425e' : '#5a4876')));
+      grad.addColorStop(0.58, isMarrakech ? '#f26a4b' : (isWarmAfrica ? '#e86a3a' : '#df7a52'));
+      grad.addColorStop(0.78, isEgypt ? '#ffc65c' : (isWarmAfrica ? '#ffb84d' : '#ffbc68'));
+      grad.addColorStop(1.0, '#fff2c8');
     } else if (mode === 2) {
-      grad.addColorStop(0.0, '#090f24');
-      grad.addColorStop(0.5, '#1a2c56');
-      grad.addColorStop(1.0, '#445882');
+      grad.addColorStop(0.0, isMarrakech ? '#0d0c28' : '#090f24');
+      grad.addColorStop(0.5, isMarrakech ? '#281d52' : '#1a2c56');
+      grad.addColorStop(1.0, isEgypt ? '#544a6e' : '#445882');
+    } else if (isEgypt) {
+      grad.addColorStop(0.0, '#1e6ec4');
+      grad.addColorStop(0.32, '#58b4e8');
+      grad.addColorStop(0.60, '#bce8f7');
+      grad.addColorStop(0.80, '#ffebc2');
+      grad.addColorStop(1.0, '#ffd58a');
+    } else if (isMarrakech) {
+      grad.addColorStop(0.0, '#2a68b8');
+      grad.addColorStop(0.32, '#74a8df');
+      grad.addColorStop(0.60, '#e8d4d8');
+      grad.addColorStop(0.80, '#ffd4b8');
+      grad.addColorStop(1.0, '#ffba92');
     } else if (isSafari) {
       grad.addColorStop(0.0, '#2a75c7');
       grad.addColorStop(0.34, '#66aee8');
@@ -664,27 +679,27 @@ window.LailaSalma = window.LailaSalma || {};
     ctx.fillStyle = grad; ctx.fillRect(0, 0, 2048, 1024);
 
     if (mode === 2) {
-      if (isSafari) {
+      if (isWarmAfrica) {
         // Subtle diagonal Milky Way band across the African night sky
         ctx.save();
         ctx.translate(1024, 240);
         ctx.rotate(-0.24);
         const mw = ctx.createLinearGradient(0, -140, 0, 140);
         mw.addColorStop(0, 'rgba(130, 160, 230, 0)');
-        mw.addColorStop(0.5, 'rgba(160, 188, 248, 0.16)');
+        mw.addColorStop(0.5, 'rgba(160, 188, 248, 0.18)');
         mw.addColorStop(1, 'rgba(130, 160, 230, 0)');
         ctx.fillStyle = mw;
         ctx.fillRect(-1100, -140, 2200, 280);
         ctx.restore();
       }
       ctx.fillStyle = 'rgba(255, 250, 224, 0.92)';
-      const starCount = isSafari ? 360 : 240;
+      const starCount = isWarmAfrica ? 360 : 240;
       for (let i = 0; i < starCount; i++) {
         ctx.beginPath();
         ctx.arc(hash01(i * 9.1) * 2048, hash01(i * 4.7) * 490, (i % 5 === 0) ? 2.8 : 1.3, 0, Math.PI * 2);
         ctx.fill();
       }
-      if (isSafari) {
+      if (isWarmAfrica) {
         // Glowing golden African Night Constellations (Southern Cross, Leo the Lion & Orion!)
         const constellations = [
           // Southern Cross (Crux)

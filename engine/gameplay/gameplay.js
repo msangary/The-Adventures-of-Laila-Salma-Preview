@@ -90,6 +90,24 @@ window.LailaSalma = window.LailaSalma || {};
     sushi_boat: { name: 'Royal Kyoto Sushi Boat ⭐', short: 'Kyoto⚡', cost: 85, speedMult: 1.32, infiniteStamina: true, durationMs: 240000, bonusXp: 25 }
   };
 
+  const EGYPT_GK_POOL = [
+    { q: 'Which long, sparkling river flows right through Egypt?', opts: ['Amazon River', 'Nile River', 'Thames River', 'Seine River'], a: 1 },
+    { q: 'What were the picture-symbols written by Ancient Egyptian scribes called?', opts: ['Hieroglyphs', 'Origami', 'Calligraphy', 'Runes'], a: 0 },
+    { q: 'Which famous statue near the Great Pyramids has the body of a lion?', opts: ['The Minotaur', 'The Great Sphinx', 'Pegasus', 'A Griffin'], a: 1 },
+    { q: 'What is a traditional wooden Egyptian boat with a tall white triangular sail called?', opts: ['Gondola', 'Felucca', 'Longship', 'Canoe'], a: 1 },
+    { q: 'Which animal was treasured as a royal friend in Ancient Egyptian homes?', opts: ['Penguins', 'Cats', 'Koalas', 'Polar Bears'], a: 1 },
+    { q: 'What giant golden stone monuments were built for Egyptian Pharaohs?', opts: ['Pagodas', 'Pyramids', 'Igloos', 'Castles'], a: 1 }
+  ];
+
+  const MARRAKECH_GK_POOL = [
+    { q: 'What is the name of the colorful geometric Moroccan mosaic tilework?', opts: ['Zellige', 'Tatami', 'Origami', 'Stained Wood'], a: 0 },
+    { q: 'Which majestic snow-dusted mountain range rises near Marrakech?', opts: ['The Alps', 'The Atlas Mountains', 'The Andes', 'Mount Fuji'], a: 1 },
+    { q: 'What sweet, fragrant drink is famously poured from high up in Morocco?', opts: ['Mint Tea', 'Lemonade', 'Matcha', 'Apple Cider'], a: 0 },
+    { q: 'What cone-shaped clay pot is used to cook delicious Moroccan stews?', opts: ['Wok', 'Tagine', 'Skillet', 'Teapot'], a: 1 },
+    { q: 'Which tiny Sahara desert fox has super-big cute ears to stay cool?', opts: ['Arctic Fox', 'Fennec Fox', 'Red Fox', 'Kitsune'], a: 1 },
+    { q: 'What does "Marhaba" mean in Arabic when greeting friends in Marrakech?', opts: ['Goodnight', 'Welcome / Hello', 'See you later', 'Thank you'], a: 1 }
+  ];
+
   function seededRand(seed) {
     let s = seed % 2147483647;
     if (s <= 0) s += 2147483646;
@@ -116,11 +134,15 @@ window.LailaSalma = window.LailaSalma || {};
     const pool = (
       worldId === 'home_neighborhood' ? HOME_GK_POOL :
       worldId === 'safari' ? SAFARI_GK_POOL :
+      worldId === 'egypt' ? EGYPT_GK_POOL :
+      worldId === 'marrakech' ? MARRAKECH_GK_POOL :
       worldId === 'kyoto' ? KYOTO_GK_POOL : TOKYO_GK_POOL
     ).slice();
     const catName =
       worldId === 'home_neighborhood' ? 'Sunny Oaks School' :
       worldId === 'safari' ? 'Safari Wildlife' :
+      worldId === 'egypt' ? 'Ancient Egypt' :
+      worldId === 'marrakech' ? 'Marrakech & Morocco' :
       worldId === 'kyoto' ? 'Kyoto Discovery' : 'Tokyo & World Quiz';
     for (let i = 0; i < 3; i++) {
       const idx = Math.floor(rng() * pool.length);
@@ -187,16 +209,24 @@ window.LailaSalma = window.LailaSalma || {};
         ? '🏫 Sunny Oaks School — Ms. Nadia\'s Quiz'
         : (activeQuizWorld === 'safari'
           ? '👨‍🏫 Dr. Kofi — Safari Wildlife Quiz'
-          : (activeQuizWorld === 'kyoto'
-            ? '👨‍🏫 Sensei Kenji — Kyoto Discovery Quiz'
-            : '👩‍🏫 Sensei Haruka — Tokyo Town Quiz'));
+          : (activeQuizWorld === 'egypt'
+            ? '📜 Scribe Imhotep — Ancient Egypt Quiz'
+            : (activeQuizWorld === 'marrakech'
+              ? '🕌 Teacher Youssef — Marrakech Discovery Quiz'
+              : (activeQuizWorld === 'kyoto'
+                ? '👨‍🏫 Sensei Kenji — Kyoto Discovery Quiz'
+                : '👩‍🏫 Sensei Haruka — Tokyo Town Quiz'))));
     }
     if (backBtn) {
       backBtn.textContent = activeQuizWorld === 'home_neighborhood'
         ? 'Back to Home Community'
         : (activeQuizWorld === 'safari'
           ? 'Back to Safari'
-          : (activeQuizWorld === 'kyoto' ? 'Back to Kyoto' : 'Back to Tokyo'));
+          : (activeQuizWorld === 'egypt'
+            ? 'Back to Ancient Egypt'
+            : (activeQuizWorld === 'marrakech'
+              ? 'Back to Marrakech'
+              : (activeQuizWorld === 'kyoto' ? 'Back to Kyoto' : 'Back to Tokyo'))));
     }
     document.getElementById('school-modal').classList.remove('hidden');
     document.getElementById('school-lobby').classList.remove('hidden');
@@ -315,7 +345,11 @@ window.LailaSalma = window.LailaSalma || {};
           ? (LS.state.foundHomePets ? LS.state.foundHomePets.length : 0)
           : (wid === 'safari'
             ? (LS.state.foundLionCubs ? LS.state.foundLionCubs.length : 0)
-            : (wid === 'kyoto' ? LS.state.foundKitsune.length : LS.state.foundCats.length));
+            : (wid === 'egypt'
+              ? (LS.state.foundEgyptCats ? LS.state.foundEgyptCats.length : 0)
+              : (wid === 'marrakech'
+                ? (LS.state.foundMarrakechFoxes ? LS.state.foundMarrakechFoxes.length : 0)
+                : (wid === 'kyoto' ? LS.state.foundKitsune.length : LS.state.foundCats.length))));
         const remMs = LS.getAnimalResetRemainingMs(wid);
         const resetHtml = foundCount >= 5
           ? ('<div class="ramen-desc" style="color:#1b7a43;font-weight:700;">✨ All 5 found! New hiding spots in ' +
@@ -1365,9 +1399,16 @@ window.LailaSalma = window.LailaSalma || {};
     const isHomePup = animalId.startsWith('home_pup_') || LS.state.currentWorld === 'home_neighborhood';
     const isKitsune = animal.kind === 'kitsune';
     const isLionCub = animal.kind === 'lion_cub';
+    const isEgyptCat = animal.kind === 'egypt_cat';
+    const isMarrakechFox = animal.kind === 'marrakech_fox';
     if (isHomePup && !Array.isArray(LS.state.foundHomePets)) LS.state.foundHomePets = [];
+    if (isEgyptCat && !Array.isArray(LS.state.foundEgyptCats)) LS.state.foundEgyptCats = [];
+    if (isMarrakechFox && !Array.isArray(LS.state.foundMarrakechFoxes)) LS.state.foundMarrakechFoxes = [];
     const arr = isHomePup ? LS.state.foundHomePets
-      : (isLionCub ? LS.state.foundLionCubs : (isKitsune ? LS.state.foundKitsune : LS.state.foundCats));
+      : (isLionCub ? LS.state.foundLionCubs
+        : (isEgyptCat ? LS.state.foundEgyptCats
+          : (isMarrakechFox ? LS.state.foundMarrakechFoxes
+            : (isKitsune ? LS.state.foundKitsune : LS.state.foundCats))));
     if (!arr.includes(animalId)) arr.push(animalId);
 
     world.zones = world.zones.filter(z => z.id !== 'animal:' + animalId);
@@ -1378,6 +1419,8 @@ window.LailaSalma = window.LailaSalma || {};
     if (isAll) {
       if (isHomePup) LS.state.homePetsCompletedAt = Date.now();
       else if (isLionCub) LS.state.lionCubsCompletedAt = Date.now();
+      else if (isEgyptCat) LS.state.egyptCatsCompletedAt = Date.now();
+      else if (isMarrakechFox) LS.state.marrakechFoxesCompletedAt = Date.now();
       else if (isKitsune) LS.state.kitsuneCompletedAt = Date.now();
       else LS.state.catsCompletedAt = Date.now();
     }
@@ -1393,12 +1436,15 @@ window.LailaSalma = window.LailaSalma || {};
     if (LS.completeCozyMission) LS.completeCozyMission('pet');
 
     if (isAll) {
-      LS.unlockStamp(isHomePup ? 'home_pets' : (isLionCub ? 'safari_cubs' : (isKitsune ? 'kyoto_kitsune' : 'tokyo_cats')));
+      LS.unlockStamp(isHomePup ? 'home_pets' : (isLionCub ? 'safari_cubs' : (isEgyptCat ? 'egypt_cats' : (isMarrakechFox ? 'marrakech_foxes' : (isKitsune ? 'kyoto_kitsune' : 'tokyo_cats')))));
       LS.showToast((isHomePup ? '🐶🎉 All 5 Community Puppies Found!'
-        : (isLionCub ? '🦁🎉 All 5 Safari Lion Cubs Found!' : (isKitsune ? '🦊🎉 All 5 Kyoto Kitsune Found!' : '🐾🎉 All 5 Tokyo Cats Found!'))) +
+        : (isLionCub ? '🦁🎉 All 5 Safari Lion Cubs Found!'
+          : (isEgyptCat ? '🐱👑 All 5 Royal Egyptian Mau Cats Befriended!'
+            : (isMarrakechFox ? '🦊✨ All 5 Sahara Fennec Foxes Befriended!'
+              : (isKitsune ? '🦊🎉 All 5 Kyoto Kitsune Found!' : '🐾🎉 All 5 Tokyo Cats Found!'))))) +
         ' Bonus +' + coinReward + 'c! They will hide in brand-new spots in 2 hours!');
     } else {
-      LS.showToast((isHomePup ? '🐶 Petted ' : (isLionCub ? '🦁 Befriended ' : (isKitsune ? '🦊 Befriended ' : '🐱 Found '))) + animal.name + ' (' + count + '/5)! +' + coinReward + 'c & +' + xpReward + ' XP!');
+      LS.showToast((isHomePup ? '🐶 Petted ' : (isLionCub ? '🦁 Befriended ' : (isEgyptCat ? '🐱👑 Befriended ' : (isMarrakechFox ? '🦊✨ Befriended ' : (isKitsune ? '🦊 Befriended ' : '🐱 Found '))))) + animal.name + ' (' + count + '/5)! +' + coinReward + 'c & +' + xpReward + ' XP!');
     }
   };
 
@@ -1420,7 +1466,7 @@ window.LailaSalma = window.LailaSalma || {};
       'safari-guide-modal', 'safari-campfire-modal', 'safari-tent-modal',
       'kitchen-modal', 'piano-modal', 'tv-game-modal', 'home-restaurant-modal', 'globe-modal', 'quest-modal',
       'qashqai-modal', 'eatery-modal', 'yiwan-modal', 'cosmo-arcade-modal', 'mai-lasagna-modal', 'board-game-modal',
-      'ngsc-game-modal'
+      'ngsc-game-modal', 'wave1-game-modal'
     ].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('hidden');
@@ -2706,6 +2752,257 @@ window.LailaSalma = window.LailaSalma || {};
     }
 
     const modal = document.getElementById('ngsc-game-modal');
+    if (modal) modal.classList.remove('hidden');
+  };
+
+  // =========================================================================
+  // WAVE 1 (AFRICA): ANCIENT EGYPT & MARRAKECH INTERACTIVE MINI-GAMES!
+  // =========================================================================
+  LS.openWave1Activity = function (actId) {
+    LS.runtime.modalOpen = true;
+    const titleEl = document.getElementById('wave1-game-title');
+    const subEl = document.getElementById('wave1-game-sub');
+    const stage = document.getElementById('wave1-game-stage');
+    const msg = document.getElementById('wave1-game-msg');
+    if (!stage) return;
+    stage.innerHTML = '';
+    if (msg) msg.textContent = '';
+
+    if (actId === 'egypt_hieroglyphs') {
+      if (titleEl) titleEl.textContent = '🔺 Temple Hieroglyph Code-Breaker';
+      if (subEl) subEl.textContent = 'Tap the matching Egyptian hieroglyph symbols in order to unlock the Golden Chamber!';
+      const symbols = [
+        { s: '☀️', name: 'Sun (Ra)' },
+        { s: '🌊', name: 'Nile Water' },
+        { s: '🐱', name: 'Royal Cat' },
+        { s: '🪷', name: 'Blue Lotus' }
+      ];
+      let step = 0;
+      const render = () => {
+        stage.innerHTML =
+          '<div style="background:linear-gradient(180deg,#f3ddb0,#e2bd74);border:3px solid #1f4f94;border-radius:14px;padding:14px;text-align:center;">' +
+          '<div style="font-size:13px;font-weight:800;color:#1f4f94;margin-bottom:8px;">CARVED TEMPLE CARTOUCHE:</div>' +
+          '<div style="display:flex;justify-content:center;gap:10px;margin-bottom:14px;">' +
+          symbols.map((it, idx) =>
+            '<div style="width:54px;height:64px;border-radius:14px;border:2px solid ' + (idx < step ? '#16a34a' : (idx === step ? '#c84b31' : '#8a5a18')) +
+            ';background:' + (idx < step ? '#dcfce7' : '#fff8e7') + ';display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:26px;">' +
+            it.s + '<span style="font-size:9px;font-weight:700;color:#5c3a16;">' + (idx < step ? '✓' : (idx + 1)) + '</span></div>'
+          ).join('') +
+          '</div>' +
+          '<div style="font-size:13px;font-weight:700;color:#5c2d16;margin-bottom:8px;">' +
+          (step < symbols.length ? ('Find symbol #' + (step + 1) + ': <strong>' + symbols[step].name + '</strong>') : '✨ Golden Chamber Unlocked!') +
+          '</div>' +
+          '<div id="hiero-btns" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;"></div></div>';
+        const btnGrid = document.getElementById('hiero-btns');
+        const shuffled = [symbols[2], symbols[0], symbols[3], symbols[1]];
+        shuffled.forEach(item => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'btn-secondary';
+          b.style.fontSize = '16px';
+          b.textContent = item.s + ' ' + item.name;
+          b.onclick = () => {
+            if (step >= symbols.length) return;
+            if (item.s === symbols[step].s) {
+              step++;
+              LS.playSFX('coin');
+              if (msg) msg.textContent = '✨ Glowing match! The temple stone hums with golden light!';
+              if (step >= symbols.length) {
+                LS.addCoins(40); LS.addXP(32);
+                LS.unlockStamp('egypt_hieroglyphs');
+                LS.advanceStoryStep('egypt', 'egypt_hieroglyphs');
+                if (LS.completeCozyMission) LS.completeCozyMission('play');
+                LS.playSFX('correct');
+                if (msg) msg.innerHTML = '🏆 <strong>Bravo, Laila &amp; Salma!</strong> You decoded the Royal Cartouche! (+40c &amp; +32 XP!)';
+              }
+              render();
+            } else {
+              LS.playSFX('wrong');
+              if (msg) msg.textContent = 'Look closely at the next symbol: ' + symbols[step].name + '!';
+            }
+          };
+          btnGrid.appendChild(b);
+        });
+      };
+      render();
+    } else if (actId === 'egypt_felucca') {
+      if (titleEl) titleEl.textContent = '⛵ Nile Felucca Sailboat Voyage';
+      if (subEl) subEl.textContent = 'Catch the Nile breeze to glide past lotus flowers & collect 6 Golden Scarabs!';
+      let prog = 8, scarabs = 0, done = false;
+      stage.innerHTML =
+        '<div style="background:linear-gradient(180deg,#38bdf8 0%,#0f766e 100%);border:3px solid #f4c44e;border-radius:14px;padding:16px;color:#fff;">' +
+        '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:8px;">' +
+        '<span>🪷 Shimmering Nile River</span><span id="fel-cnt">🪲 Scarabs: 0 / 6</span></div>' +
+        '<div style="position:relative;height:42px;background:rgba(255,255,255,0.2);border-radius:20px;overflow:hidden;">' +
+        '<div id="fel-bar" style="height:100%;width:8%;background:linear-gradient(90deg,#facc15,#fb923c);border-radius:20px;transition:width 0.18s;"></div>' +
+        '<span id="fel-boat" style="position:absolute;top:5px;left:6%;font-size:26px;transition:left 0.18s;">⛵</span>' +
+        '</div></div>' +
+        '<div style="text-align:center;margin-top:12px;">' +
+        '<button id="btn-fel-sail" class="btn-primary" type="button">💨 Catch the Nile Breeze!</button></div>';
+      const btn = document.getElementById('btn-fel-sail');
+      if (btn) {
+        btn.onclick = () => {
+          if (done) { LS.openWave1Activity('egypt_felucca'); return; }
+          scarabs++;
+          prog = Math.min(100, Math.round(8 + (scarabs / 6) * 92));
+          LS.playTone(480 + scarabs * 55, 0.12, 'triangle', 0, 0.12);
+          document.getElementById('fel-bar').style.width = prog + '%';
+          document.getElementById('fel-boat').style.left = Math.min(86, prog - 6) + '%';
+          document.getElementById('fel-cnt').textContent = '🪲 Scarabs: ' + scarabs + ' / 6';
+          if (msg) msg.textContent = 'Whoosh! Sailing past blue Nile lotuses with Captain Tarek! 🪷';
+          if (scarabs >= 6) {
+            done = true;
+            LS.addCoins(40); LS.addXP(32);
+            LS.unlockStamp('egypt_felucca');
+            LS.advanceStoryStep('egypt', 'egypt_felucca');
+            if (LS.completeCozyMission) LS.completeCozyMission('play');
+            LS.playSFX('correct');
+            if (msg) msg.innerHTML = '🏆 <strong>Nile Felucca Captain!</strong> Laila &amp; Salma collected all 6 Golden Scarabs! (+40c &amp; +32 XP!)';
+            btn.textContent = '🔄 Sail the Nile Again!';
+          }
+        };
+      }
+    } else if (actId === 'egypt_camel') {
+      if (titleEl) titleEl.textContent = '🐪 Golden Oasis Camel Caravan';
+      if (subEl) subEl.textContent = 'Guide Karim smiles: "Choose Habibi or Shams for a breezy sunset camel ride around the Date-Palm Oasis!"';
+      stage.innerHTML =
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">' +
+        '<button id="btn-cam-1" class="btn-primary" type="button">🐪 Ride Habibi (Crimson Saddle)</button>' +
+        '<button id="btn-cam-2" class="btn-secondary" type="button">🐪 Ride Shams (Turquoise Saddle)</button></div>';
+      const finishRide = (name) => {
+        LS.addCoins(25); LS.addXP(22);
+        LS.runtime.stamina = 100;
+        LS.runtime.buff = { name: 'Oasis Camel Breeze', short: 'Camel🐪', speedMult: 1.28, infiniteStamina: true, expiresAt: Date.now() + 90000 };
+        LS.playSFX('correct');
+        if (msg) msg.innerHTML = '✨ <strong>Woohoo!</strong> Laila &amp; Salma rode ' + name + ' through the sunlit palm oasis! (+25c, +22 XP &amp; Speed Boost!)';
+      };
+      document.getElementById('btn-cam-1').onclick = () => finishRide('Habibi');
+      document.getElementById('btn-cam-2').onclick = () => finishRide('Shams');
+    } else if (actId === 'egypt_bakery') {
+      if (titleEl) titleEl.textContent = "🍯 Nefertari's Ancient Bakery & Fruit Stall";
+      if (subEl) subEl.textContent = 'Warm out of the clay oven! Choose a tasty Ancient Egyptian treat for Laila & Salma:';
+      stage.innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:8px;">' +
+        '<button id="btn-eg-b1" class="btn-primary" type="button">🫓 Warm Honey-Date Aish Baladi Flatbread (+20c, +20 XP)</button>' +
+        '<button id="btn-eg-b2" class="btn-secondary" type="button">🍷 Sweet Ruby Pomegranate &amp; Fig Juice (+20c, +20 XP)</button></div>';
+      const serve = (dish) => {
+        LS.addCoins(20); LS.addXP(20);
+        LS.runtime.stamina = 100;
+        if (LS.completeCozyMission) LS.completeCozyMission('meal');
+        LS.playSFX('correct');
+        if (msg) msg.innerHTML = '😋 <strong>Yummy!</strong> Laila &amp; Salma shared ' + dish + '! Stamina 100% restored!';
+      };
+      document.getElementById('btn-eg-b1').onclick = () => serve('warm honey-date Aish Baladi');
+      document.getElementById('btn-eg-b2').onclick = () => serve('sweet ruby pomegranate juice');
+    } else if (actId === 'marrakech_lantern') {
+      if (titleEl) titleEl.textContent = "🏮 Fatima's Stained-Glass Lantern Studio";
+      if (subEl) subEl.textContent = 'Pick your jewel stained-glass color and pierced brass star pattern, then light up your lantern!';
+      let glassCol = '#ffb703', glassName = 'Saffron Gold', pat = '⭐ 8-Point Star';
+      const renderLantern = () => {
+        stage.innerHTML =
+          '<div style="background:linear-gradient(180deg,#25163a,#3d224f);border:3px solid #f4be44;border-radius:14px;padding:14px;text-align:center;color:#fff8e2;">' +
+          '<div style="width:86px;height:112px;margin:0 auto 10px;border-radius:26px 26px 14px 14px;border:4px solid #e2ad3b;background:' + glassCol + ';box-shadow:0 0 28px ' + glassCol + ';display:flex;align-items:center;justify-content:center;font-size:34px;">' + pat.split(' ')[0] + '</div>' +
+          '<div style="font-size:12px;margin-bottom:10px;">Glass: <strong>' + glassName + '</strong> • Pattern: <strong>' + pat + '</strong></div>' +
+          '<div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;">' +
+          '<button class="btn-small" data-gc="#ffb703" data-gn="Saffron Gold">🟡 Saffron</button>' +
+          '<button class="btn-small" data-gc="#fb5687" data-gn="Ruby Rose">🔴 Ruby</button>' +
+          '<button class="btn-small" data-gc="#38bdf8" data-gn="Cobalt Sky">🔵 Cobalt</button>' +
+          '<button class="btn-small" data-gc="#34d399" data-gn="Emerald Oasis">🟢 Emerald</button>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;">' +
+          '<button class="btn-small" data-pt="⭐ 8-Point Star">⭐ Star</button>' +
+          '<button class="btn-small" data-pt="🌙 Crescent Moon">🌙 Moon</button>' +
+          '<button class="btn-small" data-pt="💎 Zellige Diamond">💎 Diamond</button>' +
+          '</div>' +
+          '<button id="btn-light-lantern" class="btn-primary" type="button">✨ Light &amp; Hang Lantern in the Bazaar!</button></div>';
+        stage.querySelectorAll('[data-gc]').forEach(b => {
+          b.onclick = () => { glassCol = b.dataset.gc; glassName = b.dataset.gn; LS.playTone(620, 0.08, 'sine', 0, 0.09); renderLantern(); };
+        });
+        stage.querySelectorAll('[data-pt]').forEach(b => {
+          b.onclick = () => { pat = b.dataset.pt; LS.playTone(720, 0.08, 'sine', 0, 0.09); renderLantern(); };
+        });
+        document.getElementById('btn-light-lantern').onclick = () => {
+          LS.addCoins(40); LS.addXP(32);
+          LS.unlockStamp('marrakech_lantern');
+          LS.advanceStoryStep('marrakech', 'marrakech_lantern');
+          if (LS.completeCozyMission) LS.completeCozyMission('play');
+          LS.playSFX('correct');
+          if (msg) msg.innerHTML = '🏮✨ <strong>Stunning!</strong> Your ' + glassName + ' ' + pat + ' lantern now glows above Marrakech! (+40c &amp; +32 XP!)';
+        };
+      };
+      renderLantern();
+    } else if (actId === 'marrakech_rug') {
+      if (titleEl) titleEl.textContent = '🧶 Berber Mosaic Rug Pattern Matcher';
+      if (subEl) subEl.textContent = 'Help Weaver Nadia finish the colorful diamond sequence on her Berber loom!';
+      const seq = ['🟥', '🟨', '🟦', '🟥', '🟨', '❓'];
+      stage.innerHTML =
+        '<div style="background:#fdf3e0;border:3px solid #c83e37;border-radius:14px;padding:14px;text-align:center;">' +
+        '<div style="font-size:28px;letter-spacing:8px;margin-bottom:12px;">' + seq.join(' ') + '</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#5c2d16;margin-bottom:10px;">Which woven tile completes the pattern?</div>' +
+        '<div style="display:flex;justify-content:center;gap:10px;">' +
+        '<button id="rug-opt-0" class="btn-secondary" style="font-size:20px;">🟥 Red</button>' +
+        '<button id="rug-opt-1" class="btn-secondary" style="font-size:20px;">🟦 Blue</button>' +
+        '<button id="rug-opt-2" class="btn-secondary" style="font-size:20px;">🟨 Gold</button></div></div>';
+      document.getElementById('rug-opt-1').onclick = () => {
+        LS.addCoins(35); LS.addXP(28);
+        if (LS.completeCozyMission) LS.completeCozyMission('play');
+        LS.playSFX('correct');
+        if (msg) msg.innerHTML = '🎉 <strong>Perfect Pattern!</strong> Nadia weaves the 🟦 Cobalt Diamond right into the Berber rug! (+35c &amp; +28 XP!)';
+      };
+      ['rug-opt-0', 'rug-opt-2'].forEach(id => {
+        document.getElementById(id).onclick = () => {
+          LS.playSFX('wrong');
+          if (msg) msg.textContent = 'Look at the repeating trio: Red, Gold, Blue — Red, Gold, ...!';
+        };
+      });
+    } else if (actId === 'marrakech_tea') {
+      if (titleEl) titleEl.textContent = '🫖 Riad Orange-Tree Mint Tea & Tagine';
+      if (subEl) subEl.textContent = 'Tea Master Rashid lifts the silver teapot high to pour bubbly sweet mint tea! Pick your courtyard feast:';
+      stage.innerHTML =
+        '<div style="display:flex;flex-direction:column;gap:8px;">' +
+        '<button id="btn-mk-t1" class="btn-primary" type="button">🫖 High-Poured Sweet Moroccan Mint Tea &amp; Chebakia Honey Pastries</button>' +
+        '<button id="btn-mk-t2" class="btn-secondary" type="button">🍲 Aromatic Chicken-Apricot Tagine &amp; Fluffy Golden Couscous</button></div>';
+      const serveTea = (meal) => {
+        LS.addCoins(30); LS.addXP(28);
+        LS.runtime.stamina = 100;
+        LS.runtime.buff = { name: 'Riad Mint Tea Refresh', short: 'Mint🫖', speedMult: 1.25, infiniteStamina: true, expiresAt: Date.now() + 90000 };
+        LS.unlockStamp('marrakech_tea');
+        LS.advanceStoryStep('marrakech', 'marrakech_tea');
+        if (LS.completeCozyMission) LS.completeCozyMission('meal');
+        LS.playSFX('correct');
+        if (msg) msg.innerHTML = '🫖🍊 <strong>Bessaha!</strong> Laila &amp; Salma enjoyed ' + meal + ' under the orange trees! (+30c, +28 XP &amp; Speed Boost!)';
+      };
+      document.getElementById('btn-mk-t1').onclick = () => serveTea('high-poured sweet mint tea & honey pastries');
+      document.getElementById('btn-mk-t2').onclick = () => serveTea('chicken-apricot Tagine & golden Couscous');
+    } else if (actId === 'marrakech_drums') {
+      if (titleEl) titleEl.textContent = '🥁 Jemaa el-Fnaa Evening Drum Circle';
+      if (subEl) subEl.textContent = 'Tap the 3 colorful Moroccan drums to play 8 cheerful rhythm beats under the glowing lanterns!';
+      let beats = 0, done = false;
+      stage.innerHTML =
+        '<div style="text-align:center;margin-bottom:10px;font-weight:800;" id="mk-drum-cnt">Rhythm Beats: 0 / 8 🥁</div>' +
+        '<div style="display:flex;justify-content:center;gap:10px;">' +
+        '<button class="btn-primary mk-d" data-f="220" type="button">🥁 Dum (Deep)</button>' +
+        '<button class="btn-secondary mk-d" data-f="392" type="button">🪘 Tak (Bright)</button>' +
+        '<button class="btn-secondary mk-d" data-f="523" type="button">✨ Ka (Sparkle)</button></div>';
+      stage.querySelectorAll('.mk-d').forEach(b => {
+        b.onclick = () => {
+          LS.playTone(Number(b.dataset.f), 0.14, 'triangle', 0, 0.14);
+          if (done) return;
+          beats++;
+          document.getElementById('mk-drum-cnt').textContent = 'Rhythm Beats: ' + beats + ' / 8 🥁';
+          if (msg) msg.textContent = 'The whole Marrakech bazaar claps along to your beat! ✨';
+          if (beats >= 8) {
+            done = true;
+            LS.addCoins(30); LS.addXP(26);
+            if (LS.completeCozyMission) LS.completeCozyMission('music');
+            LS.playSFX('correct');
+            if (msg) msg.innerHTML = '🎶🏆 <strong>Amazing Moroccan Rhythm, Laila &amp; Salma!</strong> Storyteller Hassan cheers! (+30c &amp; +26 XP!)';
+          }
+        };
+      });
+    }
+
+    const modal = document.getElementById('wave1-game-modal');
     if (modal) modal.classList.remove('hidden');
   };
 })(window.LailaSalma);

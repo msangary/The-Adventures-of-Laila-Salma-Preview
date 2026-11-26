@@ -134,8 +134,9 @@ window.LailaSalma = window.LailaSalma || {};
       return;
     }
 
+    const isWarmAfrica = wid === 'safari' || wid === 'egypt' || wid === 'marrakech';
     if (mode === 1) {
-      scene.fog.color.setHex(wid === 'safari' ? 0xe88b4f : (wid === 'kyoto' ? 0xeb9b6c : 0xf2a772));
+      scene.fog.color.setHex(wid === 'marrakech' ? 0xe07658 : (isWarmAfrica ? 0xe88b4f : (wid === 'kyoto' ? 0xeb9b6c : 0xf2a772)));
       dirLight.color.setHex(0xffa054);
       dirLight.intensity = LS.isHD ? 1.28 : 1.05;
       hemiLight.color.setHex(0xffc99e);
@@ -144,7 +145,7 @@ window.LailaSalma = window.LailaSalma || {};
       accentLight.intensity = 0.85;
       if (btn) btn.textContent = '🌇';
     } else if (mode === 2) {
-      scene.fog.color.setHex(0x25355a);
+      scene.fog.color.setHex(wid === 'marrakech' ? 0x261e45 : 0x25355a);
       dirLight.color.setHex(0x88a8e6);
       dirLight.intensity = LS.isHD ? 0.72 : 0.62;
       hemiLight.color.setHex(0x50689c);
@@ -153,11 +154,11 @@ window.LailaSalma = window.LailaSalma || {};
       accentLight.intensity = 1.15;
       if (btn) btn.textContent = '🌙';
     } else {
-      scene.fog.color.setHex(wid === 'safari' ? 0xeddcb8 : (LS.isHD ? 0xd8e8f5 : (wid === 'kyoto' ? 0xc8e4f2 : 0xcbe6f7)));
-      dirLight.color.setHex(wid === 'safari' ? 0xffe2a4 : (LS.isHD ? 0xffe4b3 : 0xfff1d0));
+      scene.fog.color.setHex(wid === 'egypt' ? 0xf2dfb8 : (wid === 'marrakech' ? 0xf2d3be : (wid === 'safari' ? 0xeddcb8 : (LS.isHD ? 0xd8e8f5 : (wid === 'kyoto' ? 0xc8e4f2 : 0xcbe6f7)))));
+      dirLight.color.setHex(isWarmAfrica ? 0xffe4a8 : (LS.isHD ? 0xffe4b3 : 0xfff1d0));
       dirLight.intensity = LS.isHD ? 1.26 : 1.14;
-      hemiLight.color.setHex(wid === 'safari' ? 0xb4d8ff : (LS.isHD ? 0x9ac8ff : 0xbbe2ff));
-      hemiLight.groundColor.setHex(wid === 'safari' ? 0x8a6d3b : (LS.isHD ? 0x4f637a : 0x74855c));
+      hemiLight.color.setHex(isWarmAfrica ? 0xb4d8ff : (LS.isHD ? 0x9ac8ff : 0xbbe2ff));
+      hemiLight.groundColor.setHex(wid === 'marrakech' ? 0x8f5b42 : (isWarmAfrica ? 0x8a6d3b : (LS.isHD ? 0x4f637a : 0x74855c)));
       streetLight.intensity = 0.25;
       accentLight.intensity = 0.35;
       if (btn) btn.textContent = '🌤️';
@@ -440,7 +441,7 @@ window.LailaSalma = window.LailaSalma || {};
 
     // Auto-check 2-hour Hide-and-Seek animal reset when entering outdoor worlds!
     let didResetAnimals = false;
-    if (worldId === 'home_neighborhood' || worldId === 'tokyo' || worldId === 'kyoto' || worldId === 'safari') {
+    if (worldId === 'home_neighborhood' || worldId === 'tokyo' || worldId === 'kyoto' || worldId === 'safari' || worldId === 'egypt' || worldId === 'marrakech') {
       didResetAnimals = LS.checkAnimalReset(worldId);
     }
 
@@ -566,7 +567,7 @@ window.LailaSalma = window.LailaSalma || {};
         ? '<i class="mm-dot mm-cat"></i>Pups'
         : ((worldId === 'safari' || worldId === 'safari_tent')
           ? '<i class="mm-dot mm-cat"></i>Cubs'
-          : ((worldId === 'kyoto' || worldId === 'kyoto_room')
+          : ((worldId === 'kyoto' || worldId === 'kyoto_room' || worldId === 'marrakech')
             ? '<i class="mm-dot mm-cat"></i>Foxes'
             : '<i class="mm-dot mm-cat"></i>Cats'));
     }
@@ -599,6 +600,12 @@ window.LailaSalma = window.LailaSalma || {};
     } else if (worldId === 'safari') {
       LS.setSalmaBubbleText('Whoa, African Safari!! Quiz with Dr. Kofi, ride the Balloon or Jeep, & snap wildlife [F]! 🎈🦒', 0);
       LS.unlockStamp('safari_arrival');
+    } else if (worldId === 'egypt') {
+      LS.setSalmaBubbleText('Whoa, Ancient Egypt!! Look at the Great Pyramids, smiling Sphinx & white-sailed Nile Feluccas! 🐪⛵🔺', 0);
+      LS.unlockStamp('egypt_arrival');
+    } else if (worldId === 'marrakech') {
+      LS.setSalmaBubbleText('Ooh, Marrakech Lantern Bazaar!! Craft glowing stained-glass lanterns, sip mint tea & find Fennec Foxes! 🏮🦊🫖', 0);
+      LS.unlockStamp('marrakech_arrival');
     } else if (worldId === 'kyoto') {
       LS.setSalmaBubbleText('Whoa, expanded Kyoto! Explore Gion Lantern Street, quiz with Sensei Kenji & feed the koi! ⛩️🦊', 0);
       LS.unlockStamp('kyoto_arrival');
@@ -615,9 +622,13 @@ window.LailaSalma = window.LailaSalma || {};
           ? '🐶 2 hours passed! All 5 Community Puppies hid in brand-new spots!'
           : (worldId === 'safari'
             ? '🦁 2 hours passed! All 5 Safari Lion Cubs hid in brand-new spots!'
-            : (worldId === 'kyoto'
-              ? '🦊 2 hours passed! All 5 Kyoto Kitsune hid in brand-new spots!'
-              : '🐱 2 hours passed! All 5 Tokyo Cats hid in brand-new spots!')));
+            : (worldId === 'egypt'
+              ? '🐱 2 hours passed! All 5 Royal Egyptian Mau Cats hid in brand-new spots!'
+              : (worldId === 'marrakech'
+                ? '🦊 2 hours passed! All 5 Sahara Fennec Foxes hid in brand-new spots!'
+                : (worldId === 'kyoto'
+                  ? '🦊 2 hours passed! All 5 Kyoto Kitsune hid in brand-new spots!'
+                  : '🐱 2 hours passed! All 5 Tokyo Cats hid in brand-new spots!')))));
       }, 600);
     }
   };
@@ -660,16 +671,20 @@ window.LailaSalma = window.LailaSalma || {};
       if (id === 'tokyo' || id === 'tokyo_room') return 'tokyo';
       if (id === 'kyoto' || id === 'kyoto_room') return 'kyoto';
       if (id === 'safari' || id === 'safari_tent') return 'safari';
+      if (id === 'egypt') return 'egypt';
+      if (id === 'marrakech') return 'marrakech';
       return 'home';
     }
     const pins = {
       home: { x: 274, y: 112, label: '🏡 Home (Egypt)' },
+      egypt: { x: 280, y: 120, label: '🐪 Ancient Egypt' },
+      marrakech: { x: 230, y: 114, label: '🏮 Marrakech' },
       safari: { x: 294, y: 168, label: '🦁 Safari (Kenya)' },
       kyoto: { x: 422, y: 108, label: '⛩️ Kyoto' },
       tokyo: { x: 454, y: 98, label: '🗼 Tokyo' }
     };
     const pFrom = pins[normId(fromWorldId)] || pins.home;
-    const pTo = pins[normId(toWorldId)] || pins.tokyo;
+    const pTo = pins[normId(toWorldId)] || pins.safari;
 
     // Curved control point arching gracefully above the route
     const mx = (pFrom.x + pTo.x) * 0.5;
@@ -1136,6 +1151,12 @@ window.LailaSalma = window.LailaSalma || {};
     else if (zid === 'cosmo_claw') LS.openCosmoGameModal('claw');
     else if (zid === 'ngsc_squash') LS.openNGSCModal('squash');
     else if (zid === 'ngsc_swim') LS.openNGSCModal('swim');
+    else if (zid === 'egypt_teacher_quiz') LS.openSchoolModal('egypt');
+    else if (zid === 'marrakech_teacher_quiz') LS.openSchoolModal('marrakech');
+    else if (
+      zid === 'egypt_hieroglyphs' || zid === 'egypt_felucca' || zid === 'egypt_camel' || zid === 'egypt_bakery' ||
+      zid === 'marrakech_lantern' || zid === 'marrakech_rug' || zid === 'marrakech_tea' || zid === 'marrakech_drums'
+    ) LS.openWave1Activity(zid);
     else if (zid === 'visit_gedo_mahmoud') {
       LS.addCoins(18); LS.addXP(22);
       LS.unlockStamp('home_dinner');
@@ -1606,7 +1627,7 @@ window.LailaSalma = window.LailaSalma || {};
     if (resetCheckAccum > 10) {
       resetCheckAccum = 0;
       const wid = LS.state.currentWorld;
-      if ((wid === 'home_neighborhood' || wid === 'tokyo' || wid === 'kyoto' || wid === 'safari') && LS.checkAnimalReset(wid)) {
+      if ((wid === 'home_neighborhood' || wid === 'tokyo' || wid === 'kyoto' || wid === 'safari' || wid === 'egypt' || wid === 'marrakech') && LS.checkAnimalReset(wid)) {
         const curLead = getLeader();
         LS.loadWorld(wid, false, {
           x: curLead.root.position.x,
@@ -1618,9 +1639,13 @@ window.LailaSalma = window.LailaSalma || {};
           ? '🐶 2 hours passed! All 5 Community Puppies hid in brand-new spots!'
           : (wid === 'safari'
             ? '🦁 2 hours passed! All 5 Safari Lion Cubs hid in brand-new spots!'
-            : (wid === 'kyoto'
-              ? '🦊 2 hours passed! All 5 Kyoto Kitsune hid in brand-new spots!'
-              : '🐱 2 hours passed! All 5 Tokyo Cats hid in brand-new spots!')));
+            : (wid === 'egypt'
+              ? '🐱 2 hours passed! All 5 Royal Egyptian Mau Cats hid in brand-new spots!'
+              : (wid === 'marrakech'
+                ? '🦊 2 hours passed! All 5 Sahara Fennec Foxes hid in brand-new spots!'
+                : (wid === 'kyoto'
+                  ? '🦊 2 hours passed! All 5 Kyoto Kitsune hid in brand-new spots!'
+                  : '🐱 2 hours passed! All 5 Tokyo Cats hid in brand-new spots!')))));
         return;
       }
     }

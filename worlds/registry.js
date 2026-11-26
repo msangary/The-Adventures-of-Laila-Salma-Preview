@@ -181,6 +181,52 @@ window.LailaSalma = window.LailaSalma || {};
       fogNear: 25,
       fogFar: 65
     },
+    egypt: {
+      id: 'egypt',
+      wave: 'wave1',
+      title: 'Ancient Egypt',
+      subtitle: 'Golden Pyramids, Great Sphinx & Sunlit Nile',
+      emoji: '🐪',
+      badgeColor: '#c98a2c',
+      unlocked: true,
+      isInterior: false,
+      collectibleLabel: 'Mau Cats',
+      collectibleEmoji: '🐱',
+      collectibleTotal: 5,
+      destinationName: 'Marrakech Lantern Bazaar',
+      destinationId: 'marrakech',
+      travelMode: 'globe',
+      description: 'Step into sunlit Ancient Egypt! Gaze up at the towering Great Pyramids & smiling Sphinx, sail a white-sailed Felucca down the shimmering Nile, crack glowing temple hieroglyphs, meet Scribe Imhotep for an Egypt Quiz, ride a desert oasis camel, taste honey-date flatbread, and befriend 5 royal Egyptian Mau Cats!',
+      bounds: { minX: -62, maxX: 62, minZ: -58, maxZ: 48 },
+      mapBounds: { minX: -64, maxX: 64, minZ: -60, maxZ: 50 },
+      spawn: { x: 0, y: 0, z: 18.0, rotY: Math.PI },
+      arrivalSpawn: { x: 0, y: 0, z: 18.0, rotY: Math.PI },
+      fogNear: 85,
+      fogFar: 260
+    },
+    marrakech: {
+      id: 'marrakech',
+      wave: 'wave1',
+      title: 'Marrakech Bazaar',
+      subtitle: 'Glowing Lanterns, Zellige Tiles & Riad Courtyard',
+      emoji: '🏮',
+      badgeColor: '#c84b31',
+      unlocked: true,
+      isInterior: false,
+      collectibleLabel: 'Fennec Foxes',
+      collectibleEmoji: '🦊',
+      collectibleTotal: 5,
+      destinationName: 'Home Community',
+      destinationId: 'home_neighborhood',
+      travelMode: 'flight',
+      description: 'Wander a painterly Studio Ghibli Moroccan medina beneath the snow-dusted Atlas Mountains! Craft stained-glass brass lanterns, match Berber carpet mosaics, enjoy high-poured sweet mint tea & tagine beside an octagonal Zellige fountain, play the evening bazaar drum circle, quiz with Teacher Youssef, and find 5 big-eared Sahara Fennec Foxes!',
+      bounds: { minX: -54, maxX: 54, minZ: -52, maxZ: 46 },
+      mapBounds: { minX: -56, maxX: 56, minZ: -54, maxZ: 48 },
+      spawn: { x: 0, y: 0, z: 22.0, rotY: Math.PI },
+      arrivalSpawn: { x: 0, y: 0, z: 22.0, rotY: Math.PI },
+      fogNear: 78,
+      fogFar: 245
+    },
     dest_eatery: {
       id: 'dest_eatery',
       title: 'Eatery Restaurant',
@@ -324,10 +370,6 @@ window.LailaSalma = window.LailaSalma || {};
   };
 
   LS.UPCOMING_WORLDS = [
-    { id: 'egypt', title: 'Ancient Egypt', subtitle: 'Nile River & Golden Pyramids', emoji: '🐪', gate: 'Wave 1 • Africa',
-      description: 'Sail a felucca down the Nile, explore the pyramids, quiz with an Egyptian teacher, and befriend desert cats!' },
-    { id: 'marrakech', title: 'Marrakech Lantern Bazaar', subtitle: 'Glowing Mosaic Souk & Courtyard', emoji: '🏮', gate: 'Wave 1 • Africa',
-      description: 'Explore a colorful tiled courtyard souk glowing with mosaic lanterns, sip sweet mint tea, and befriend fennec foxes!' },
     { id: 'china', title: 'China', subtitle: 'Great Wall, Panda Bamboo Grove & Lanterns', emoji: '🐼', gate: 'Wave 2B • Asia',
       description: 'Feed Giant Pandas in a bamboo sanctuary, join a Dragon Dance rhythm parade, paint glowing red sky lanterns, and taste steamed dim sum!' },
     { id: 'saudi_arabia', title: 'Saudi Arabia', subtitle: 'AlUla Sandstone Arches, Diriyah & Red Sea', emoji: '🌴', gate: 'Wave 2B • Asia',
@@ -381,7 +423,17 @@ window.LailaSalma = window.LailaSalma || {};
     { id: 'safari_photographer', world: 'safari', emoji: '📸', title: 'Wildlife Photographer', desc: 'Completed the 7-animal Safari Field Guide album' },
     { id: 'safari_campfire', world: 'safari', emoji: '🥁', title: 'Djembe Star', desc: 'Played African Djembe rhythms & roasted marshmallows at Base Camp' },
     { id: 'safari_cheetah', world: 'safari', emoji: '🐆', title: 'Cheetah Sprinter', desc: 'Completed the Savanna Cheetah Sprint Challenge' },
-    { id: 'safari_tent_decor', world: 'safari', emoji: '⛺', title: 'Glamping Designer', desc: 'Stepped inside & decorated your 3D Safari Glamping Tent' }
+    { id: 'safari_tent_decor', world: 'safari', emoji: '⛺', title: 'Glamping Designer', desc: 'Stepped inside & decorated your 3D Safari Glamping Tent' },
+    { id: 'egypt_arrival', world: 'egypt', emoji: '🐪', title: 'Pyramid Explorer', desc: 'Arrived in sunlit Ancient Egypt by the Great Pyramids' },
+    { id: 'egypt_quiz', world: 'egypt', emoji: '📜', title: 'Royal Scribe Scholar', desc: 'Completed Scribe Imhotep\'s Ancient Egypt Quiz' },
+    { id: 'egypt_hieroglyphs', world: 'egypt', emoji: '🔺', title: 'Hieroglyph Decoder', desc: 'Solved the glowing Temple Hieroglyph Code-Breaker' },
+    { id: 'egypt_felucca', world: 'egypt', emoji: '⛵', title: 'Nile Felucca Captain', desc: 'Sailed a breezy felucca across the shimmering Nile River' },
+    { id: 'egypt_cats', world: 'egypt', emoji: '🐱', title: 'Royal Mau Cat Pal', desc: 'Befriended all 5 golden-collared Egyptian Mau Cats' },
+    { id: 'marrakech_arrival', world: 'marrakech', emoji: '🏮', title: 'Medina Adventurer', desc: 'Arrived in the glowing Marrakech Lantern Bazaar' },
+    { id: 'marrakech_quiz', world: 'marrakech', emoji: '🕌', title: 'Atlas Scholar', desc: 'Completed Teacher Youssef\'s Marrakech Quiz' },
+    { id: 'marrakech_lantern', world: 'marrakech', emoji: '✨', title: 'Master Lantern Maker', desc: 'Crafted & lit a stained-glass Moroccan brass lantern' },
+    { id: 'marrakech_tea', world: 'marrakech', emoji: '🫖', title: 'Riad Mint Tea Guest', desc: 'Shared high-poured mint tea & tagine in the Riad courtyard' },
+    { id: 'marrakech_foxes', world: 'marrakech', emoji: '🦊', title: 'Fennec Fox Friend', desc: 'Befriended all 5 big-eared Sahara Fennec Foxes' }
   ];
 
   // Release & Preview Wave Gating Helpers
@@ -400,7 +452,7 @@ window.LailaSalma = window.LailaSalma || {};
   };
 
   LS.getEnabledOutdoorWorlds = function () {
-    return ['home_neighborhood', 'safari', 'tokyo', 'kyoto'].filter(wid => LS.isWorldEnabled(wid));
+    return ['home_neighborhood', 'safari', 'egypt', 'marrakech', 'tokyo', 'kyoto'].filter(wid => LS.isWorldEnabled(wid));
   };
 
   LS.getActivePassportStamps = function () {

@@ -140,6 +140,28 @@ window.LailaSalma = window.LailaSalma || {};
         { id: 'safari_feed', zoneId: 'safari_feed_giraffe', title: 'Feed the Gentle Giraffes at Acacia Sanctuary 🌿', hint: 'Follow the trail west to the Tall Giraffe platform!' },
         { id: 'safari_jeep', zoneId: 'safari_jeep', title: 'Ride the Safari Jeep across the Savanna 🚙', hint: 'Hop into the zebra-striped Safari Jeep at Base Camp!' }
       ]
+    },
+    egypt: {
+      title: 'Chapter 5: Secrets of Ancient Egypt',
+      emoji: '🐪',
+      rewardCoins: 120,
+      rewardXp: 95,
+      steps: [
+        { id: 'egypt_teacher', zoneId: 'egypt_teacher_quiz', title: 'Take an Ancient Egypt Quiz with Scribe Imhotep 📜', hint: 'Scribe Imhotep is waiting by the Sunlit Sandstone Plaza!' },
+        { id: 'egypt_hieroglyphs', zoneId: 'egypt_hieroglyphs', title: 'Crack the Temple Hieroglyph Code-Breaker 🔺', hint: 'Walk north to the Painted Temple Pylon near the Great Pyramids!' },
+        { id: 'egypt_felucca', zoneId: 'egypt_felucca', title: 'Sail a Nile Felucca Boat down the River ⛵', hint: 'Stroll east to the palm-lined Nile Lotus Dock!' }
+      ]
+    },
+    marrakech: {
+      title: 'Chapter 6: Lanterns of Marrakech',
+      emoji: '🏮',
+      rewardCoins: 120,
+      rewardXp: 95,
+      steps: [
+        { id: 'marrakech_teacher', zoneId: 'marrakech_teacher_quiz', title: 'Quiz with Teacher Youssef by the Zellige Fountain 🕌', hint: 'Teacher Youssef is greeting guests beside the mosaic courtyard fountain!' },
+        { id: 'marrakech_lantern', zoneId: 'marrakech_lantern', title: 'Craft a Glowing Stained-Glass Lantern 🏮✨', hint: 'Visit Lantern Artisan Fatima under the glowing west bazaar arches!' },
+        { id: 'marrakech_tea', zoneId: 'marrakech_tea', title: 'Enjoy High-Poured Mint Tea & Tagine 🫖', hint: 'Relax with Tea Master Rashid in the Riad Orange-Tree Courtyard!' }
+      ]
     }
   };
 
@@ -175,6 +197,8 @@ window.LailaSalma = window.LailaSalma || {};
       lastCompletedWindowTokyo: -1,
       lastCompletedWindowKyoto: -1,
       lastCompletedWindowSafari: -1,
+      lastCompletedWindowEgypt: -1,
+      lastCompletedWindowMarrakech: -1,
       demoOffsetWindows: 0,
       timeMode: 0,
       grainEnabled: true,
@@ -191,7 +215,13 @@ window.LailaSalma = window.LailaSalma || {};
       foundLionCubs: [],
       lionCubsCompletedAt: 0,
       lionCubsRound: 0,
-      storyProgress: { home_neighborhood: 0, tokyo: 0, kyoto: 0, safari: 0 },
+      foundEgyptCats: [],
+      egyptCatsCompletedAt: 0,
+      egyptCatsRound: 0,
+      foundMarrakechFoxes: [],
+      marrakechFoxesCompletedAt: 0,
+      marrakechFoxesRound: 0,
+      storyProgress: { home_neighborhood: 0, tokyo: 0, kyoto: 0, safari: 0, egypt: 0, marrakech: 0 },
       cozyMissionSeed: 1,
       cozyMissions: buildCozyMissions(1),
       unlockedOutfits: ['laila_school', 'salma_kinder'],
@@ -224,7 +254,7 @@ window.LailaSalma = window.LailaSalma || {};
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return makeDefaultState();
       const parsed = JSON.parse(raw);
-      const validOutdoors = ['home_neighborhood', 'tokyo', 'kyoto', 'safari'];
+      const validOutdoors = ['home_neighborhood', 'tokyo', 'kyoto', 'safari', 'egypt', 'marrakech'];
       const startW = (validOutdoors.includes(parsed.currentWorld) && (!LS.isWorldEnabled || LS.isWorldEnabled(parsed.currentWorld)))
         ? parsed.currentWorld
         : 'home_neighborhood';
@@ -240,6 +270,8 @@ window.LailaSalma = window.LailaSalma || {};
         foundCats: Array.isArray(parsed.foundCats) ? parsed.foundCats.slice() : [],
         foundKitsune: Array.isArray(parsed.foundKitsune) ? parsed.foundKitsune.slice() : [],
         foundLionCubs: Array.isArray(parsed.foundLionCubs) ? parsed.foundLionCubs.slice() : [],
+        foundEgyptCats: Array.isArray(parsed.foundEgyptCats) ? parsed.foundEgyptCats.slice() : [],
+        foundMarrakechFoxes: Array.isArray(parsed.foundMarrakechFoxes) ? parsed.foundMarrakechFoxes.slice() : [],
         unlockedOutfits: Array.isArray(parsed.unlockedOutfits) ? parsed.unlockedOutfits.slice() : ['laila_school', 'salma_kinder'],
         unlockedToys: Array.isArray(parsed.unlockedToys) ? parsed.unlockedToys.slice() : [],
         stamps: Array.isArray(parsed.stamps) ? parsed.stamps.slice() : [],
@@ -448,6 +480,24 @@ window.LailaSalma = window.LailaSalma || {};
         return true;
       }
     }
+    if (wid === 'egypt' && LS.state.foundEgyptCats && LS.state.foundEgyptCats.length >= 5 && LS.state.egyptCatsCompletedAt > 0) {
+      if (now - LS.state.egyptCatsCompletedAt >= ANIMAL_RESET_MS) {
+        LS.state.foundEgyptCats = [];
+        LS.state.egyptCatsCompletedAt = 0;
+        LS.state.egyptCatsRound = (LS.state.egyptCatsRound || 0) + 1;
+        LS.saveState();
+        return true;
+      }
+    }
+    if (wid === 'marrakech' && LS.state.foundMarrakechFoxes && LS.state.foundMarrakechFoxes.length >= 5 && LS.state.marrakechFoxesCompletedAt > 0) {
+      if (now - LS.state.marrakechFoxesCompletedAt >= ANIMAL_RESET_MS) {
+        LS.state.foundMarrakechFoxes = [];
+        LS.state.marrakechFoxesCompletedAt = 0;
+        LS.state.marrakechFoxesRound = (LS.state.marrakechFoxesRound || 0) + 1;
+        LS.saveState();
+        return true;
+      }
+    }
     return false;
   };
 
@@ -466,6 +516,12 @@ window.LailaSalma = window.LailaSalma || {};
     if (wid === 'safari' && LS.state.foundLionCubs.length >= 5 && LS.state.lionCubsCompletedAt > 0) {
       return Math.max(0, ANIMAL_RESET_MS - (now - LS.state.lionCubsCompletedAt));
     }
+    if (wid === 'egypt' && LS.state.foundEgyptCats && LS.state.foundEgyptCats.length >= 5 && LS.state.egyptCatsCompletedAt > 0) {
+      return Math.max(0, ANIMAL_RESET_MS - (now - LS.state.egyptCatsCompletedAt));
+    }
+    if (wid === 'marrakech' && LS.state.foundMarrakechFoxes && LS.state.foundMarrakechFoxes.length >= 5 && LS.state.marrakechFoxesCompletedAt > 0) {
+      return Math.max(0, ANIMAL_RESET_MS - (now - LS.state.marrakechFoxesCompletedAt));
+    }
     return 0;
   };
 
@@ -483,6 +539,14 @@ window.LailaSalma = window.LailaSalma || {};
       LS.state.foundLionCubs = [];
       LS.state.lionCubsCompletedAt = 0;
       LS.state.lionCubsRound = (LS.state.lionCubsRound || 0) + 1;
+    } else if (wid === 'egypt') {
+      LS.state.foundEgyptCats = [];
+      LS.state.egyptCatsCompletedAt = 0;
+      LS.state.egyptCatsRound = (LS.state.egyptCatsRound || 0) + 1;
+    } else if (wid === 'marrakech') {
+      LS.state.foundMarrakechFoxes = [];
+      LS.state.marrakechFoxesCompletedAt = 0;
+      LS.state.marrakechFoxesRound = (LS.state.marrakechFoxesRound || 0) + 1;
     } else {
       LS.state.foundCats = [];
       LS.state.catsCompletedAt = 0;
@@ -497,9 +561,13 @@ window.LailaSalma = window.LailaSalma || {};
       ? '🐶 New Hide-and-Seek Round! All 5 Community Puppies hid in brand-new spots!'
       : (wid === 'safari'
         ? '🦁 New Hide-and-Seek Round! All 5 Safari Lion Cubs hid in brand-new spots!'
-        : (wid === 'kyoto'
-          ? '🦊 New Hide-and-Seek Round! All 5 Kyoto Kitsune hid in brand-new spots!'
-          : '🐱 New Hide-and-Seek Round! All 5 Tokyo Cats hid in brand-new spots!')));
+        : (wid === 'egypt'
+          ? '🐱 New Hide-and-Seek Round! All 5 Royal Egyptian Mau Cats hid in brand-new spots!'
+          : (wid === 'marrakech'
+            ? '🦊 New Hide-and-Seek Round! All 5 Marrakech Fennec Foxes hid in brand-new spots!'
+            : (wid === 'kyoto'
+              ? '🦊 New Hide-and-Seek Round! All 5 Kyoto Kitsune hid in brand-new spots!'
+              : '🐱 New Hide-and-Seek Round! All 5 Tokyo Cats hid in brand-new spots!')))));
   };
 
   // Deterministic seeded pick of 5 hiding spots from a larger curated list based on round number
@@ -572,7 +640,11 @@ window.LailaSalma = window.LailaSalma || {};
       ? LS.state.lastCompletedWindowHome
       : (wid === 'safari'
         ? LS.state.lastCompletedWindowSafari
-        : (wid === 'kyoto' ? LS.state.lastCompletedWindowKyoto : LS.state.lastCompletedWindowTokyo));
+        : (wid === 'egypt'
+          ? LS.state.lastCompletedWindowEgypt
+          : (wid === 'marrakech'
+            ? LS.state.lastCompletedWindowMarrakech
+            : (wid === 'kyoto' ? LS.state.lastCompletedWindowKyoto : LS.state.lastCompletedWindowTokyo))));
     if (last < cur) return 0;
     const realWindow = Math.floor(Date.now() / QUIZ_WINDOW_MS);
     const nextRealBoundary = (realWindow + 1) * QUIZ_WINDOW_MS;
@@ -588,6 +660,14 @@ window.LailaSalma = window.LailaSalma || {};
     } else if (wid === 'safari') {
       LS.state.lastCompletedWindowSafari = cur;
       LS.advanceStoryStep('safari', 'safari_teacher');
+    } else if (wid === 'egypt') {
+      LS.state.lastCompletedWindowEgypt = cur;
+      LS.unlockStamp('egypt_quiz');
+      LS.advanceStoryStep('egypt', 'egypt_teacher');
+    } else if (wid === 'marrakech') {
+      LS.state.lastCompletedWindowMarrakech = cur;
+      LS.unlockStamp('marrakech_quiz');
+      LS.advanceStoryStep('marrakech', 'marrakech_teacher');
     } else if (wid === 'kyoto') {
       LS.state.lastCompletedWindowKyoto = cur;
       LS.advanceStoryStep('kyoto', 'kyoto_teacher');
@@ -605,6 +685,8 @@ window.LailaSalma = window.LailaSalma || {};
     const isHomeContext = LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment';
     const isKyotoContext = LS.state.currentWorld === 'kyoto' || LS.state.currentWorld === 'kyoto_room';
     const isSafariContext = LS.state.currentWorld === 'safari' || LS.state.currentWorld === 'safari_tent';
+    const isEgyptContext = LS.state.currentWorld === 'egypt';
+    const isMarrakechContext = LS.state.currentWorld === 'marrakech';
     const lvEl = document.getElementById('hud-level');
     const worldBadge = document.getElementById('hud-world-badge');
     const xpBar = document.getElementById('xp-bar');
@@ -648,6 +730,14 @@ window.LailaSalma = window.LailaSalma || {};
         const sCount = LS.state.foundLionCubs ? LS.state.foundLionCubs.length : 0;
         animalPill.innerHTML = '🦁 <span id="cat-count">' + sCount + '/5</span>';
         animalPill.title = 'Hidden Safari Lion Cubs Found (resets 2h after 5/5)';
+      } else if (isEgyptContext) {
+        const eCount = LS.state.foundEgyptCats ? LS.state.foundEgyptCats.length : 0;
+        animalPill.innerHTML = '🐱 <span id="cat-count">' + eCount + '/5</span>';
+        animalPill.title = 'Hidden Royal Egyptian Mau Cats Found (resets 2h after 5/5)';
+      } else if (isMarrakechContext) {
+        const mCount = LS.state.foundMarrakechFoxes ? LS.state.foundMarrakechFoxes.length : 0;
+        animalPill.innerHTML = '🦊 <span id="cat-count">' + mCount + '/5</span>';
+        animalPill.title = 'Hidden Sahara Fennec Foxes Found (resets 2h after 5/5)';
       } else if (isKyotoContext) {
         const kCount = LS.state.foundKitsune ? LS.state.foundKitsune.length : 0;
         animalPill.innerHTML = '🦊 <span id="cat-count">' + kCount + '/5</span>';
@@ -905,7 +995,9 @@ window.LailaSalma = window.LailaSalma || {};
     indoor: { tempo: 0.72, type: 'sine',     vol: 0.024, notes: [523.25, 659.25, 783.99, 987.77, 880.00, 783.99, 659.25, 0, 440.00, 523.25, 659.25, 783.99, 659.25, 587.33, 523.25, 0] },
     tokyo:  { tempo: 0.56, type: 'triangle', vol: 0.026, notes: [587.33, 659.25, 739.99, 880.00, 987.77, 880.00, 739.99, 659.25, 587.33, 493.88, 587.33, 739.99, 880.00, 739.99, 659.25, 0] },
     kyoto:  { tempo: 0.74, type: 'sine',     vol: 0.026, notes: [440.00, 493.88, 523.25, 659.25, 783.99, 659.25, 523.25, 493.88, 440.00, 0, 523.25, 659.25, 783.99, 659.25, 493.88, 0] },
-    safari: { tempo: 0.52, type: 'sine',     vol: 0.028, notes: [392.00, 440.00, 523.25, 659.25, 587.33, 523.25, 440.00, 392.00, 523.25, 587.33, 659.25, 783.99, 659.25, 523.25, 440.00, 0] }
+    safari:    { tempo: 0.52, type: 'sine',     vol: 0.028, notes: [392.00, 440.00, 523.25, 659.25, 587.33, 523.25, 440.00, 392.00, 523.25, 587.33, 659.25, 783.99, 659.25, 523.25, 440.00, 0] },
+    egypt:     { tempo: 0.64, type: 'triangle', vol: 0.026, notes: [440.00, 466.16, 554.37, 587.33, 659.25, 587.33, 554.37, 466.16, 440.00, 0, 587.33, 659.25, 698.46, 659.25, 554.37, 440.00] },
+    marrakech: { tempo: 0.50, type: 'triangle', vol: 0.026, notes: [523.25, 587.33, 622.25, 783.99, 698.46, 622.25, 587.33, 523.25, 466.16, 523.25, 622.25, 783.99, 880.00, 783.99, 622.25, 0] }
   };
 
   LS.tickGhibliMusic = function (dt) {
@@ -917,7 +1009,7 @@ window.LailaSalma = window.LailaSalma || {};
     const wid = LS.state.currentWorld;
     const meta = LS.WORLDS[wid];
     const themeKey = (meta && meta.isInterior) ? 'indoor'
-      : (wid === 'kyoto' ? 'kyoto' : (wid === 'safari' ? 'safari' : (wid === 'tokyo' ? 'tokyo' : 'home')));
+      : (GHIBLI_THEMES[wid] ? wid : 'home');
     const theme = GHIBLI_THEMES[themeKey] || GHIBLI_THEMES.home;
     musicTimer = theme.tempo;
 
