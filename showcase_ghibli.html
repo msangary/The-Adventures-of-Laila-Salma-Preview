@@ -238,10 +238,15 @@
       cobble: loadPaintedTex('assets/ghibli_showcase/stone_cobble.jpg', 7, 7),
       plaster: loadPaintedTex('assets/ghibli_showcase/plaster_wall.jpg', 2.4, 1.6),
       roof: loadPaintedTex('assets/ghibli_showcase/terracotta_roof.jpg', 4, 2.2),
-      meadow: loadPaintedTex('assets/ghibli_showcase/meadow_ground.jpg', 12, 12)
+      meadow: loadPaintedTex('assets/ghibli_showcase/meadow_ground.jpg', 12, 12),
+      bark: loadPaintedTex('assets/ghibli_showcase/bark_ghibli.jpg', 1.6, 2.8),
+      sakuraBough: loadPaintedTex('assets/ghibli_showcase/sakura_bough.png', 1, 1),
+      leafBough: loadPaintedTex('assets/ghibli_showcase/leaf_bough.png', 1, 1)
     };
     TEX.sky.wrapS = THREE.RepeatWrapping;
     TEX.sky.wrapT = THREE.ClampToEdgeWrapping;
+    TEX.sakuraBough.wrapS = TEX.sakuraBough.wrapT = THREE.ClampToEdgeWrapping;
+    TEX.leafBough.wrapS = TEX.leafBough.wrapT = THREE.ClampToEdgeWrapping;
 
     // Shared global uniforms for time-of-day, rim light, ink outlines, wind
     const GLOBAL = {
@@ -463,7 +468,17 @@
         ].join('\n'))
         .replace('#include <map_fragment>', [
           'vec3 cCobble = texture2D(uCobbleTex, vTWPos.xz * 0.24).rgb;',
-          'vec3 cMeadow = texture2D(uMeadowTex, vTWPos.xz * 0.14).rgb;',
+          'vec3 cMeadowA = texture2D(uMeadowTex, vTWPos.xz * 0.13).rgb;',
+          'vec3 cMeadowB = texture2D(uMeadowTex, vTWPos.xz * 0.055 + vec2(0.37, 0.71)).rgb;',
+          'vec3 cMeadow = mix(cMeadowA, cMeadowB, 0.45);',
+          '// Sweeping organic Miyazaki meadow color patches (emerald shade, sunlit golden clover, warm soil pockets!)',
+          'float pBig = 0.5 + 0.5 * sin(vTWPos.x * 0.14 + cos(vTWPos.z * 0.12 + 0.5) * 1.6);',
+          'float pMed = 0.5 + 0.5 * cos(vTWPos.x * 0.34 - vTWPos.z * 0.29 + sin(vTWPos.x * 0.11) * 2.0);',
+          'float pSoil = smoothstep(0.66, 0.92, sin(vTWPos.x * 0.22 + 1.3) * cos(vTWPos.z * 0.25 - 0.8) * 0.5 + 0.5);',
+          'vec3 patchTint = mix(vec3(0.72, 0.92, 0.78), vec3(1.14, 1.07, 0.76), smoothstep(0.22, 0.78, pBig));',
+          'patchTint = mix(patchTint, vec3(0.62, 0.84, 0.66), smoothstep(0.55, 0.92, pMed) * 0.55);',
+          'cMeadow *= patchTint;',
+          'cMeadow = mix(cMeadow, vec3(0.68, 0.62, 0.44), pSoil * 0.36);',
           '// Organic painterly noise along courtyard rim & paths so grass softly creeps over stone!',
           'float edgeNoise = sin(vTWPos.x * 1.4 + vTWPos.z * 1.1) * 0.45 + cos(vTWPos.x * 2.7 - vTWPos.z * 2.1) * 0.25;',
           'float rCourt = length(vTWPos.xz - vec2(0.0, 0.5)) + edgeNoise * 0.65;',
@@ -471,9 +486,9 @@
           'float inNorthWalk = (1.0 - smoothstep(2.4, 3.25, abs(vTWPos.x) + edgeNoise * 0.28)) * step(-13.8, vTWPos.z) * step(vTWPos.z, 22.0);',
           'float inCrossWalk = (1.0 - smoothstep(1.9, 2.65, abs(vTWPos.z - 0.5) + edgeNoise * 0.25)) * step(-18.0, vTWPos.x) * step(vTWPos.x, 18.0);',
           'float stoneMask = clamp(max(inCircle, max(inNorthWalk, inCrossWalk)), 0.0, 1.0);',
-          '// Subtle warm sunlit watercolor wash across distant hills',
-          'float hillWarm = smoothstep(14.0, 48.0, length(vTWPos.xz));',
-          'cMeadow = mix(cMeadow, cMeadow * vec3(0.92, 1.05, 0.90), hillWarm * 0.5);',
+          '// Atmospheric painterly hills fading into soft sunlit olive-emerald in the distance',
+          'float hillWarm = smoothstep(16.0, 52.0, length(vTWPos.xz));',
+          'cMeadow = mix(cMeadow, cMeadow * vec3(0.88, 1.02, 0.92), hillWarm * 0.42);',
           'diffuseColor.rgb = mix(cMeadow, cCobble * vec3(1.04, 1.01, 0.95), stoneMask);'
         ].join('\n'))
         .replace('#include <dithering_fragment>', [
@@ -867,32 +882,32 @@
       addStorybookWindow(vg, 0.0, 6.45, 4.44, true);
       addStorybookWindow(vg, 5.0, 6.45, 4.44, true);
 
-      // Graceful organic climbing ivy vines & pink climbing roses hugging the sunny plaster corner!
-      const ivyDark = makeGhibliMat(0x2f7539, { rimBoost: 0.9 });
-      const ivyBright = makeGhibliMat(0x4ea34a, { rimBoost: 1.05 });
-      const roseMat = makeGhibliMat(0xf47296, { rimBoost: 0.9 });
+      // Graceful botanical climbing ivy & climbing rose vine using hand-painted foliage sprites!
       const vinePts = [];
       for (let v = 0; v <= 14; v++) {
         const t = v / 14;
-        vinePts.push(new THREE.Vector3(-7.45 + Math.sin(t * 5.2) * 0.35 + t * 0.85, 0.85 + t * 7.35, 4.46));
+        vinePts.push(new THREE.Vector3(-7.45 + Math.sin(t * 5.2) * 0.32 + t * 0.72, 0.85 + t * 7.35, 4.46));
       }
       const vineCurve = new THREE.CatmullRomCurve3(vinePts);
-      vg.add(new THREE.Mesh(new THREE.TubeGeometry(vineCurve, 28, 0.045, 6, false), timberMat));
-      for (let i = 0; i < 42; i++) {
-        const t = i / 41;
+      vg.add(new THREE.Mesh(new THREE.TubeGeometry(vineCurve, 28, 0.042, 6, false), timberMat));
+      const vineLeafMat = new THREE.MeshStandardMaterial({
+        map: TEX.leafBough, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.78
+      });
+      const vineRoseMat = new THREE.MeshStandardMaterial({
+        map: TEX.sakuraBough, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.72
+      });
+      for (let i = 0; i < 24; i++) {
+        const t = i / 23;
         const pt = vineCurve.getPoint(t);
-        const spread = 0.22 + Math.sin(i * 2.1) * 0.24;
-        const leaf = new THREE.Mesh(
-          new THREE.SphereGeometry(0.14 + (i % 3) * 0.045, 8, 6),
-          i % 2 === 0 ? ivyBright : ivyDark
-        );
-        leaf.scale.set(1.25, 0.85, 0.45);
-        leaf.position.set(pt.x + Math.cos(i * 1.9) * spread, pt.y + Math.sin(i * 2.7) * 0.14, 4.50 + (i % 2) * 0.04);
-        vg.add(leaf);
-        if (i % 5 === 2) {
-          const rose = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), roseMat);
-          rose.position.set(leaf.position.x + 0.05, leaf.position.y + 0.05, 4.58);
-          vg.add(rose);
+        const card = new THREE.Mesh(new THREE.PlaneGeometry(0.92 + (i % 3) * 0.18, 0.92 + (i % 3) * 0.18), vineLeafMat);
+        card.position.set(pt.x + Math.sin(i * 2.1) * 0.20, pt.y, 4.52 + (i % 2) * 0.05);
+        card.rotation.set((i % 3 - 1) * 0.16, (i % 2 === 0 ? 0.18 : -0.18), i * 0.95);
+        vg.add(card);
+        if (i % 3 === 1) {
+          const bloom = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.62), vineRoseMat);
+          bloom.position.set(pt.x + Math.cos(i * 1.7) * 0.24, pt.y + 0.06, 4.60);
+          bloom.rotation.set(0, 0, i * 1.3);
+          vg.add(bloom);
         }
       }
 
@@ -974,68 +989,16 @@
     [[-8.2, 6.2], [8.2, 6.2], [-8.8, -6.2], [8.8, -6.2]].forEach(p => addGhibliLamppost(p[0], p[1]));
 
     // =========================================================================
-    // 8. MASTERPIECE NORMAL-TRANSFERRED MIYAZAKI TREES (BOTW / NI NO KUNI TECHNIQUE!)
+    // 8. SCULPTURAL MULTI-SPECIES STUDIO GHIBLI TREES (HAND-PAINTED BOTANICAL BOUGHS + FURROWED MOSSY BARK!)
     // =========================================================================
-    function createPainterlyLeafAlphaTex(isSakura) {
-      const S = 512;
-      const c = document.createElement('canvas'); c.width = S; c.height = S;
-      const ctx = c.getContext('2d');
-      ctx.clearRect(0, 0, S, S);
-      let seed = isSakura ? 777 : 1337;
-      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
-
-      for (let i = 0; i < (isSakura ? 46 : 52); i++) {
-        const layer = i < 16 ? 0 : (i < 34 ? 1 : 2);
-        const a = (i / 48) * Math.PI * 2 + rnd() * 0.6;
-        const rad = layer === 0 ? (15 + rnd() * 72) : (layer === 1 ? (66 + rnd() * 92) : (115 + rnd() * 75));
-        const x = S * 0.5 + Math.cos(a) * rad;
-        const y = S * 0.5 + Math.sin(a) * rad;
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(a + rnd() * 1.4);
-        if (isSakura) {
-          const r = 34 + rnd() * 24;
-          ctx.fillStyle = layer === 0 ? '#e3cfd7' : (layer === 1 ? '#f8ebf0' : '#ffffff');
-          for (let p = 0; p < 5; p++) {
-            ctx.save();
-            ctx.rotate((p / 5) * Math.PI * 2);
-            ctx.beginPath();
-            ctx.ellipse(0, -r * 0.50, r * 0.38, r * 0.56, 0, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
-          }
-          ctx.fillStyle = 'rgba(255, 224, 130, 0.85)';
-          ctx.beginPath(); ctx.arc(0, 0, r * 0.18, 0, Math.PI * 2); ctx.fill();
-        } else {
-          const len = 76 + rnd() * 44;
-          const wid = 32 + rnd() * 18;
-          ctx.fillStyle = layer === 0 ? '#bac4b6' : (layer === 1 ? '#e2e6de' : '#ffffff');
-          ctx.beginPath();
-          ctx.moveTo(0, len * 0.5);
-          ctx.bezierCurveTo(-wid, len * 0.18, -wid * 0.82, -len * 0.25, 0, -len * 0.5);
-          ctx.bezierCurveTo(wid * 0.82, -len * 0.25, wid, len * 0.18, 0, len * 0.5);
-          ctx.closePath();
-          ctx.fill();
-        }
-        ctx.restore();
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.encoding = THREE.sRGBEncoding;
-      tex.anisotropy = 4;
-      return tex;
-    }
-    const LEAF_TEX = createPainterlyLeafAlphaTex(false);
-    const SAKURA_TEX = createPainterlyLeafAlphaTex(true);
-
-    // Custom GLSL Normal-Transferred Foliage Shader (Zero harsh card seams + subsurface sunlit glow + breeze!)
-    function makeMiyazakiFoliageMat(sunHex, midHex, shadeHex, isSakura) {
+    function makePaintedBoughMat(tex, sunTintHex, shadeTintHex, warmTintHex) {
       return new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
         uniforms: {
-          uMap: { value: isSakura ? SAKURA_TEX : LEAF_TEX },
-          uSunCol: { value: new THREE.Color(sunHex) },
-          uMidCol: { value: new THREE.Color(midHex) },
-          uShadeCol: { value: new THREE.Color(shadeHex) },
+          uMap: { value: tex },
+          uSunTint: { value: new THREE.Color(sunTintHex) },
+          uShadeTint: { value: new THREE.Color(shadeTintHex) },
+          uWarmTint: { value: new THREE.Color(warmTintHex) },
           uSunDir: GLOBAL.uSunDir,
           uTime: GLOBAL.uTime,
           uTimeMode: GLOBAL.uTimeMode,
@@ -1045,16 +1008,22 @@
           uFogDensity: GLOBAL.uFogDensity
         },
         vertexShader: [
+          'attribute float aAO;',
           'uniform float uTime;',
           'varying vec2 vUv;',
           'varying vec3 vSmoothNorm;',
           'varying vec3 vWPos;',
+          'varying float vAO;',
           'void main() {',
           '  vUv = uv;',
+          '  vAO = aAO;',
           '  vec4 wp = modelMatrix * vec4(position, 1.0);',
-          '  // Gentle Miyazaki breeze rustling outer foliage clusters!',
-          '  float w = sin(uTime * 1.9 + wp.x * 0.75 + wp.z * 0.65) * 0.085;',
-          '  wp.x += w; wp.y += cos(uTime * 1.5 + wp.z) * 0.035;',
+          '  // Natural Miyazaki breeze fluttering outer leaf sprays more than inner boughs',
+          '  float flex = clamp(vAO, 0.25, 1.0);',
+          '  float gust = sin(uTime * 1.7 + wp.x * 0.55 + wp.z * 0.48) * 0.085 * flex;',
+          '  float flut = sin(uTime * 3.8 + wp.y * 2.1 + wp.x * 1.6) * 0.025 * flex;',
+          '  wp.x += gust + flut;',
+          '  wp.y += cos(uTime * 1.4 + wp.z * 0.9) * 0.03 * flex;',
           '  vWPos = wp.xyz;',
           '  vSmoothNorm = normalize(mat3(modelMatrix) * normal);',
           '  gl_Position = projectionMatrix * viewMatrix * wp;',
@@ -1062,9 +1031,9 @@
         ].join('\n'),
         fragmentShader: [
           'uniform sampler2D uMap;',
-          'uniform vec3 uSunCol;',
-          'uniform vec3 uMidCol;',
-          'uniform vec3 uShadeCol;',
+          'uniform vec3 uSunTint;',
+          'uniform vec3 uShadeTint;',
+          'uniform vec3 uWarmTint;',
           'uniform vec3 uSunDir;',
           'uniform float uTimeMode;',
           'uniform vec3 uRimCol;',
@@ -1074,27 +1043,28 @@
           'varying vec2 vUv;',
           'varying vec3 vSmoothNorm;',
           'varying vec3 vWPos;',
+          'varying float vAO;',
           'void main() {',
           '  vec4 tex = texture2D(uMap, vUv);',
-          '  if (tex.a < 0.42) discard;',
+          '  if (tex.a < 0.45) discard;',
           '  vec3 nW = normalize(vSmoothNorm);',
           '  float ndl = dot(nW, normalize(uSunDir));',
-          '  // 3-band painterly Miyazaki canopy lighting driven by transferred cloud-center normals!',
-          '  float band1 = smoothstep(-0.35, 0.10, ndl);',
-          '  float band2 = smoothstep(0.18, 0.58, ndl);',
-          '  vec3 col = mix(uShadeCol, uMidCol, band1);',
-          '  col = mix(col, uSunCol, band2);',
-          '  // Multiply subtle inner brushstroke variation from painted leaf texture',
-          '  col *= mix(vec3(0.84, 0.86, 0.90), vec3(1.03, 1.01, 0.99), tex.r);',
-          '  // Soft backlit subsurface golden rim light (clamped to preserve painterly pigment!)',
+          '  // Preserve crisp hand-painted petals, veins & twigs while sculpting 3D bough volume!',
+          '  float sunBand = smoothstep(-0.32, 0.42, ndl);',
+          '  float topSun = smoothstep(0.28, 0.78, ndl);',
+          '  vec3 lightCol = mix(uShadeTint, uWarmTint, sunBand);',
+          '  lightCol = mix(lightCol, uSunTint, topSun * 0.65);',
+          '  // Deep painterly branch-cavity AO inside the canopy vs luminous outer blossoms/leaves',
+          '  float ao = mix(0.56, 1.08, clamp(vAO, 0.0, 1.0));',
+          '  vec3 col = tex.rgb * lightCol * ao;',
+          '  // Subtle backlit golden rim along outer leaf & petal silhouettes',
           '  vec3 vDir = normalize(cameraPosition - vWPos);',
-          '  float rim = pow(1.0 - max(0.0, dot(nW, vDir)), 3.0) * smoothstep(-0.2, 0.6, ndl);',
-          '  col += uRimCol * rim * uRimStr * 0.38;',
-          '  if (uTimeMode > 1.5) col *= vec3(0.36, 0.48, 0.78);',
-          '  else if (uTimeMode > 0.5) col *= vec3(1.10, 0.82, 0.68);',
-          '  // Soft highlight rolloff so petals stay lush & gouache-painted',
-          '  col = col / (1.0 + col * 0.22);',
-          '  // Exponential aerial perspective fog',
+          '  float rim = pow(1.0 - max(0.0, dot(nW, vDir)), 3.2) * smoothstep(-0.15, 0.65, ndl) * clamp(vAO, 0.0, 1.0);',
+          '  col += uRimCol * rim * uRimStr * 0.28;',
+          '  if (uTimeMode > 1.5) col *= vec3(0.38, 0.50, 0.80);',
+          '  else if (uTimeMode > 0.5) col *= vec3(1.16, 0.82, 0.64);',
+          '  // Soft filmic highlight compression so individual blossoms stay crisp',
+          '  col = col / (1.0 + col * 0.16);',
           '  float dist = length(cameraPosition - vWPos);',
           '  float fogF = 1.0 - exp(-pow(dist * uFogDensity, 2.0));',
           '  col = mix(col, uFogCol, clamp(fogF, 0.0, 1.0));',
@@ -1105,149 +1075,256 @@
     }
 
     const FOLIAGE_MATS = {
-      sakura: makeMiyazakiFoliageMat(0xf7b2cc, 0xe36fa2, 0x973d72, true),
-      emerald: makeMiyazakiFoliageMat(0xa8e06c, 0x4f9f46, 0x245d40, false),
-      olive: makeMiyazakiFoliageMat(0xc0dc78, 0x6b9846, 0x355e36, false)
+      sakura:  makePaintedBoughMat(TEX.sakuraBough, 0xfff0f5, 0x8d638e, 0xffd5e4),
+      camphor: makePaintedBoughMat(TEX.leafBough,   0xd8f594, 0x3b6e68, 0xa8d87a),
+      olive:   makePaintedBoughMat(TEX.leafBough,   0xdbe6b8, 0x5c746e, 0xaab890),
+      cypress: makePaintedBoughMat(TEX.leafBough,   0x79b87a, 0x26484e, 0x4b8760)
     };
 
-    const barkMat = makeGhibliMat(0x634330, { map: TEX.plaster, roughness: 0.92, aoGround: 0.42 });
+    const barkMat = makeGhibliMat(0xd4b69e, { map: TEX.bark, roughness: 0.90, rimBoost: 0.75, aoGround: 0.45 });
+    const TREE_SPOTS = [];
+
+    function makeTaperedBranch(curve, segs, rBase, rTip, radialSegs) {
+      const geo = new THREE.TubeGeometry(curve, segs, 1.0, radialSegs || 8, false);
+      const pos = geo.attributes.position;
+      const ringSize = (radialSegs || 8) + 1;
+      for (let i = 0; i <= segs; i++) {
+        const t = i / segs;
+        const center = curve.getPointAt(t);
+        const rad = rBase + (rTip - rBase) * Math.pow(t, 0.85);
+        for (let j = 0; j < ringSize; j++) {
+          const idx = i * ringSize + j;
+          const vx = pos.getX(idx) - center.x;
+          const vy = pos.getY(idx) - center.y;
+          const vz = pos.getZ(idx) - center.z;
+          pos.setXYZ(idx, center.x + vx * rad, center.y + vy * rad, center.z + vz * rad);
+        }
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
 
     function buildMasterpieceTree(kind, x, z, scale) {
       const s = scale || 1.0;
       const g = new THREE.Group();
-      g.position.set(x, getTerrainHeight(x, z) - 0.06, z);
+      g.position.set(x, getTerrainHeight(x, z) - 0.08, z);
 
-      // Smooth organic curving spline trunk + flared gnarled roots + 4 sweeping forked boughs!
-      const trunkCurve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0.08, 1.1, -0.04),
-        new THREE.Vector3(-0.06, 2.2, 0.06),
-        new THREE.Vector3(0.04, 3.25, 0.0)
-      ]);
-      const trunkGeo = new THREE.TubeGeometry(trunkCurve, 14, 0.34, 10, false);
-      // Smooth taper from flared base to upper trunk
-      const tp = trunkGeo.attributes.position;
-      for (let i = 0; i < tp.count; i++) {
-        const vy = tp.getY(i);
-        const taper = Math.max(0.45, 1.25 - (vy / 3.4) * 0.72);
-        tp.setX(i, tp.getX(i) * taper);
-        tp.setZ(i, tp.getZ(i) * taper);
-      }
-      trunkGeo.computeVertexNormals();
-      const trunk = new THREE.Mesh(trunkGeo, barkMat);
-      trunk.castShadow = true; trunk.receiveShadow = true;
-      g.add(trunk);
+      let seed = Math.abs(Math.floor(x * 73.1 + z * 131.7 + (kind.charCodeAt(0) * 19))) % 99991 + 17;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
-      // 5 organic curved roots gripping the meadow
-      for (let r = 0; r < 5; r++) {
-        const a = (r / 5) * Math.PI * 2 + 0.3;
-        const rCurve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(Math.cos(a) * 0.16, 0.72, Math.sin(a) * 0.16),
-          new THREE.Vector3(Math.cos(a) * 0.52, 0.25, Math.sin(a) * 0.52),
-          new THREE.Vector3(Math.cos(a) * 0.86, -0.04, Math.sin(a) * 0.86)
-        ]);
-        const rMesh = new THREE.Mesh(new THREE.TubeGeometry(rCurve, 7, 0.12, 6, false), barkMat);
-        rMesh.castShadow = true; g.add(rMesh);
-      }
-
-      // 4 organic curved branches reaching into the cloud crown
-      [
-        [1.15, 3.85, 0.55], [-1.25, 3.72, -0.45], [0.45, 3.92, -1.15], [-0.55, 3.65, 1.15]
-      ].forEach(b => {
-        const bCurve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(0, 2.35, 0),
-          new THREE.Vector3(b[0] * 0.55, 3.15, b[2] * 0.55),
-          new THREE.Vector3(b[0], b[1], b[2])
-        ]);
-        const bMesh = new THREE.Mesh(new THREE.TubeGeometry(bCurve, 8, 0.12, 6, false), barkMat);
-        bMesh.castShadow = true; g.add(bMesh);
-      });
-
-      // Soft inner shadow-caster volume (invisible or nestled deep inside) + 150 Normal-Transferred Leaf Cards!
-      const cloudCenters = [
-        [0.0, 4.75, 0.0, 1.42], [1.15, 4.35, 0.65, 1.18], [-1.20, 4.25, -0.55, 1.22],
-        [0.55, 4.15, -1.25, 1.15], [-0.65, 4.05, 1.18, 1.16], [1.55, 3.55, -0.55, 1.05],
-        [-1.55, 3.60, 0.65, 1.08], [0.15, 3.45, 1.48, 0.98], [-0.25, 3.45, -1.45, 1.00],
-        [0.72, 5.15, -0.32, 1.02], [-0.68, 5.05, 0.42, 0.98], [0.0, 3.75, 0.0, 1.25]
-      ];
-      const crownCenter = new THREE.Vector3(0, 3.95, 0);
-
-      // Batched merged leaf-card BufferGeometry with transferred spherical canopy normals!
-      const posArr = [], normArr = [], uvArr = [], idxArr = [];
+      const posArr = [], normArr = [], uvArr = [], aoArr = [], idxArr = [];
       let vOff = 0;
       const basePlane = new THREE.PlaneGeometry(1.0, 1.0);
       const bp = basePlane.attributes.position.array;
       const bu = basePlane.attributes.uv.array;
       const bi = basePlane.index.array;
-      const m4 = new THREE.Matrix4();
-      const q = new THREE.Quaternion();
-      const e = new THREE.Euler();
-      const vTmp = new THREE.Vector3();
-      const nTmp = new THREE.Vector3();
+      const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
+      const vTmp = new THREE.Vector3(), nLoc = new THREE.Vector3(), nCrown = new THREE.Vector3();
 
-      cloudCenters.forEach((c, ci) => {
-        const cardsPerPuff = 12;
-        for (let k = 0; k < cardsPerPuff; k++) {
-          const phi = Math.acos(1 - 2 * ((k + 0.5) / cardsPerPuff));
-          const theta = Math.PI * (1 + Math.sqrt(5)) * (k + ci * 7);
-          const rad = c[3] * (0.42 + ((k * 37 + ci * 13) % 10) * 0.048);
-          const px = c[0] + Math.sin(phi) * Math.cos(theta) * rad;
-          const py = c[1] + Math.cos(phi) * rad * 0.78;
-          const pz = c[2] + Math.sin(phi) * Math.sin(theta) * rad;
-          const cardSize = c[3] * (1.28 + ((k + ci) % 3) * 0.16);
+      function addBoughPad(cx, cy, cz, rx, ry, rz, cardCount, cardScale, crownRef, droop) {
+        const padCenter = new THREE.Vector3(cx, cy, cz);
+        for (let k = 0; k < cardCount; k++) {
+          const u = (k + 0.5) / cardCount;
+          const phi = Math.acos(1 - 2 * u);
+          const theta = Math.PI * (1 + Math.sqrt(5)) * (k + cx * 3.1 + cz * 2.7);
+          const shellR = 0.32 + 0.68 * Math.pow(rnd(), 0.55);
+          const px = cx + Math.sin(phi) * Math.cos(theta) * rx * shellR;
+          const py = cy + Math.cos(phi) * ry * shellR - (droop ? Math.sin(phi) * droop * shellR : 0);
+          const pz = cz + Math.sin(phi) * Math.sin(theta) * rz * shellR;
+          const sz = cardScale * (0.78 + rnd() * 0.44);
 
-          e.set(((k * 17 + ci) % 7 - 3) * 0.35, theta + ci * 0.9, ((k * 23 + ci) % 5 - 2) * 0.3);
-          q.setFromEuler(e);
-          m4.compose(new THREE.Vector3(px, py, pz), q, new THREE.Vector3(cardSize, cardSize, cardSize));
+          // Crossed organic angles tilted outward from branch tips so silhouettes stay airy & botanical!
+          eu.set(
+            (rnd() - 0.5) * 1.15 - (droop ? 0.25 : 0),
+            theta + (rnd() - 0.5) * 1.2,
+            (rnd() - 0.5) * 1.05
+          );
+          q.setFromEuler(eu);
+          m4.compose(new THREE.Vector3(px, py, pz), q, new THREE.Vector3(sz, sz, sz));
 
           for (let v = 0; v < 4; v++) {
             vTmp.set(bp[v * 3], bp[v * 3 + 1], bp[v * 3 + 2]).applyMatrix4(m4);
             posArr.push(vTmp.x, vTmp.y, vTmp.z);
-            // SECRET SAUCE: Smooth outward normal from canopy center -> seamless painterly cloud lighting!
-            nTmp.copy(vTmp).sub(crownCenter).normalize();
-            normArr.push(nTmp.x, nTmp.y, nTmp.z);
+            // Hybrid 65% local bough-pad normal + 35% global crown normal -> sculptural layered tiers!
+            nLoc.copy(vTmp).sub(padCenter).normalize();
+            nCrown.copy(vTmp).sub(crownRef).normalize();
+            nLoc.multiplyScalar(0.65).addScaledVector(nCrown, 0.35).normalize();
+            normArr.push(nLoc.x, nLoc.y, nLoc.z);
+            // Per-vertex cavity AO: darker inside bough cavities & lower undersides, bright at outer sunlit tips
+            const distPad = vTmp.distanceTo(padCenter) / Math.max(0.4, Math.max(rx, rz));
+            const hBias = Math.max(0, Math.min(1, (vTmp.y - (crownRef.y - 1.8)) / 4.2));
+            const aoVal = Math.max(0.05, Math.min(1.0, distPad * 0.58 + hBias * 0.48));
+            aoArr.push(aoVal);
             uvArr.push(bu[v * 2], bu[v * 2 + 1]);
           }
           for (let ii = 0; ii < bi.length; ii++) idxArr.push(bi[ii] + vOff);
           vOff += 4;
         }
-      });
+      }
+
+      if (kind === 'cypress') {
+        // Tall slender sculptural Mediterranean / Studio Ghibli coastal cypress!
+        const h = 7.4 + rnd() * 1.8;
+        const tCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3((rnd() - 0.5) * 0.14, h * 0.4, (rnd() - 0.5) * 0.14),
+          new THREE.Vector3((rnd() - 0.5) * 0.18, h * 0.85, (rnd() - 0.5) * 0.18)
+        ]);
+        const trunk = new THREE.Mesh(makeTaperedBranch(tCurve, 10, 0.24, 0.05, 8), barkMat);
+        trunk.castShadow = true; g.add(trunk);
+        const crownRef = new THREE.Vector3(0, h * 0.52, 0);
+        const tiers = 7;
+        for (let ti = 0; ti < tiers; ti++) {
+          const frac = ti / (tiers - 1);
+          const ty = 1.55 + frac * (h - 1.85);
+          const rad = Math.sin(Math.pow(frac, 0.72) * Math.PI * 0.92) * 0.92 + 0.24;
+          addBoughPad((rnd() - 0.5) * 0.18, ty, (rnd() - 0.5) * 0.18, rad, 0.95, rad, 11, 1.35 + rad * 0.55, crownRef, 0);
+        }
+        const shadowProxy = new THREE.Mesh(
+          new THREE.ConeGeometry(1.05, h * 0.8, 8),
+          new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
+        );
+        shadowProxy.position.y = h * 0.52; shadowProxy.castShadow = true; g.add(shadowProxy);
+        TREE_SPOTS.push({ x, z, r: 2.2 * s });
+      } else {
+        // Sculptural Asymmetric Broadleaf / Spreading Sakura / Gnarled Olive!
+        const isSak = (kind === 'sakura');
+        const isOlive = (kind === 'olive');
+        const leanX = (rnd() - 0.5) * (isSak ? 0.95 : 0.65);
+        const leanZ = (rnd() - 0.5) * (isSak ? 0.85 : 0.55);
+        const trunkH = isOlive ? 2.55 : (isSak ? 3.25 : 3.55);
+
+        const trunkCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(leanX * 0.38, trunkH * 0.36, leanZ * 0.32),
+          new THREE.Vector3(leanX * 0.72, trunkH * 0.72, leanZ * 0.78),
+          new THREE.Vector3(leanX * 0.85, trunkH, leanZ * 0.82)
+        ]);
+        const trunk = new THREE.Mesh(
+          makeTaperedBranch(trunkCurve, 14, isSak ? 0.44 : 0.48, 0.20, 10),
+          barkMat
+        );
+        trunk.castShadow = true; trunk.receiveShadow = true;
+        g.add(trunk);
+
+        // 6 gnarled mossy buttress roots gripping the earth!
+        for (let r = 0; r < 6; r++) {
+          const a = (r / 6) * Math.PI * 2 + rnd() * 0.38;
+          const rLen = 0.88 + rnd() * 0.45;
+          const rCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(Math.cos(a) * 0.20, 0.78, Math.sin(a) * 0.20),
+            new THREE.Vector3(Math.cos(a) * rLen * 0.58, 0.24, Math.sin(a) * rLen * 0.58),
+            new THREE.Vector3(Math.cos(a) * rLen, -0.06, Math.sin(a) * rLen)
+          ]);
+          const rMesh = new THREE.Mesh(makeTaperedBranch(rCurve, 7, 0.16, 0.04, 6), barkMat);
+          rMesh.castShadow = true; g.add(rMesh);
+        }
+
+        // 5-6 sweeping primary boughs + forked secondary limbs reaching out into DISTINCT tiered foliage pads!
+        const boughCount = isOlive ? 5 : 6;
+        const crownRef = new THREE.Vector3(leanX * 0.65, trunkH + 1.35, leanZ * 0.65);
+
+        for (let biIdx = 0; biIdx < boughCount; biIdx++) {
+          const ang = (biIdx / boughCount) * Math.PI * 2 + rnd() * 0.45;
+          const isHigh = (biIdx % 2 === 0);
+          const startT = isHigh ? (0.72 + rnd() * 0.24) : (0.50 + rnd() * 0.24);
+          const p0 = trunkCurve.getPointAt(Math.min(0.98, startT));
+          const reach = (isSak ? 2.55 : (isOlive ? 2.15 : 2.35)) * (isHigh ? 0.86 : 1.14) + rnd() * 0.55;
+          const rise = isHigh ? (1.45 + rnd() * 0.75) : (0.62 + rnd() * 0.62);
+          const pMid = new THREE.Vector3(
+            p0.x + Math.cos(ang) * reach * 0.55,
+            p0.y + rise * 0.68,
+            p0.z + Math.sin(ang) * reach * 0.55
+          );
+          const pEnd = new THREE.Vector3(
+            p0.x + Math.cos(ang) * reach,
+            p0.y + rise,
+            p0.z + Math.sin(ang) * reach
+          );
+
+          const bCurve = new THREE.CatmullRomCurve3([p0, pMid, pEnd]);
+          const bMesh = new THREE.Mesh(makeTaperedBranch(bCurve, 9, 0.17, 0.055, 7), barkMat);
+          bMesh.castShadow = true; g.add(bMesh);
+
+          // Forked secondary branch spreading outward for authentic Miyazaki branch silhouette!
+          const forkAng = ang + (biIdx % 2 === 0 ? 0.52 : -0.52);
+          const fEnd = new THREE.Vector3(
+            pMid.x + Math.cos(forkAng) * (reach * 0.62),
+            pMid.y + 0.52 + rnd() * 0.45,
+            pMid.z + Math.sin(forkAng) * (reach * 0.62)
+          );
+          const fCurve = new THREE.CatmullRomCurve3([
+            pMid,
+            pMid.clone().lerp(fEnd, 0.5).add(new THREE.Vector3(0, 0.22, 0)),
+            fEnd
+          ]);
+          const fMesh = new THREE.Mesh(makeTaperedBranch(fCurve, 6, 0.095, 0.032, 6), barkMat);
+          fMesh.castShadow = true; g.add(fMesh);
+
+          // Wide, layered horizontal bough pad at primary branch tip (NOT a vertical sphere!)
+          const padRx = isSak ? 1.55 : 1.38;
+          const padRy = isSak ? 0.74 : 0.88;
+          addBoughPad(pEnd.x, pEnd.y + 0.22, pEnd.z, padRx, padRy, padRx, 15, isSak ? 1.85 : 1.72, crownRef, isSak ? 0.24 : 0.08);
+          // Smaller offset sub-cluster on the secondary fork for organic irregular silhouette!
+          addBoughPad(fEnd.x, fEnd.y + 0.16, fEnd.z, padRx * 0.72, padRy * 0.78, padRx * 0.72, 10, isSak ? 1.52 : 1.45, crownRef, isSak ? 0.18 : 0.06);
+        }
+
+        // Upper windswept crown cap pad slightly offset from center for natural Miyazaki asymmetry!
+        const topPt = trunkCurve.getPointAt(1.0);
+        addBoughPad(
+          topPt.x + (rnd() - 0.5) * 0.6,
+          topPt.y + (isSak ? 1.72 : 1.95),
+          topPt.z + (rnd() - 0.5) * 0.6,
+          isSak ? 1.85 : 1.72,
+          isSak ? 0.85 : 1.05,
+          isSak ? 1.78 : 1.65,
+          18, isSak ? 1.92 : 1.82, crownRef, isSak ? 0.16 : 0.05
+        );
+
+        // Soft dappled shadow-caster nestled cleanly across the wide canopy
+        const shadowProxy = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(2.45, 1),
+          new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
+        );
+        shadowProxy.scale.set(1.25, 0.68, 1.25);
+        shadowProxy.position.set(leanX * 0.6, trunkH + 1.15, leanZ * 0.6);
+        shadowProxy.castShadow = true;
+        g.add(shadowProxy);
+        TREE_SPOTS.push({ x, z, r: 4.4 * s });
+      }
 
       const canopyGeo = new THREE.BufferGeometry();
       canopyGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
       canopyGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
       canopyGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvArr, 2));
+      canopyGeo.setAttribute('aAO', new THREE.Float32BufferAttribute(aoArr, 1));
       canopyGeo.setIndex(idxArr);
 
-      const canopyMesh = new THREE.Mesh(canopyGeo, FOLIAGE_MATS[kind] || FOLIAGE_MATS.emerald);
+      const canopyMesh = new THREE.Mesh(canopyGeo, FOLIAGE_MATS[kind] || FOLIAGE_MATS.camphor);
       g.add(canopyMesh);
 
-      // Subtle dappled shadow-caster proxy sphere nestled cleanly inside the canopy
-      const shadowProxy = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(2.1, 1),
-        new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false })
-      );
-      shadowProxy.position.set(0, 4.2, 0);
-      shadowProxy.castShadow = true;
-      g.add(shadowProxy);
-
       g.scale.setScalar(s);
-      g.rotation.y = (x * 0.7 + z * 0.4);
+      g.rotation.y = (x * 0.73 + z * 0.41);
       scene.add(g);
       return g;
     }
 
-    // Hero Sakura & Lush Emerald/Olive Studio Ghibli Trees framing the Courtyard!
-    buildMasterpieceTree('sakura', -11.4, -7.2, 1.18);
-    buildMasterpieceTree('sakura', 11.4, -7.2, 1.15);
-    buildMasterpieceTree('emerald', -12.8, 5.2, 1.24);
-    buildMasterpieceTree('olive', 12.6, 5.8, 1.18);
-    buildMasterpieceTree('sakura', 15.8, -1.8, 1.05);
-    buildMasterpieceTree('emerald', -16.2, -1.5, 1.14);
-    buildMasterpieceTree('emerald', -9.2, 14.5, 1.28);
-    buildMasterpieceTree('sakura', 10.2, 13.8, 1.22);
-    buildMasterpieceTree('olive', -24.0, -18.0, 1.45);
-    buildMasterpieceTree('emerald', 24.0, -18.5, 1.42);
+    // Diverse Studio Ghibli Trees: Spreading Cherry Blossoms, Totoro Camphor Oaks, Silver Olives & Coastal Cypresses!
+    buildMasterpieceTree('sakura',  -11.6, -7.0, 1.18);
+    buildMasterpieceTree('sakura',   11.6, -6.8, 1.14);
+    buildMasterpieceTree('camphor', -13.4,  5.0, 1.22);
+    buildMasterpieceTree('olive',    12.8,  5.6, 1.16);
+    buildMasterpieceTree('cypress', -14.8, -12.6, 1.08);
+    buildMasterpieceTree('cypress',  14.2, -13.4, 1.15);
+    buildMasterpieceTree('cypress',  16.4, -11.2, 0.96);
+    buildMasterpieceTree('sakura',   16.2, -1.6, 1.04);
+    buildMasterpieceTree('camphor', -16.8, -1.8, 1.16);
+    buildMasterpieceTree('camphor',  -9.6, 14.5, 1.24);
+    buildMasterpieceTree('sakura',   10.4, 13.8, 1.18);
+    buildMasterpieceTree('olive',   -23.5, -17.5, 1.42);
+    buildMasterpieceTree('camphor',  24.0, -18.0, 1.38);
+    buildMasterpieceTree('cypress', -22.5, -6.2, 1.22);
+    buildMasterpieceTree('cypress',  23.2, -4.5, 1.18);
 
     // =========================================================================
     // 9. SCULPTED SMOOTH STUDIO GHIBLI LAILA, SALMA & MOCHI (ZERO BOXY PRIMITIVES!)
@@ -1607,15 +1684,45 @@
     const mochi = buildSculptedMochi();
 
     // =========================================================================
-    // 10. 14,000 BILLOWING CURVED 3D GRASS PATCHES + 1,400 SWAYING WILDFLOWERS
+    // 10. ORGANIC CLUMPED STUDIO GHIBLI MEADOW (MULTI-HEIGHT GRASS, TALL REED PLUMES, BOUQUET DRIFTS & MOSSY STONES!)
     // =========================================================================
     const hash01 = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+    function meadowNoise(x, z) {
+      const a = Math.sin(x * 0.19 + Math.cos(z * 0.17 + 0.4) * 1.8) * 0.5 + 0.5;
+      const b = Math.cos(x * 0.43 - z * 0.37 + Math.sin(x * 0.13) * 1.9) * 0.5 + 0.5;
+      const c = Math.sin(x * 0.92 + z * 0.85) * 0.5 + 0.5;
+      return a * 0.50 + b * 0.34 + c * 0.16;
+    }
+    function getTreeShadeAt(x, z) {
+      let sh = 0;
+      for (let i = 0; i < TREE_SPOTS.length; i++) {
+        const ts = TREE_SPOTS[i];
+        const d = Math.hypot(x - ts.x, z - ts.z);
+        if (d < ts.r) {
+          const f = 1.0 - d / ts.r;
+          sh = Math.max(sh, f * f);
+        }
+      }
+      return Math.min(1.0, sh);
+    }
+    function isClearWalkOrBuilding(x, z) {
+      if (Math.hypot(x, z - 0.5) < 9.90) return true;
+      if (Math.abs(x) < 3.05 && z > -14 && z < 23) return true;
+      if (Math.abs(z - 0.5) < 2.50 && Math.abs(x) < 18.5) return true;
+      if (x > -9.2 && x < 9.2 && z > -21.8 && z < -11.0) return true;
+      if (Math.hypot(x + 19.5, z + 9.5) < 6.4 || Math.hypot(x - 20.5, z + 8.8) < 6.4) return true;
+      return false;
+    }
+
+    // Irregular 7-blade varied meadow tuft geometry (mixed short/medium/long asymmetric curved blades!)
     const grassBlades = [
-      { a: 0.15, r0: 0.05, w: 0.054, h: 0.44, lean: 0.20 },
-      { a: 1.40, r0: 0.18, w: 0.050, h: 0.33, lean: 0.17 },
-      { a: 2.66, r0: 0.24, w: 0.056, h: 0.47, lean: 0.22 },
-      { a: 3.92, r0: 0.16, w: 0.050, h: 0.28, lean: 0.15 },
-      { a: 5.18, r0: 0.22, w: 0.052, h: 0.38, lean: 0.18 }
+      { a: 0.12, r0: 0.04, w: 0.048, h: 0.48, lean: 0.24 },
+      { a: 1.02, r0: 0.16, w: 0.042, h: 0.24, lean: 0.13 },
+      { a: 1.98, r0: 0.22, w: 0.052, h: 0.56, lean: 0.28 },
+      { a: 2.95, r0: 0.11, w: 0.044, h: 0.31, lean: 0.16 },
+      { a: 3.88, r0: 0.24, w: 0.046, h: 0.40, lean: 0.22 },
+      { a: 4.82, r0: 0.15, w: 0.038, h: 0.21, lean: 0.11 },
+      { a: 5.64, r0: 0.20, w: 0.050, h: 0.44, lean: 0.25 }
     ];
     const gPos = [], gUv = [];
     grassBlades.forEach(b => {
@@ -1623,7 +1730,7 @@
       const bx = ca * b.r0, bz = sa * b.r0;
       const mx = bx + ca * b.lean * 0.42, mz = bz + sa * b.lean * 0.42;
       const tx = bx + ca * b.lean, tz = bz + sa * b.lean;
-      const mh = b.h * 0.56, w0 = b.w, w1 = b.w * 0.55;
+      const mh = b.h * 0.56, w0 = b.w, w1 = b.w * 0.52;
       gPos.push(
         bx - px * w0, 0, bz - pz * w0,  bx + px * w0, 0, bz + pz * w0,  mx + px * w1, mh, mz + pz * w1,
         bx - px * w0, 0, bz - pz * w0,  mx + px * w1, mh, mz + pz * w1,  mx - px * w1, mh, mz - pz * w1,
@@ -1636,85 +1743,194 @@
     grassGeo.setAttribute('uv', new THREE.Float32BufferAttribute(gUv, 2));
     grassGeo.computeVertexNormals();
 
-    const grassMat = new THREE.ShaderMaterial({
-      side: THREE.DoubleSide,
-      uniforms: {
-        uTime: GLOBAL.uTime,
-        uTimeMode: GLOBAL.uTimeMode,
-        uFogCol: GLOBAL.uFogCol,
-        uFogDensity: GLOBAL.uFogDensity
-      },
-      vertexShader: [
-        'uniform float uTime;',
-        'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
-        'void main() {',
-        '  vH = uv.y;',
-        '  vec4 wb = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);',
-        '  vVar = fract(sin(dot(wb.xz, vec2(12.9898, 78.233))) * 43758.5453);',
-        '  float gust = sin(uTime * 1.55 + wb.x * 0.16 + wb.z * 0.12);',
-        '  float fl = sin(uTime * 3.2 + wb.x * 0.45 - wb.z * 0.35 + vVar * 6.28) * 0.35;',
-        '  float sway = gust * 0.16 + fl * 0.045;',
-        '  vGust = gust * 0.5 + 0.5;',
-        '  vec3 p = position;',
-        '  p.x += sway * vH * vH; p.z += sway * 0.55 * vH * vH; p.y -= abs(sway) * 0.18 * vH * vH;',
-        '  vec4 wp = modelMatrix * instanceMatrix * vec4(p, 1.0);',
-        '  vDist = length(cameraPosition - wp.xyz);',
-        '  gl_Position = projectionMatrix * viewMatrix * wp;',
-        '}'
-      ].join('\n'),
-      fragmentShader: [
-        'uniform float uTimeMode; uniform vec3 uFogCol; uniform float uFogDensity;',
-        'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
-        'void main() {',
-        '  vec3 rootC = vec3(0.24, 0.54, 0.28);',
-        '  vec3 midC  = vec3(0.42, 0.76, 0.34);',
-        '  vec3 tipC  = mix(vec3(0.76, 0.94, 0.46), vec3(0.92, 0.96, 0.52), vVar);',
-        '  vec3 col = vH < 0.42 ? mix(rootC, midC, vH / 0.42) : mix(midC, tipC, (vH - 0.42) / 0.58);',
-        '  col += vec3(0.14, 0.15, 0.06) * vGust * pow(vH, 1.6);',
-        '  if (uTimeMode > 1.5) col *= vec3(0.36, 0.50, 0.80);',
-        '  else if (uTimeMode > 0.5) col *= vec3(1.16, 0.84, 0.62);',
-        '  float fogF = 1.0 - exp(-pow(vDist * uFogDensity, 2.0));',
-        '  col = mix(col, uFogCol, clamp(fogF, 0.0, 1.0));',
-        '  gl_FragColor = vec4(col, 1.0);',
-        '}'
-      ].join('\n')
-    });
+    // Tall graceful arching reed / golden-tipped wild meadow plume geometry!
+    const rPos = [], rUv = [];
+    for (let rb = 0; rb < 5; rb++) {
+      const a = (rb / 5) * Math.PI * 2 + 0.35;
+      const ca = Math.cos(a), sa = Math.sin(a), px = -sa, pz = ca;
+      const h = 0.72 + (rb % 3) * 0.18;
+      const lean = 0.34 + (rb % 2) * 0.14;
+      const bx = ca * 0.08, bz = sa * 0.08;
+      const m1x = bx + ca * lean * 0.32, m1z = bz + sa * lean * 0.32, h1 = h * 0.44;
+      const m2x = bx + ca * lean * 0.74, m2z = bz + sa * lean * 0.74, h2 = h * 0.78;
+      const tx = bx + ca * lean * 1.15, tz = bz + sa * lean * 1.15, h3 = h * 0.94;
+      const w0 = 0.032, w1 = 0.024, w2 = 0.016;
+      rPos.push(
+        bx - px*w0, 0, bz - pz*w0, bx + px*w0, 0, bz + pz*w0, m1x + px*w1, h1, m1z + pz*w1,
+        bx - px*w0, 0, bz - pz*w0, m1x + px*w1, h1, m1z + pz*w1, m1x - px*w1, h1, m1z - pz*w1,
+        m1x - px*w1, h1, m1z - pz*w1, m1x + px*w1, h1, m1z + pz*w1, m2x + px*w2, h2, m2z + pz*w2,
+        m1x - px*w1, h1, m1z - pz*w1, m2x + px*w2, h2, m2z + pz*w2, m2x - px*w2, h2, m2z - pz*w2,
+        m2x - px*w2, h2, m2z - pz*w2, m2x + px*w2, h2, m2z + pz*w2, tx, h3, tz
+      );
+      rUv.push(
+        0,0, 1,0, 1,0.44, 0,0, 1,0.44, 0,0.44,
+        0,0.44, 1,0.44, 1,0.78, 0,0.44, 1,0.78, 0,0.78,
+        0,0.78, 1,0.78, 0.5,1.0
+      );
+    }
+    const reedGeo = new THREE.BufferGeometry();
+    reedGeo.setAttribute('position', new THREE.Float32BufferAttribute(rPos, 3));
+    reedGeo.setAttribute('uv', new THREE.Float32BufferAttribute(rUv, 2));
+    reedGeo.computeVertexNormals();
 
-    const MAX_GRASS = 13500;
+    function makeOrganicGrassMat(isReed) {
+      return new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        uniforms: {
+          uTime: GLOBAL.uTime,
+          uTimeMode: GLOBAL.uTimeMode,
+          uFogCol: GLOBAL.uFogCol,
+          uFogDensity: GLOBAL.uFogDensity,
+          uIsReed: { value: isReed ? 1.0 : 0.0 }
+        },
+        vertexShader: [
+          'attribute vec3 aTone;',
+          'uniform float uTime;',
+          'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
+          'varying vec3 vTone; varying vec2 vWXZ;',
+          'void main() {',
+          '  vH = uv.y;',
+          '  vTone = aTone;',
+          '  vec4 wb = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);',
+          '  vWXZ = wb.xz;',
+          '  vVar = fract(sin(dot(wb.xz, vec2(12.9898, 78.233))) * 43758.5453);',
+          '  float gust = sin(uTime * 1.45 + wb.x * 0.14 + wb.z * 0.11);',
+          '  float fl = sin(uTime * 3.1 + wb.x * 0.42 - wb.z * 0.36 + vVar * 6.28) * 0.38;',
+          '  float sway = (gust * 0.19 + fl * 0.05) * (0.75 + aTone.x * 0.65);',
+          '  vGust = gust * 0.5 + 0.5;',
+          '  vec3 p = position;',
+          '  p.x += sway * vH * vH; p.z += sway * 0.55 * vH * vH; p.y -= abs(sway) * 0.20 * vH * vH;',
+          '  vec4 wp = modelMatrix * instanceMatrix * vec4(p, 1.0);',
+          '  vDist = length(cameraPosition - wp.xyz);',
+          '  gl_Position = projectionMatrix * viewMatrix * wp;',
+          '}'
+        ].join('\n'),
+        fragmentShader: [
+          'uniform float uTimeMode; uniform vec3 uFogCol; uniform float uFogDensity; uniform float uIsReed;',
+          'varying float vH; varying float vVar; varying float vGust; varying float vDist;',
+          'varying vec3 vTone; varying vec2 vWXZ;',
+          'void main() {',
+          '  // Macro painterly meadow patch variation (deep emerald, olive-sage, sunlit chartreuse & wheat-gold!)',
+          '  float macro = 0.5 + 0.5 * sin(vWXZ.x * 0.15 + cos(vWXZ.y * 0.13 + 0.5) * 1.7);',
+          '  float micro = 0.5 + 0.5 * cos(vWXZ.x * 0.38 - vWXZ.y * 0.32);',
+          '  vec3 rootLush = vec3(0.16, 0.40, 0.22);',
+          '  vec3 rootDry  = vec3(0.28, 0.42, 0.19);',
+          '  vec3 rootC = mix(rootLush, rootDry, macro * 0.65 + vTone.z * 0.35);',
+          '  vec3 midEmerald = vec3(0.30, 0.64, 0.28);',
+          '  vec3 midSage    = vec3(0.46, 0.68, 0.30);',
+          '  vec3 midGold    = vec3(0.62, 0.72, 0.28);',
+          '  vec3 midC = mix(midEmerald, midSage, macro);',
+          '  midC = mix(midC, midGold, smoothstep(0.45, 0.95, micro) * 0.45 + vTone.z * 0.45);',
+          '  vec3 tipGreen = vec3(0.66, 0.88, 0.38);',
+          '  vec3 tipGold  = vec3(0.92, 0.85, 0.44);',
+          '  vec3 tipWheat = vec3(0.95, 0.82, 0.48);',
+          '  vec3 tipC = mix(tipGreen, tipGold, clamp(vVar * 0.65 + macro * 0.45, 0.0, 1.0));',
+          '  if (uIsReed > 0.5) tipC = mix(tipC, tipWheat, smoothstep(0.52, 1.0, vH));',
+          '  vec3 col = vH < 0.40 ? mix(rootC, midC, vH / 0.40) : mix(midC, tipC, (vH - 0.40) / 0.60);',
+          '  // Cool deep mossy teal shade right under tree canopies!',
+          '  col = mix(col, col * vec3(0.56, 0.74, 0.76), vTone.y * 0.82);',
+          '  // Sweeping sunlit wind ripple highlights across tall meadow crests',
+          '  col += vec3(0.14, 0.15, 0.05) * vGust * pow(vH, 1.7) * (1.0 - vTone.y * 0.7);',
+          '  if (uTimeMode > 1.5) col *= vec3(0.36, 0.50, 0.80);',
+          '  else if (uTimeMode > 0.5) col *= vec3(1.16, 0.83, 0.60);',
+          '  float fogF = 1.0 - exp(-pow(vDist * uFogDensity, 2.0));',
+          '  col = mix(col, uFogCol, clamp(fogF, 0.0, 1.0));',
+          '  gl_FragColor = vec4(col, 1.0);',
+          '}'
+        ].join('\n')
+      });
+    }
+
+    const grassMat = makeOrganicGrassMat(false);
+    const reedMat = makeOrganicGrassMat(true);
+
+    const MAX_GRASS = 11500;
+    const MAX_REEDS = 1800;
     const grassMesh = new THREE.InstancedMesh(grassGeo, grassMat, MAX_GRASS);
+    const reedMesh = new THREE.InstancedMesh(reedGeo, reedMat, MAX_REEDS);
+    const grassTones = new Float32Array(MAX_GRASS * 3);
+    const reedTones = new Float32Array(MAX_REEDS * 3);
     const dummy = new THREE.Object3D();
-    let placedGrass = 0;
-    const flowerSpots = [];
+    let placedGrass = 0, placedReeds = 0;
 
-    for (let i = 0; i < MAX_GRASS * 3 && placedGrass < MAX_GRASS; i++) {
+    // Clumped organic placement: dense wild drifts & lush border/tree tufts with airy short-clover clearings between!
+    for (let i = 0; i < MAX_GRASS * 5 && placedGrass < MAX_GRASS; i++) {
       const x = -34 + hash01(i * 3.17 + 1.1) * 68;
       const z = -26 + hash01(i * 5.73 + 2.9) * 54;
-      // Keep courtyard cobblestones, footpaths & villas clear!
-      if (Math.hypot(x, z - 0.5) < 9.95) continue;
-      if (Math.abs(x) < 3.1 && z > -14 && z < 23) continue;
-      if (Math.abs(z - 0.5) < 2.55 && Math.abs(x) < 18.5) continue;
-      if (x > -9.2 && x < 9.2 && z > -21.8 && z < -11.0) continue;
-      if (Math.hypot(x + 19.5, z + 9.5) < 6.4 || Math.hypot(x - 20.5, z + 8.8) < 6.4) continue;
+      if (isClearWalkOrBuilding(x, z)) continue;
+
+      const clump = meadowNoise(x, z);
+      const rCourt = Math.hypot(x, z - 0.5);
+      const nearEdge = (rCourt < 12.2) || (Math.abs(x) < 10.6 && z > -22 && z < -9.5);
+      const tShade = getTreeShadeAt(x, z);
+
+      // Organic rejection sampling creates real clumped wild meadow pockets & soft clearings!
+      const keepProb = Math.min(0.96, (clump < 0.34 ? 0.12 : (clump - 0.16) * 1.18) + (nearEdge ? 0.38 : 0) + tShade * 0.25);
+      if (hash01(i * 11.3 + 4.7) > keepProb) continue;
+
       const y = getTerrainHeight(x, z);
-      dummy.position.set(x, y - 0.02, z);
-      dummy.rotation.set(0, hash01(i * 7.1) * Math.PI * 2, 0);
-      const sxz = 1.08 + hash01(i * 9.3) * 0.72;
-      const sy = 0.78 + hash01(i * 2.3) * 0.62;
+      const tallFactor = Math.max(0.0, Math.min(1.0, (clump - 0.22) * 1.35 + (nearEdge ? 0.25 : 0) + (hash01(i * 19.1) - 0.45) * 0.45));
+      const sxz = 0.72 + tallFactor * 0.85 + hash01(i * 9.3) * 0.35;
+      const sy = 0.38 + tallFactor * 1.12 + hash01(i * 2.3) * 0.38;
+      const dryGold = Math.max(0, Math.min(1, (1.0 - tShade) * (hash01(i * 23.7) * 0.65 + (clump > 0.68 ? 0.35 : 0))));
+
+      dummy.position.set(x, y - 0.025, z);
+      dummy.rotation.set((hash01(i * 4.1) - 0.5) * 0.18, hash01(i * 7.1) * Math.PI * 2, (hash01(i * 6.3) - 0.5) * 0.18);
       dummy.scale.set(sxz, sy, sxz);
       dummy.updateMatrix();
-      grassMesh.setMatrixAt(placedGrass++, dummy.matrix);
-      if (flowerSpots.length < 1400 && (i % 8 === 0)) {
-        flowerSpots.push([x, y, z, hash01(i * 13.7)]);
+      grassMesh.setMatrixAt(placedGrass, dummy.matrix);
+      grassTones[placedGrass * 3] = tallFactor;
+      grassTones[placedGrass * 3 + 1] = tShade;
+      grassTones[placedGrass * 3 + 2] = dryGold;
+      placedGrass++;
+
+      // Place tall graceful arching reed / golden-tipped plumes in dense clumps, borders & tree roots!
+      if (placedReeds < MAX_REEDS && (tallFactor > 0.64 || (nearEdge && hash01(i * 31.1) > 0.78) || (tShade > 0.35 && hash01(i * 29.3) > 0.72))) {
+        const rs = 0.78 + hash01(i * 17.7) * 0.62;
+        dummy.scale.set(rs, rs * (0.88 + tallFactor * 0.45), rs);
+        dummy.updateMatrix();
+        reedMesh.setMatrixAt(placedReeds, dummy.matrix);
+        reedTones[placedReeds * 3] = 1.0;
+        reedTones[placedReeds * 3 + 1] = tShade;
+        reedTones[placedReeds * 3 + 2] = 0.55 + hash01(i * 41.3) * 0.45;
+        placedReeds++;
       }
     }
     grassMesh.count = placedGrass;
     grassMesh.instanceMatrix.needsUpdate = true;
+    grassGeo.setAttribute('aTone', new THREE.InstancedBufferAttribute(grassTones, 3));
     scene.add(grassMesh);
 
-    // Swaying 3D Wildflower Duos (White Daisies, Buttercups, Pink Clover & Bluebells!)
+    reedMesh.count = placedReeds;
+    reedMesh.instanceMatrix.needsUpdate = true;
+    reedGeo.setAttribute('aTone', new THREE.InstancedBufferAttribute(reedTones, 3));
+    scene.add(reedMesh);
+
+    // Organic Mossy Meadow Stones nestled naturally into the tall grass near tree roots & curb edges!
+    const mossyStoneMat = makeGhibliMat(0x9da592, { map: TEX.cobble, roughness: 0.90, aoGround: 0.40 });
+    const mossCapMat = makeGhibliMat(0x4b8744, { roughness: 0.86, rimBoost: 0.8 });
+    [
+      [-10.4, -4.6, 0.55], [-10.9, -5.0, 0.34], [10.6, -4.8, 0.52],
+      [-11.8, 3.8, 0.62], [11.5, 4.4, 0.48], [12.1, 4.1, 0.30],
+      [-7.8, -10.2, 0.45], [8.2, -10.5, 0.54], [-14.2, -9.2, 0.68], [14.5, -8.8, 0.62]
+    ].forEach((st, idx) => {
+      const sy = getTerrainHeight(st[0], st[1]);
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(st[2], 1), mossyStoneMat);
+      rock.scale.set(1.25, 0.62, 1.05);
+      rock.position.set(st[0], sy + st[2] * 0.24, st[1]);
+      rock.rotation.set(idx * 0.4, idx * 1.1, 0.15);
+      rock.castShadow = true; rock.receiveShadow = true;
+      scene.add(rock);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(st[2] * 0.72, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.45), mossCapMat);
+      cap.scale.set(1.18, 0.45, 0.98);
+      cap.position.set(st[0], sy + st[2] * 0.42, st[1]);
+      scene.add(cap);
+    });
+
+    // Clustered Bouquet Wildflower Drifts (Daisies, Buttercups, Pink Clover, Forget-Me-Nots & Lavender!)
     const fPos = [], fUv = [], fPart = [];
     function addFlowerGeo(ox, oz, h, pr) {
-      fPos.push(ox - 0.014, 0, oz, ox + 0.014, 0, oz, ox, h, oz);
+      fPos.push(ox - 0.013, 0, oz, ox + 0.013, 0, oz, ox, h, oz);
       fUv.push(0,0, 1,0, 0.5,0.92); fPart.push(0, 0, 0);
       for (let p = 0; p < 5; p++) {
         const a0 = (p / 5) * Math.PI * 2;
@@ -1725,22 +1941,44 @@
       fPos.push(ox, h + 0.025, oz + cr, ox - cr * 0.88, h + 0.025, oz - cr * 0.55, ox + cr * 0.88, h + 0.025, oz - cr * 0.55);
       fUv.push(0.5,1, 1,1, 0,1); fPart.push(2, 2, 2);
     }
-    addFlowerGeo(0, 0, 0.42, 0.11);
-    addFlowerGeo(0.14, 0.09, 0.33, 0.085);
+    addFlowerGeo(0, 0, 0.44, 0.11);
+    addFlowerGeo(0.14, 0.09, 0.34, 0.085);
     const flowerGeo = new THREE.BufferGeometry();
     flowerGeo.setAttribute('position', new THREE.Float32BufferAttribute(fPos, 3));
     flowerGeo.setAttribute('uv', new THREE.Float32BufferAttribute(fUv, 2));
     flowerGeo.setAttribute('aPart', new THREE.Float32BufferAttribute(fPart, 1));
+
+    // Group wildflowers into 42 painterly bouquet drifts instead of uniform confetti!
+    const flowerSpots = [];
+    for (let d = 0; d < 48; d++) {
+      const cx = -28 + hash01(d * 7.13 + 0.7) * 56;
+      const cz = -20 + hash01(d * 11.41 + 2.3) * 42;
+      if (isClearWalkOrBuilding(cx, cz)) continue;
+      const patchSpecies = hash01(d * 19.3 + 5.1); // Each drift shares a cohesive flower color family!
+      const countInDrift = 18 + Math.floor(hash01(d * 5.9) * 26);
+      const driftRad = 1.4 + hash01(d * 3.7) * 1.9;
+      for (let k = 0; k < countInDrift && flowerSpots.length < 1550; k++) {
+        const ang = hash01(d * 97 + k * 13.1) * Math.PI * 2;
+        const rad = Math.pow(hash01(d * 53 + k * 7.7), 0.7) * driftRad;
+        const fx = cx + Math.cos(ang) * rad;
+        const fz = cz + Math.sin(ang) * rad;
+        if (isClearWalkOrBuilding(fx, fz)) continue;
+        const fy = getTerrainHeight(fx, fz);
+        const colSeed = (hash01(d * 31 + k * 17.3) < 0.78) ? patchSpecies : hash01(k * 29.7 + d);
+        flowerSpots.push([fx, fy, fz, colSeed, 0.74 + hash01(k * 11.1 + d) * 0.68]);
+      }
+    }
+
+    const flowerColAttr = new Float32Array(flowerSpots.length);
     const flowerMat = new THREE.ShaderMaterial({
       side: THREE.DoubleSide,
       uniforms: { uTime: GLOBAL.uTime, uTimeMode: GLOBAL.uTimeMode },
       vertexShader: [
-        'attribute float aPart; uniform float uTime; varying float vPart; varying float vVar;',
+        'attribute float aPart; attribute float aColSeed; uniform float uTime; varying float vPart; varying float vVar;',
         'void main() {',
-        '  vPart = aPart; float h = uv.y;',
+        '  vPart = aPart; vVar = aColSeed; float h = uv.y;',
         '  vec4 wb = modelMatrix * instanceMatrix * vec4(0.0,0.0,0.0,1.0);',
-        '  vVar = fract(sin(dot(wb.xz, vec2(37.13, 91.7))) * 43758.5453);',
-        '  float sway = sin(uTime * 1.55 + wb.x * 0.16 + wb.z * 0.12) * 0.16;',
+        '  float sway = sin(uTime * 1.45 + wb.x * 0.14 + wb.z * 0.11) * 0.17;',
         '  vec3 p = position; p.x += sway * h * h; p.z += sway * 0.55 * h * h;',
         '  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(p, 1.0);',
         '}'
@@ -1748,8 +1986,8 @@
       fragmentShader: [
         'uniform float uTimeMode; varying float vPart; varying float vVar;',
         'void main() {',
-        '  vec3 pCol = vVar < 0.32 ? vec3(1.0, 0.99, 0.96) : (vVar < 0.58 ? vec3(1.0, 0.88, 0.38) : (vVar < 0.82 ? vec3(1.0, 0.66, 0.78) : vec3(0.58, 0.80, 1.0)));',
-        '  vec3 col = vPart < 0.5 ? vec3(0.28, 0.60, 0.28) : (vPart > 1.5 ? vec3(1.0, 0.82, 0.22) : pCol);',
+        '  vec3 pCol = vVar < 0.24 ? vec3(1.0, 0.99, 0.95) : (vVar < 0.48 ? vec3(1.0, 0.86, 0.34) : (vVar < 0.70 ? vec3(0.98, 0.64, 0.76) : (vVar < 0.86 ? vec3(0.56, 0.78, 1.0) : vec3(0.76, 0.60, 0.98))));',
+        '  vec3 col = vPart < 0.5 ? vec3(0.24, 0.56, 0.26) : (vPart > 1.5 ? vec3(1.0, 0.80, 0.20) : pCol);',
         '  if (uTimeMode > 1.5) col *= vec3(0.45, 0.58, 0.84);',
         '  else if (uTimeMode > 0.5) col *= vec3(1.12, 0.86, 0.66);',
         '  gl_FragColor = vec4(col, 1.0);',
@@ -1759,12 +1997,13 @@
     const flowerMesh = new THREE.InstancedMesh(flowerGeo, flowerMat, flowerSpots.length);
     flowerSpots.forEach((fs, idx) => {
       dummy.position.set(fs[0], fs[1] - 0.01, fs[2]);
-      dummy.rotation.set(0, fs[3] * Math.PI * 2, 0);
-      const sc = 0.88 + fs[3] * 0.55;
-      dummy.scale.set(sc, sc, sc);
+      dummy.rotation.set(0, hash01(idx * 17.1) * Math.PI * 2, 0);
+      dummy.scale.set(fs[4], fs[4], fs[4]);
       dummy.updateMatrix();
       flowerMesh.setMatrixAt(idx, dummy.matrix);
+      flowerColAttr[idx] = fs[3];
     });
+    flowerGeo.setAttribute('aColSeed', new THREE.InstancedBufferAttribute(flowerColAttr, 1));
     flowerMesh.instanceMatrix.needsUpdate = true;
     scene.add(flowerMesh);
 
@@ -1813,7 +2052,7 @@
       sisters:  { yaw: 0.24, pitch: 0.14,  dist: 3.9,  tx: -0.1, ty: 1.02, tz: 5.55 },
       fountain: { yaw: -0.56, pitch: 0.22, dist: 6.3,  tx: 0.0, ty: 1.38, tz: 0.5 },
       sakura:   { yaw: 0.52, pitch: 0.14,  dist: 10.6, tx: -9.5, ty: 3.3, tz: -4.8 },
-      vista:    { yaw: -0.34, pitch: 0.20, dist: 24.5, tx: 0.0, ty: 3.2, tz: -2.5 }
+      vista:    { yaw: -0.14, pitch: 0.34, dist: 24.0, tx: 0.0, ty: 2.2, tz: -2.0 }
     };
     const camState = Object.assign({}, PRESETS.hero);
     const camTarget = Object.assign({}, PRESETS.hero);
