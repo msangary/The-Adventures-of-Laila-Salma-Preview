@@ -1978,12 +1978,26 @@ window.LailaSalma = window.LailaSalma || {};
       }
     ]);
 
-    W.zones.push({ id: 'ngsc_squash', label: 'Play Squash Rally as Laila! 🎾🏆', pos: new THREE.Vector3(-7.6, 0, 4.2), radius: 3.0 });
+    // White translucent water-splash rings used when Laila & Salma swim together!
+    W.swimSplashes = [0, 1].map(() => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.28, 0.52, 18),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.72, side: THREE.DoubleSide })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(7.4, 0.22, 0);
+      ring.visible = false;
+      worldGroup.add(ring);
+      return ring;
+    });
+
+    W.zones.push({ id: 'ngsc_squash', label: 'Watch Laila Play Squash on Court! 🎾🏆', pos: new THREE.Vector3(-7.6, 0, 4.2), radius: 3.0 });
     W.zones.push({ id: 'ngsc_swim', label: 'Swim Together in the NGSC Pool (Laila & Salma!) 🏊‍♀️💦', pos: new THREE.Vector3(7.4, 0, 4.6), radius: 3.2 });
     W.zones.push({ id: 'home_qashqai', label: 'Hop in Gray Nissan Qashqai (Drive Home or Elsewhere) 🚙', pos: new THREE.Vector3(-1.8, 0, 10.2), radius: 3.2 });
 
     W.update = function (dt, elapsed) {
-      if (W.squashBall) {
+      const activeSquash = LS.runtime && LS.runtime.ngscActivity && LS.runtime.ngscActivity.type === 'squash';
+      if (W.squashBall && !activeSquash) {
         const t = elapsed * 2.6;
         W.squashBall.position.set(
           Math.sin(t * 0.9) * 2.4,

@@ -306,6 +306,8 @@ window.LailaSalma = window.LailaSalma || {};
         fountainDrops: [],
         canopies: [],
         teaSteam: [],
+        strollers: [],
+        swayers: [],
         mochiStartPos: new THREE.Vector3(2.4, 0, 19.5)
       };
 
@@ -864,6 +866,98 @@ window.LailaSalma = window.LailaSalma || {};
         });
       });
 
+      // ---------------------------------------------------------------------
+      // 8. Bustling Medina Crowd: 10 More Lively Moroccan NPCs!
+      //    (2 Merchants, 2 Seated Tea Guests, 2 Drum Musicians & 4 Strollers)
+      // ---------------------------------------------------------------------
+      safeRun('bustling_medina_npcs', () => {
+        // 1) Spice Merchant Tariq beside the colorful Spice Pyramids!
+        const tariq = LS.createAnimeCharacter({
+          scale: 1.03, hairColor: 0x231b17, skinColor: 0xc58d64,
+          topColor: 0xf4a236, bottomColor: 0x3b2a20, pants: true,
+          faceOpts: { mustache: true, eyeColor: '#2c1e16', eyeHighlight: '#8c623d' }
+        });
+        tariq.root.position.set(14.8, 0, -2.6);
+        tariq.root.rotation.y = -Math.PI / 2;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Spice Merchant Tariq 🌶️', 'Smell the golden saffron, sweet cinnamon & warm paprika! ✨');
+          sb.position.set(0, 2.38, 0); tariq.root.add(sb);
+        }
+        worldGroup.add(tariq.root);
+
+        // 2) Sweet Orange & Chebakia Pastry Seller Amina + Wooden Citrus Cart!
+        const cart = new THREE.Group();
+        cart.position.set(7.6, 0, 25.8);
+        cart.rotation.y = -0.35;
+        const cBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.9, 1.25), cedarMat);
+        cBody.position.y = 0.65; cBody.castShadow = true; cart.add(cBody);
+        [-0.85, 0.85].forEach(wx => {
+          const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.06, 8, 16), cedarMat);
+          wheel.position.set(wx, 0.34, 0.66); cart.add(wheel);
+        });
+        const orangeMat = LS.makeToonMat(0xff8c24);
+        for (let i = 0; i < 8; i++) {
+          const or = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), orangeMat);
+          or.position.set(-0.65 + (i % 4) * 0.32, 1.20 + Math.floor(i / 4) * 0.14, -0.18 + Math.floor(i / 4) * 0.32);
+          cart.add(or);
+        }
+        worldGroup.add(cart);
+        addCollider(7.6, 25.8, 1.4, 1.0);
+
+        const amina = LS.createAnimeCharacter({
+          scale: 0.96, hairColor: 0x1d1410, skinColor: 0xd09870,
+          topColor: 0xc83e37, bottomColor: 0xfff3d6, hairBun: true,
+          faceOpts: { eyeColor: '#3a2216', eyeHighlight: '#b07246', blush: 'rgba(226,114,98,0.42)' }
+        });
+        amina.root.position.set(5.8, 0, 25.6);
+        amina.root.rotation.y = -0.65;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Amina (Oranges) 🍊', 'Fresh sweet Marrakech oranges & honey pastries! 🍊🍯');
+          sb.position.set(0, 2.25, 0); amina.root.add(sb);
+        }
+        worldGroup.add(amina.root);
+
+        // 3 & 4) Two Cozy Guests Properly Seated at the Riad Mint Tea Table!
+        const teaGuests = [
+          { x: -2.2, z: -20.3, rotY: Math.PI / 2, cfg: { scale: 0.98, hairColor: 0x261d17, skinColor: 0xc68e66, topColor: 0x1f5692, bottomColor: 0xf4e8d2, pants: true } },
+          { x: 2.2, z: -20.3, rotY: -Math.PI / 2, cfg: { scale: 0.94, hairColor: 0x1e1612, skinColor: 0xd49d76, topColor: 0x1e8a7a, bottomColor: 0xf4be44, hairBun: true } }
+        ];
+        teaGuests.forEach((tg, idx) => {
+          const ch = LS.createAnimeCharacter(tg.cfg);
+          ch.root.position.set(tg.x, 0.34, tg.z);
+          ch.root.rotation.y = tg.rotY;
+          if (LS.applyArticulatedPose) LS.applyArticulatedPose(ch, 0, 'chair_sit', idx * 1.2);
+          worldGroup.add(ch.root);
+          W.swayers.push({ ch, mode: 'sit', phase: idx * 1.7 });
+        });
+
+        // 5 & 6) Two Musicians Swaying & Playing at the Evening Drum Circle!
+        const musicians = [
+          { x: -13.2, z: 21.8, rotY: 0.9, cfg: { scale: 1.0, hairColor: 0x1d1613, skinColor: 0xb98158, topColor: 0x1f5692, bottomColor: 0xfdf3dc, pants: true, faceOpts: { mustache: true } } },
+          { x: -7.8, z: 21.8, rotY: -0.9, cfg: { scale: 0.95, hairColor: 0x2a1b14, skinColor: 0xcf976f, topColor: 0xd97706, bottomColor: 0x7c2d12, hairBun: true } }
+        ];
+        musicians.forEach((mu, idx) => {
+          const ch = LS.createAnimeCharacter(mu.cfg);
+          ch.root.position.set(mu.x, 0, mu.z);
+          ch.root.rotation.y = mu.rotY;
+          worldGroup.add(ch.root);
+          W.swayers.push({ ch, mode: 'clap', phase: idx * 1.3 });
+        });
+
+        // 7–10) Four Animated Strolling Medina Visitors Exploring the Bazaar!
+        const strollerDefs = [
+          { rx: 8.6, rz: 9.2, cx: 0, cz: 4.0, speed: 0.24, phase: 0.0, cfg: { scale: 0.98, hairColor: 0x2c2018, skinColor: 0xd19a72, topColor: 0x0ea5e9, bottomColor: 0x334155, pants: true } },
+          { rx: 9.4, rz: 8.2, cx: 0, cz: 4.0, speed: -0.21, phase: 2.1, cfg: { scale: 0.94, hairColor: 0x1f1512, skinColor: 0xc99169, topColor: 0xf43f5e, bottomColor: 0xfef3c7, hairBun: true } },
+          { rx: 11.2, rz: 10.6, cx: 0, cz: 3.5, speed: 0.18, phase: 4.2, cfg: { scale: 0.88, hairColor: 0x3b281c, skinColor: 0xd9a682, topColor: 0x10b981, bottomColor: 0x1e3a5f, pants: true } },
+          { rx: 7.4, rz: 7.8, cx: 0, cz: 4.5, speed: -0.25, phase: 5.1, cfg: { scale: 0.92, hairColor: 0x261a14, skinColor: 0xc48b62, topColor: 0x8b5cf6, bottomColor: 0xfde68a, longHair: true } }
+        ];
+        strollerDefs.forEach(sd => {
+          const ch = LS.createAnimeCharacter(sd.cfg);
+          worldGroup.add(ch.root);
+          W.strollers.push({ ch, rx: sd.rx, rz: sd.rz, cx: sd.cx, cz: sd.cz, speed: sd.speed, phase: sd.phase });
+        });
+      });
+
       W.getZoneLabel = function (x, z) {
         if (z < -11) return 'Riad Orange-Tree Tea Courtyard 🫖🍊';
         if (x < -10 && z < 14) return "Fatima's Lantern Bazaar Arcade 🏮";
@@ -893,6 +987,29 @@ window.LailaSalma = window.LailaSalma || {};
           p.position.set(p.userData.baseX + Math.sin(elapsed * 2 + p.userData.phase * 6) * 0.16, p.userData.baseY + t * 1.5, p.userData.baseZ);
           p.scale.setScalar(0.55 + t * 0.95);
           p.material.opacity = (1 - t) * 0.42;
+        });
+        W.strollers.forEach(st => {
+          const a = elapsed * st.speed + st.phase;
+          const nx = st.cx + Math.cos(a) * st.rx;
+          const nz = st.cz + Math.sin(a) * st.rz;
+          const dx = -Math.sin(a) * st.rx * st.speed;
+          const dz = Math.cos(a) * st.rz * st.speed;
+          st.ch.root.position.set(nx, 0, nz);
+          st.ch.root.rotation.y = Math.atan2(dx, dz);
+          const sw = Math.sin(elapsed * 6.5 + st.phase) * 0.48;
+          st.ch.leftLeg.rotation.x = sw;
+          st.ch.rightLeg.rotation.x = -sw;
+          st.ch.leftArm.rotation.x = -sw * 0.65;
+          st.ch.rightArm.rotation.x = sw * 0.65;
+        });
+        W.swayers.forEach(sw => {
+          if (sw.mode === 'clap') {
+            sw.ch.leftArm.rotation.x = -0.75 + Math.sin(elapsed * 6.0 + sw.phase) * 0.28;
+            sw.ch.rightArm.rotation.x = -0.75 + Math.sin(elapsed * 6.0 + sw.phase + 0.3) * 0.28;
+            sw.ch.root.position.y = Math.abs(Math.sin(elapsed * 3.0 + sw.phase)) * 0.06;
+          } else if (sw.ch.head) {
+            sw.ch.head.rotation.y = Math.sin(elapsed * 1.1 + sw.phase) * 0.18;
+          }
         });
         W.hiddenAnimals.forEach((a, idx) => {
           if (!a.found && a.tail) a.tail.rotation.y = Math.sin(elapsed * 4.5 + idx) * 0.4;

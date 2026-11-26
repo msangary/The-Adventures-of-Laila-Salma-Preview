@@ -448,6 +448,8 @@ window.LailaSalma = window.LailaSalma || {};
     if (LS.runtime.eating) LS.finishEatingAnimation(scene);
     LS.runtime.mochiGame = null;
     LS.runtime.parkActivity = null;
+    if (LS.runtime.ngscActivity && LS.finishNGSCActivity) LS.finishNGSCActivity(true);
+    LS.runtime.ngscActivity = null;
     LS.runtime.safariRide = null;
     LS.runtime.balloonRide = null;
     LS.runtime.cheetahRace = null;
@@ -1119,8 +1121,133 @@ window.LailaSalma = window.LailaSalma || {};
     document.getElementById('btn-run').classList.toggle('active', LS.runtime.runToggle);
   }
 
+  function ensureSquashRacket(laila) {
+    if (!laila || !laila.rightArm) return null;
+    if (laila._ngscRacket) return laila._ngscRacket;
+    const rg = new THREE.Group();
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.032, 0.42, 8), LS.makeToonMat(0x1e3a5f));
+    grip.position.set(0, -0.42, 0.14);
+    grip.rotation.x = Math.PI * 0.35;
+    rg.add(grip);
+    const frame = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.028, 8, 18), LS.makeToonMat(0xf59e0b));
+    frame.scale.set(0.82, 1.15, 1.0);
+    frame.position.set(0, -0.58, 0.34);
+    frame.rotation.x = Math.PI * 0.35;
+    rg.add(frame);
+    const strings = new THREE.Mesh(
+      new THREE.CircleGeometry(0.15, 14),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+    );
+    strings.scale.set(0.82, 1.15, 1.0);
+    strings.position.copy(frame.position);
+    strings.rotation.copy(frame.rotation);
+    rg.add(strings);
+    rg.visible = false;
+    laila.rightArm.add(rg);
+    laila._ngscRacket = rg;
+    return rg;
+  }
+
+  LS.startNGSCActivity = function (mode) {
+    if (LS.runtime.ngscActivity) return;
+    LS.closeAllModals();
+    const laila = LS.chars.laila;
+    if (!laila) return;
+
+    LS.runtime.ngscActivity = { type: mode, timer: 7.5, duration: 7.5 };
+    LS.runtime.nearZone = null;
+    const pEl = document.getElementById('interact-prompt');
+    const mEl = document.getElementById('btn-interact-mobile');
+    if (pEl) pEl.classList.add('hidden');
+    if (mEl) mEl.classList.add('hidden');
+    LS.playSFX('jump');
+
+    if (mode === 'squash') {
+      const rack = ensureSquashRacket(laila);
+      if (rack) rack.visible = true;
+      LS.setSalmaBubbleText('Go Laila!! Awesome forehand squash rally!! 🎾🏆', 7200);
+      LS.showToast('🎾 Laila steps onto the NGSC Squash Court for a live rally!');
+      targetCamYaw = Math.PI;
+      targetCamPitch = 0.28;
+    } else {
+      LS.setSalmaBubbleText('Splash!! Swimming together in the NGSC Olympic Pool! 🏊‍♀️💦', 7200);
+      LS.showToast('🏊‍♀️ Laila & Salma dive into the sparkling NGSC Swimming Pool together!');
+      targetCamYaw = Math.PI * 0.85;
+      targetCamPitch = 0.34;
+    }
+
+    const ban = document.getElementById('eating-banner');
+    const st = document.getElementById('eating-status');
+    const skipBtn = document.getElementById('btn-skip-eat');
+    if (st) {
+      st.textContent = mode === 'squash'
+        ? '🎾 Laila is playing a championship Squash rally while Salma cheers!'
+        : '🏊‍♀️ Laila & Salma are swimming freestyle laps together in the NGSC Pool! 💦';
+    }
+    if (ban) ban.classList.remove('hidden');
+    if (skipBtn) {
+      skipBtn.onclick = () => {
+        if (LS.runtime.ngscActivity) LS.finishNGSCActivity(false);
+        else if (LS.runtime.eating) LS.finishEatingAnimation(scene);
+      };
+    }
+  };
+
+  LS.finishNGSCActivity = function (silent) {
+    const na = LS.runtime.ngscActivity;
+    if (!na) return;
+    const mode = na.type;
+    LS.runtime.ngscActivity = null;
+
+    const laila = LS.chars.laila;
+    const salma = LS.chars.salma;
+    if (laila) {
+      if (laila._ngscRacket) laila._ngscRacket.visible = false;
+      if (laila.bodyPivot) laila.bodyPivot.rotation.set(0, 0, 0);
+      laila.leftArm.rotation.set(0, 0, 0);
+      laila.rightArm.rotation.set(0, 0, 0);
+      laila.leftLeg.rotation.set(0, 0, 0);
+      laila.rightLeg.rotation.set(0, 0, 0);
+      if (!silent) {
+        laila.root.position.set(mode === 'squash' ? -7.6 : 6.2, 0, 5.2);
+        laila.root.rotation.y = Math.PI;
+      }
+    }
+    if (salma) {
+      if (salma.bodyPivot) salma.bodyPivot.rotation.set(0, 0, 0);
+      salma.leftArm.rotation.set(0, 0, 0);
+      salma.rightArm.rotation.set(0, 0, 0);
+      salma.leftLeg.rotation.set(0, 0, 0);
+      salma.rightLeg.rotation.set(0, 0, 0);
+      if (!silent) {
+        salma.root.position.set(mode === 'squash' ? -6.2 : 7.8, 0, 5.4);
+        salma.root.rotation.y = Math.PI;
+      }
+    }
+    if (LS.activeWorld && LS.activeWorld.swimSplashes) {
+      LS.activeWorld.swimSplashes.forEach(r => { r.visible = false; });
+    }
+    const ban = document.getElementById('eating-banner');
+    if (ban) ban.classList.add('hidden');
+
+    if (!silent) {
+      LS.addCoins(30);
+      LS.addXP(28);
+      LS.runtime.stamina = 100;
+      LS.unlockStamp('dest_ngsc');
+      if (LS.completeCozyMission) LS.completeCozyMission('play');
+      LS.playSFX('correct');
+      if (mode === 'swim') {
+        LS.runtime.buff = { name: 'NGSC Swim Refresh', short: 'Swim💦', speedMult: 1.25, infiniteStamina: true, expiresAt: Date.now() + 90000 };
+        LS.showToast('🏆 Woohoo! Laila & Salma finished their NGSC swim laps! (+30c, +28 XP & Swim Boost!)');
+      } else {
+        LS.showToast('🏆 Awesome Squash match, Laila! Coach Karim & Salma cheer! (+30c & +28 XP!)');
+      }
+    }
+  };
+
   function triggerInteract() {
-    if (LS.runtime.titleScreenActive || LS.runtime.modalOpen || LS.runtime.eating || LS.runtime.traveling) return;
+    if (LS.runtime.titleScreenActive || LS.runtime.modalOpen || LS.runtime.eating || LS.runtime.traveling || LS.runtime.ngscActivity) return;
     if (LS.unlockAudio) LS.unlockAudio();
     if (LS.runtime.bikeRide) {
       LS.dismountYellowBike();
@@ -1149,8 +1276,8 @@ window.LailaSalma = window.LailaSalma || {};
     else if (zid === 'cosmo_meteors') LS.openCosmoGameModal('meteors');
     else if (zid === 'cosmo_memory') LS.openCosmoGameModal('memory');
     else if (zid === 'cosmo_claw') LS.openCosmoGameModal('claw');
-    else if (zid === 'ngsc_squash') LS.openNGSCModal('squash');
-    else if (zid === 'ngsc_swim') LS.openNGSCModal('swim');
+    else if (zid === 'ngsc_squash') LS.startNGSCActivity('squash');
+    else if (zid === 'ngsc_swim') LS.startNGSCActivity('swim');
     else if (zid === 'egypt_teacher_quiz') LS.openSchoolModal('egypt');
     else if (zid === 'marrakech_teacher_quiz') LS.openSchoolModal('marrakech');
     else if (
@@ -1804,6 +1931,119 @@ window.LailaSalma = window.LailaSalma || {};
           salma.rightLeg.rotation.x = 0;
         }
         LS.runtime.parkActivity = null;
+      }
+      return;
+    }
+
+    // Live 3D NGSC Sports Club Animations (Laila Playing Squash & Laila + Salma Swimming!)
+    if (LS.runtime.ngscActivity) {
+      const na = LS.runtime.ngscActivity;
+      na.timer -= dt;
+      const t = Math.max(0, Math.min(1, 1 - (na.timer / na.duration)));
+      const w = LS.activeWorld;
+
+      if (na.type === 'squash') {
+        // Laila rallies dynamically across the hardwood Squash Court holding a 3D racket!
+        const rallyPhase = elapsed * 2.5;
+        const lx = -7.6 + Math.sin(rallyPhase) * 2.15;
+        const lz = 0.25 + Math.cos(rallyPhase * 0.72) * 0.85;
+        const hop = Math.abs(Math.sin(rallyPhase * 2.0)) * 0.14;
+        laila.root.position.set(lx, 0.13 + hop, lz);
+        laila.root.rotation.y = Math.PI + Math.cos(rallyPhase) * 0.28;
+        if (laila.bodyPivot) laila.bodyPivot.rotation.x = 0.08;
+        const runSwing = Math.sin(rallyPhase * 4.0) * 0.65;
+        laila.leftLeg.rotation.x = runSwing;
+        laila.rightLeg.rotation.x = -runSwing;
+        // Rhythmic forehand/backhand squash racket swing synced to ball bounce!
+        const ballCycle = (elapsed * 1.45) % 1.0; // 0 = hit from Laila -> 0.5 = wall impact -> 1.0 = back to Laila
+        const swingAmt = ballCycle < 0.22 ? Math.sin((ballCycle / 0.22) * Math.PI) : 0;
+        laila.rightArm.rotation.x = -0.85 - swingAmt * 1.45;
+        laila.rightArm.rotation.z = -0.35 + swingAmt * 0.65;
+        laila.leftArm.rotation.x = 0.25;
+        laila.leftArm.rotation.z = 0.35;
+
+        // Sync 3D squash ball directly between Laila's racket & the front white wall!
+        if (w && w.squashBall) {
+          const arc = ballCycle < 0.5 ? (ballCycle * 2.0) : ((1.0 - ballCycle) * 2.0); // 0 = at Laila, 1 = at front wall
+          const localLx = lx - (-7.6);
+          const localLz = lz - (-2.0);
+          const bx = localLx * (1 - arc) + (Math.sin(rallyPhase + 1.0) * 1.6) * arc;
+          const bz = (localLz - 0.55) * (1 - arc) + (-4.62) * arc;
+          const by = 0.95 + Math.sin(arc * Math.PI) * 1.35 + arc * 0.65;
+          w.squashBall.position.set(bx, by, bz);
+        }
+
+        // Salma cheers & hops happily right outside the clear glass back wall!
+        if (salma) {
+          salma.root.position.set(-6.0, Math.abs(Math.sin(elapsed * 7.5)) * 0.24, 4.15);
+          salma.root.rotation.y = Math.PI - 0.18;
+          if (salma.bodyPivot) salma.bodyPivot.rotation.x = 0;
+          salma.leftArm.rotation.z = 2.45 + Math.sin(elapsed * 9.0) * 0.35;
+          salma.rightArm.rotation.z = -2.45 - Math.sin(elapsed * 9.0) * 0.35;
+          salma.leftLeg.rotation.x = 0;
+          salma.rightLeg.rotation.x = 0;
+        }
+      } else if (na.type === 'swim') {
+        // BOTH Laila (Lane 1) & Salma (Lane 2) swim freestyle side-by-side in the NGSC pool!
+        const lapT = (elapsed * 0.26) % 2.0; // 0..1 north toward starting blocks, 1..2 south back
+        const goingNorth = lapT < 1.0;
+        const u = goingNorth ? lapT : (2.0 - lapT);
+        const swimZ = 1.9 - u * 6.8;
+        const salmaU = ((elapsed * 0.26 + 0.08) % 2.0);
+        const sNorth = salmaU < 1.0;
+        const su = sNorth ? salmaU : (2.0 - salmaU);
+        const salmaZ = 1.9 - su * 6.8;
+
+        const strokeL = elapsed * 6.8;
+        const strokeS = elapsed * 7.2 + 1.1;
+
+        // Laila freestyle in Lane 1 (X = +4.7)
+        laila.root.position.set(4.7, 0.34 + Math.sin(strokeL) * 0.03, swimZ);
+        laila.root.rotation.y = goingNorth ? Math.PI : 0;
+        if (laila.bodyPivot) laila.bodyPivot.rotation.x = Math.PI * 0.44;
+        laila.leftArm.rotation.x = -strokeL;
+        laila.rightArm.rotation.x = -(strokeL + Math.PI);
+        laila.leftArm.rotation.z = 0.18;
+        laila.rightArm.rotation.z = -0.18;
+        laila.leftLeg.rotation.x = Math.sin(strokeL * 2.1) * 0.38;
+        laila.rightLeg.rotation.x = -Math.sin(strokeL * 2.1) * 0.38;
+
+        // Salma freestyle in Lane 2 (X = +7.4)
+        if (salma) {
+          salma.root.position.set(7.4, 0.32 + Math.sin(strokeS) * 0.03, salmaZ);
+          salma.root.rotation.y = sNorth ? Math.PI : 0;
+          if (salma.bodyPivot) salma.bodyPivot.rotation.x = Math.PI * 0.44;
+          salma.leftArm.rotation.x = -strokeS;
+          salma.rightArm.rotation.x = -(strokeS + Math.PI);
+          salma.leftArm.rotation.z = 0.18;
+          salma.rightArm.rotation.z = -0.18;
+          salma.leftLeg.rotation.x = Math.sin(strokeS * 2.1) * 0.42;
+          salma.rightLeg.rotation.x = -Math.sin(strokeS * 2.1) * 0.42;
+        }
+
+        // Animated sparkling white water-splash rings trailing behind both sisters!
+        if (w && w.swimSplashes) {
+          const sp0 = w.swimSplashes[0];
+          if (sp0) {
+            sp0.visible = true;
+            sp0.position.set(4.7, 0.22, swimZ + (goingNorth ? 0.55 : -0.55));
+            const sc0 = 0.85 + ((elapsed * 2.2) % 1.0) * 0.75;
+            sp0.scale.setScalar(sc0);
+            sp0.material.opacity = (1 - ((elapsed * 2.2) % 1.0)) * 0.75;
+          }
+          const sp1 = w.swimSplashes[1];
+          if (sp1 && salma) {
+            sp1.visible = true;
+            sp1.position.set(7.4, 0.22, salmaZ + (sNorth ? 0.55 : -0.55));
+            const sc1 = 0.85 + ((elapsed * 2.2 + 0.45) % 1.0) * 0.75;
+            sp1.scale.setScalar(sc1);
+            sp1.material.opacity = (1 - ((elapsed * 2.2 + 0.45) % 1.0)) * 0.75;
+          }
+        }
+      }
+
+      if (na.timer <= 0) {
+        LS.finishNGSCActivity(false);
       }
       return;
     }

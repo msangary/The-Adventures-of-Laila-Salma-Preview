@@ -373,9 +373,10 @@ window.LailaSalma = window.LailaSalma || {};
           btn.disabled = true;
         } else {
           btn.className = 'btn-primary';
-          const isGlobe = wid === 'home_neighborhood' || LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment';
-          const isFlight = !isGlobe && (wid === 'safari' || LS.state.currentWorld === 'safari');
-          btn.textContent = (isGlobe ? '🌍 Magic Globe to ' : (isFlight ? '✈️ Fly to ' : '🚅 Ride Shinkansen to ')) + w.title;
+          const curW = LS.state.currentWorld;
+          const isGlobe = wid === 'home_neighborhood' || curW === 'home_neighborhood' || curW === 'home_apartment';
+          const isShinkansen = (curW === 'tokyo' && wid === 'kyoto') || (curW === 'kyoto' && wid === 'tokyo');
+          btn.textContent = (isGlobe ? '🌍 Magic Globe to ' : (isShinkansen ? '🚅 Ride Shinkansen to ' : '✈️ Fly to ')) + w.title;
           btn.onclick = () => LS.travelToWorld(wid);
         }
         actions.appendChild(btn);
