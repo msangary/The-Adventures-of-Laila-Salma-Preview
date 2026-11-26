@@ -571,24 +571,54 @@ window.LailaSalma = window.LailaSalma || {};
         W.lanternPivots.push({ piv, phase: idx * 0.95 });
       });
 
-      // Potted Seville Orange Trees in the 4 Corners
-      const leafMat = LS.makeToonMat(0x2f8545);
-      const orangeMat = LS.makeToonMat(0xff8c24);
-      [[-5.2, -4.4], [5.2, -4.4], [-5.2, 4.2], [5.2, 4.2]].forEach(tp => {
-        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.36, 0.65, 12), cobaltMat);
-        pot.position.set(tp[0], 0.33, tp[1]); worldGroup.add(pot);
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 1.3, 8), cedarMat);
-        trunk.position.set(tp[0], 1.25, tp[1]); worldGroup.add(trunk);
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.76, 14, 10), leafMat);
-        crown.position.set(tp[0], 2.15, tp[1]); crown.castShadow = true; worldGroup.add(crown);
-        for (let o = 0; o < 5; o++) {
-          const ang = (o / 5) * Math.PI * 2;
-          const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), orangeMat);
-          fruit.position.set(tp[0] + Math.cos(ang) * 0.68, 2.1 + (o % 2) * 0.25, tp[1] + Math.sin(ang) * 0.68);
-          worldGroup.add(fruit);
+      // Lush Studio Ghibli Potted Seville Orange Trees in the 4 Corners!
+      [[-5.3, -4.5], [5.3, -4.5], [-5.3, 4.2], [5.3, 4.2]].forEach((tp, idx) => {
+        if (LS.ghibli && LS.ghibli.buildOrangeTree) {
+          const ot = LS.ghibli.buildOrangeTree(0.95);
+          ot.position.set(tp[0], 0, tp[1]);
+          ot.rotation.y = idx * 1.45;
+          worldGroup.add(ot);
         }
-        addCollider(tp[0], tp[1], 0.65, 0.65);
+        addCollider(tp[0], tp[1], 0.72, 0.72);
       });
+
+      // Enchanting Moroccan Zellige Rooftop Wall Fountain (North-Center Terrace Parapet!)
+      const rfG = new THREE.Group();
+      rfG.position.set(0, 0, -5.25);
+      const rfBack = new THREE.Mesh(new THREE.BoxGeometry(2.15, 2.25, 0.34), terraceMat);
+      rfBack.position.set(0, 1.12, -0.45); rfBack.castShadow = true; rfG.add(rfBack);
+      const rfArch = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.14, 8, 18, Math.PI), creamMat);
+      rfArch.position.set(0, 1.45, -0.26); rfG.add(rfArch);
+      const rfSpout = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.34, 8), brassMat);
+      rfSpout.rotation.x = Math.PI / 2; rfSpout.position.set(0, 1.32, -0.15); rfG.add(rfSpout);
+      const rfBasin = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.80, 0.42, 8), terraceMat);
+      rfBasin.position.set(0, 0.21, 0.25); rfBasin.castShadow = true; rfG.add(rfBasin);
+      const rfRim = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.09, 8, 8), creamMat);
+      rfRim.rotation.x = Math.PI / 2; rfRim.rotation.z = Math.PI / 8; rfRim.position.set(0, 0.52, 0.25); rfG.add(rfRim);
+      const rfWater = new THREE.Mesh(new THREE.CircleGeometry(0.80, 8), LS.makeWaterMat(0.94));
+      rfWater.rotation.x = -Math.PI / 2; rfWater.rotation.z = Math.PI / 8; rfWater.position.set(0, 0.48, 0.25); rfWater.renderOrder = -1; rfG.add(rfWater);
+      if (LS.ghibli && LS.ghibli.createWaterJetArc) {
+        rfG.add(LS.ghibli.createWaterJetArc(
+          new THREE.Vector3(0, 1.30, 0.02),
+          new THREE.Vector3(0, 1.18, 0.26),
+          new THREE.Vector3(0, 0.50, 0.32),
+          0.030
+        ));
+      }
+      const rfRippleMat = new THREE.MeshBasicMaterial({ color: 0xf4feff, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false });
+      const rfRipple = new THREE.Mesh(new THREE.RingGeometry(0.08, 0.16, 16), rfRippleMat);
+      rfRipple.rotation.x = -Math.PI / 2; rfRipple.position.set(0, 0.52, 0.32); rfRipple.renderOrder = 2;
+      rfG.add(rfRipple);
+      W.riadFountainRipple = rfRipple;
+      const rfDropMat = LS.makeEmissiveMat(0xe8fbff, 0x90e0ef, 0.65);
+      for (let i = 0; i < 6; i++) {
+        const dr = new THREE.Mesh(new THREE.SphereGeometry(0.052, 8, 6), rfDropMat);
+        dr.userData = { phase: i / 6 };
+        rfG.add(dr);
+        W.fountainDrops.push(dr);
+      }
+      worldGroup.add(rfG);
+      addCollider(0, -5.0, 1.2, 0.9);
 
       // Rooftop Sign Banner
       const sign = new THREE.Mesh(
@@ -651,6 +681,19 @@ window.LailaSalma = window.LailaSalma || {};
           lp.piv.rotation.z = Math.sin(elapsed * 1.4 + lp.phase) * 0.06;
           lp.piv.rotation.x = Math.cos(elapsed * 1.1 + lp.phase) * 0.04;
         });
+        W.fountainDrops.forEach(d => {
+          const t = (elapsed * 1.65 + d.userData.phase) % 1.0;
+          const u = 1 - t;
+          const y = u * u * 1.30 + 2 * u * t * 1.18 + t * t * 0.50;
+          const z = u * u * 0.02 + 2 * u * t * 0.26 + t * t * 0.32;
+          d.position.set(0, y, z);
+        });
+        if (W.riadFountainRipple) {
+          const cyc = (elapsed * 1.35) % 1.0;
+          const sc = 0.5 + cyc * 2.4;
+          W.riadFountainRipple.scale.set(sc, sc, 1);
+          W.riadFountainRipple.material.opacity = (1 - cyc) * 0.72;
+        }
       };
 
       W.drawMiniMap = function (ctx, cw, ch) {

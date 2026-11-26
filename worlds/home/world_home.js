@@ -89,27 +89,21 @@ window.LailaSalma = window.LailaSalma || {};
     return g;
   }
 
-  // Helper: Potted Olive / Citrus Tree for Entrances & Patios
+  // Helper: Lush Studio Ghibli Potted Olive / Citrus Tree for Entrances & Patios
   function createPottedTree(potHex, leafHex, fruitHex) {
+    if (LS.ghibli && LS.ghibli.buildOrangeTree) {
+      return LS.ghibli.buildOrangeTree(0.56, {
+        potHex: potHex || 0xc66b47,
+        rimHex: potHex || 0xd4966a,
+        bandHex: 0xf4e3c1,
+        midHex: leafHex || 0x4f9451,
+        fruitHex: fruitHex || null,
+        withBlossoms: !!fruitHex
+      });
+    }
     const g = new THREE.Group();
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.22, 0.46, 10), LS.makeToonMat(potHex || 0xc66b47));
     pot.position.y = 0.23; pot.castShadow = true; g.add(pot);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 7, 12), LS.makeToonMat(potHex || 0xc66b47));
-    rim.rotation.x = Math.PI / 2; rim.position.y = 0.45; g.add(rim);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.85, 7), LS.makeToonMat(0x6e472b));
-    trunk.position.y = 0.82; g.add(trunk);
-    const leafMat = LS.makeToonMat(leafHex || 0x4f9451);
-    [[0, 1.32, 0, 0.42], [0.22, 1.18, 0.14, 0.28], [-0.22, 1.22, -0.1, 0.27], [0.06, 1.56, -0.08, 0.26]].forEach(b => {
-      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(b[3], 1), leafMat);
-      m.position.set(b[0], b[1], b[2]); m.castShadow = true; g.add(m);
-    });
-    if (fruitHex) {
-      const fMat = LS.makeToonMat(fruitHex);
-      [[0.26, 1.30, 0.22], [-0.24, 1.36, 0.18], [0.12, 1.48, -0.22]].forEach(fp => {
-        const fr = new THREE.Mesh(new THREE.SphereGeometry(0.065, 6, 6), fMat);
-        fr.position.set(fp[0], fp[1], fp[2]); g.add(fr);
-      });
-    }
     return g;
   }
 
@@ -548,20 +542,66 @@ window.LailaSalma = window.LailaSalma || {};
       }
 
       const water = new THREE.Mesh(new THREE.CircleGeometry(2.60, 28), LS.makeWaterMat(0.92));
-      water.rotation.x = -Math.PI / 2; water.position.y = 0.54; fg.add(water);
+      water.rotation.x = -Math.PI / 2; water.position.y = 0.54; water.renderOrder = -1; fg.add(water);
 
       const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.54, 1.45, 14), stoneMat);
       pillar.position.y = 0.96; pillar.castShadow = true; fg.add(pillar);
 
       const midBasin = new THREE.Mesh(new THREE.CylinderGeometry(1.22, 0.48, 0.34, 18), stoneMat);
       midBasin.position.y = 1.66; midBasin.castShadow = true; fg.add(midBasin);
-      const midWater = new THREE.Mesh(new THREE.CircleGeometry(1.06, 16), LS.makeWaterMat(0.95));
-      midWater.rotation.x = -Math.PI / 2; midWater.position.y = 1.84; fg.add(midWater);
+      const midRim = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.08, 8, 22), trimStone);
+      midRim.rotation.x = Math.PI / 2; midRim.position.y = 1.83; fg.add(midRim);
+      const midWater = new THREE.Mesh(new THREE.CircleGeometry(1.08, 16), LS.makeWaterMat(0.95));
+      midWater.rotation.x = -Math.PI / 2; midWater.position.y = 1.84; midWater.renderOrder = -1; fg.add(midWater);
 
       const upperStem = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 0.62, 10), stoneMat);
       upperStem.position.y = 2.08; fg.add(upperStem);
-      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.36, 10), brassMat);
-      finial.position.y = 2.52; fg.add(finial);
+      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.38, 10), brassMat);
+      finial.position.y = 2.54; fg.add(finial);
+
+      // Continuous Luminous Parabolic Water Jets (Upper Finial -> Middle Basin & Middle Basin -> Main Pool!)
+      W.fountainRipples = [];
+      W.fountainPetals = [];
+      if (LS.ghibli && LS.ghibli.createWaterJetArc) {
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const ca = Math.cos(a), sa = Math.sin(a);
+          fg.add(LS.ghibli.createWaterJetArc(
+            new THREE.Vector3(ca * 0.14, 2.48, sa * 0.14),
+            new THREE.Vector3(ca * 0.64, 2.78, sa * 0.64),
+            new THREE.Vector3(ca * 0.88, 1.84, sa * 0.88),
+            0.024
+          ));
+          const a2 = a + Math.PI / 8;
+          const c2 = Math.cos(a2), s2 = Math.sin(a2);
+          fg.add(LS.ghibli.createWaterJetArc(
+            new THREE.Vector3(c2 * 1.15, 1.83, s2 * 1.15),
+            new THREE.Vector3(c2 * 1.68, 2.04, s2 * 1.68),
+            new THREE.Vector3(c2 * 1.98, 0.56, s2 * 1.98),
+            0.032
+          ));
+        }
+      }
+
+      // 8 Expanding Concentric White Splash Ripple Rings on the Main Pool!
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        const rMat = new THREE.MeshBasicMaterial({ color: 0xf4feff, transparent: true, opacity: 0.7, side: THREE.DoubleSide, depthWrite: false });
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.10, 0.18, 14), rMat);
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(Math.cos(a) * 1.98, 0.58, Math.sin(a) * 1.98);
+        ring.renderOrder = 2;
+        fg.add(ring);
+        W.fountainRipples.push({ mesh: ring, phase: i * 0.27 });
+      }
+
+      // 8 Floating Sakura & Courtyard Blossom Petals drifting gently on the turquoise pool!
+      const pCols = [0xffb3c6, 0xfffdf6, 0xffd166, 0xff8fab];
+      for (let i = 0; i < 8; i++) {
+        const pt = new THREE.Mesh(new THREE.CircleGeometry(0.085, 7), LS.makeToonMat(pCols[i % 4]));
+        pt.rotation.x = -Math.PI / 2; pt.position.y = 0.57; fg.add(pt);
+        W.fountainPetals.push({ mesh: pt, r: 1.35 + (i % 3) * 0.42, spd: 0.14 + (i % 3) * 0.03, phase: i * 0.78 });
+      }
 
       // Two cute white courtyard doves perched on the fountain rim!
       const doveMat = LS.makeToonMat(0xfffdf8);
@@ -575,10 +615,11 @@ window.LailaSalma = window.LailaSalma || {};
         fg.add(d);
       });
 
-      const dropMat = LS.makeToonMat(0xc4f5ff, { transparent: true, opacity: 0.86 });
-      for (let i = 0; i < 12; i++) {
-        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.10, 8, 6), dropMat);
-        drop.userData = { angle: (i / 12) * Math.PI * 2, phase: i * 0.33, high: i % 2 === 0 };
+      const dropMat = LS.makeEmissiveMat(0xe8fbff, 0x90e0ef, 0.6);
+      for (let i = 0; i < 16; i++) {
+        const high = i < 8;
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(high ? 0.06 : 0.08, 8, 6), dropMat);
+        drop.userData = { angle: high ? ((i / 8) * Math.PI * 2) : (((i - 8) / 8) * Math.PI * 2 + Math.PI / 8), phase: (i % 8) * 0.29, high: high };
         fg.add(drop);
         W.fountainDrops.push(drop);
       }
@@ -1600,15 +1641,35 @@ window.LailaSalma = window.LailaSalma || {};
     };
 
     W.update = function (dt, elapsed) {
-      // Animate double-tier fountain water arcs
+      // Animate double-tier parabolic fountain droplets, splash ripples & drifting petals
       W.fountainDrops.forEach(d => {
-        const t = ((elapsed * 1.35 + d.userData.phase) % 1.0);
-        const maxR = d.userData.high ? 1.85 : 1.05;
-        const r = 0.20 + t * maxR;
-        const startY = d.userData.high ? 2.45 : 1.75;
-        const y = startY + Math.sin(t * Math.PI) * (d.userData.high ? 0.95 : 0.65) - t * (d.userData.high ? 1.85 : 1.15);
-        d.position.set(Math.cos(d.userData.angle) * r, Math.max(0.56, y), Math.sin(d.userData.angle) * r);
+        const t = ((elapsed * 1.48 + d.userData.phase) % 1.0);
+        const u = 1 - t;
+        if (d.userData.high) {
+          const r = u * u * 0.14 + 2 * u * t * 0.64 + t * t * 0.88;
+          const y = u * u * 2.48 + 2 * u * t * 2.78 + t * t * 1.84;
+          d.position.set(Math.cos(d.userData.angle) * r, y, Math.sin(d.userData.angle) * r);
+        } else {
+          const r = u * u * 1.15 + 2 * u * t * 1.68 + t * t * 1.98;
+          const y = u * u * 1.83 + 2 * u * t * 2.04 + t * t * 0.56;
+          d.position.set(Math.cos(d.userData.angle) * r, Math.max(0.56, y), Math.sin(d.userData.angle) * r);
+        }
       });
+      if (W.fountainRipples) {
+        W.fountainRipples.forEach(rp => {
+          const cyc = (elapsed * 1.18 + rp.phase) % 1.0;
+          const sc = 0.52 + cyc * 2.15;
+          rp.mesh.scale.set(sc, sc, 1);
+          rp.mesh.material.opacity = (1 - cyc) * 0.68;
+        });
+      }
+      if (W.fountainPetals) {
+        W.fountainPetals.forEach(pt => {
+          const a = elapsed * pt.spd + pt.phase;
+          pt.mesh.position.set(Math.cos(a) * pt.r, 0.57, Math.sin(a) * pt.r);
+          pt.mesh.rotation.z = a;
+        });
+      }
       if (W.swingPivot) W.swingPivot.rotation.x = Math.sin(elapsed * 2.1) * 0.24;
       if (W.carouselGroup) W.carouselGroup.rotation.y += dt * 0.55;
       if (W.schoolFlag) W.schoolFlag.rotation.y = Math.sin(elapsed * 3.8) * 0.16;

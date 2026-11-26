@@ -202,32 +202,15 @@ window.LailaSalma = window.LailaSalma || {};
     return g;
   }
 
-  // Lush Potted Moroccan Seville Orange Tree!
+  // Lush Studio Ghibli Potted Moroccan Seville Orange Tree (multi-layered dappled canopy, forked bark, oranges & white blossoms!)
   function createOrangeTree(scale) {
+    if (LS.ghibli && LS.ghibli.buildOrangeTree) {
+      return LS.ghibli.buildOrangeTree(scale || 1.0);
+    }
     const s = scale || 1.0;
     const g = new THREE.Group();
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.56 * s, 0.42 * s, 0.68 * s, 14), LS.makeToonMat(0x1f5692));
     pot.position.y = 0.34 * s; pot.castShadow = true; g.add(pot);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.56 * s, 0.06 * s, 8, 18), LS.makeToonMat(0xf4be44));
-    rim.rotation.x = Math.PI / 2; rim.position.y = 0.68 * s; g.add(rim);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.10 * s, 0.15 * s, 1.65 * s, 10), LS.makeToonMat(0x7c5334));
-    trunk.position.y = 1.45 * s; trunk.castShadow = true; g.add(trunk);
-
-    const leafMat = LS.makeToonMat(0x3a8f49);
-    const leafB = LS.makeToonMat(0x52a854);
-    const orangeMat = LS.makeToonMat(0xff8c24);
-    [[0, 2.55, 0, 1.05], [0.52, 2.35, 0.32, 0.72], [-0.52, 2.40, -0.28, 0.74], [0.1, 2.95, -0.25, 0.68]].forEach((c, i) => {
-      const puff = new THREE.Mesh(new THREE.SphereGeometry(c[3] * s, 14, 12), i % 2 === 0 ? leafMat : leafB);
-      puff.position.set(c[0] * s, c[1] * s, c[2] * s);
-      puff.castShadow = true;
-      g.add(puff);
-    });
-    // Bright sweet Seville oranges nestled in the canopy!
-    [[0.62, 2.45, 0.55], [-0.65, 2.55, 0.42], [0.25, 2.85, 0.72], [-0.22, 2.25, 0.75], [0.75, 2.20, -0.35], [-0.45, 2.75, -0.58]].forEach(op => {
-      const or = new THREE.Mesh(new THREE.SphereGeometry(0.14 * s, 10, 8), orangeMat);
-      or.position.set(op[0] * s, op[1] * s, op[2] * s);
-      g.add(or);
-    });
     return g;
   }
 
@@ -304,6 +287,8 @@ window.LailaSalma = window.LailaSalma || {};
         hiddenAnimals: [],
         lanterns: [],
         fountainDrops: [],
+        fountainRipples: [],
+        fountainPetals: [],
         canopies: [],
         teaSteam: [],
         strollers: [],
@@ -431,34 +416,138 @@ window.LailaSalma = window.LailaSalma || {};
       });
 
       // ---------------------------------------------------------------------
-      // 2. Central Octagonal Zellige Fountain + Teacher Youssef!
+      // 2. Central 2-Tier Royal Octagonal Zellige & Marble Fountain + Youssef!
       // ---------------------------------------------------------------------
       safeRun('zellige_fountain', () => {
         const fg = new THREE.Group();
         fg.position.set(0, 0, 4.0);
+        const marbleMat = LS.makeToonMat(0xfdf7ec);
+        const marbleTrim = LS.makeToonMat(0xe8dac2);
 
-        const rim = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 3.85, 0.85, 8), zelligeMat);
-        rim.position.y = 0.42; rim.castShadow = true; rim.receiveShadow = true; fg.add(rim);
-        const water = new THREE.Mesh(new THREE.CylinderGeometry(3.15, 3.15, 0.72, 8), LS.makeWaterMat(0.92));
-        water.position.y = 0.44; fg.add(water);
-        const tier1 = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.85, 1.75, 12), LS.makeToonMat(0xfff7e8));
-        tier1.position.y = 0.95; fg.add(tier1);
-        const bowl = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 0.65, 0.45, 16), zelligeMat);
-        bowl.position.y = 1.92; fg.add(bowl);
-        const finial = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), brassMat);
-        finial.position.y = 2.45; fg.add(finial);
+        // Stepped sandstone octagonal plinth + glazed Zellige basin wall
+        const step = new THREE.Mesh(new THREE.CylinderGeometry(4.15, 4.35, 0.18, 8), marbleTrim);
+        step.position.y = 0.09; step.receiveShadow = true; fg.add(step);
 
-        // Animated sparkling fountain water arcs!
-        const dropMat = LS.makeEmissiveMat(0xcaf0f8, 0x90e0ef, 0.55);
-        for (let i = 0; i < 16; i++) {
-          const drop = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), dropMat);
-          drop.userData = { angle: (i / 16) * Math.PI * 2, phase: (i % 4) * 0.25 };
+        const rimWall = new THREE.Mesh(new THREE.CylinderGeometry(3.75, 3.92, 0.62, 8), zelligeMat);
+        rimWall.position.y = 0.42; rimWall.castShadow = true; rimWall.receiveShadow = true; fg.add(rimWall);
+
+        // Wide carved cream-marble octagonal coping ledge + 8 corner brass lotus finials!
+        const coping = new THREE.Mesh(new THREE.TorusGeometry(3.52, 0.24, 10, 8), marbleMat);
+        coping.rotation.x = Math.PI / 2;
+        coping.rotation.z = Math.PI / 8;
+        coping.position.y = 0.86;
+        coping.castShadow = true;
+        fg.add(coping);
+
+        for (let i = 0; i < 8; i++) {
+          const ang = (i / 8) * Math.PI * 2 + Math.PI / 8;
+          const fx = Math.cos(ang) * 3.68;
+          const fz = Math.sin(ang) * 3.68;
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.20, 0.22, 10), marbleTrim);
+          cap.position.set(fx, 1.02, fz); fg.add(cap);
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), brassMat);
+          orb.position.set(fx, 1.22, fz); fg.add(orb);
+        }
+
+        // Shimmering animated turquoise pool surface gleaming cleanly inside the marble coping!
+        const water = new THREE.Mesh(new THREE.CircleGeometry(3.40, 8), LS.makeWaterMat(0.94));
+        water.rotation.x = -Math.PI / 2;
+        water.rotation.z = Math.PI / 8;
+        water.position.y = 0.80;
+        water.renderOrder = -1;
+        fg.add(water);
+
+        // Sculpted Fluted White Marble Pedestal + Scalloped Middle Bowl + Upper Lotus Spire!
+        const pedBase = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 1.22, 0.45, 12), marbleTrim);
+        pedBase.position.y = 0.88; fg.add(pedBase);
+        const pedShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.68, 1.32, 14), marbleMat);
+        pedShaft.position.y = 1.56; pedShaft.castShadow = true; fg.add(pedShaft);
+        const pedCollar = new THREE.Mesh(new THREE.TorusGeometry(0.54, 0.09, 8, 16), brassMat);
+        pedCollar.rotation.x = Math.PI / 2; pedCollar.position.y = 1.62; fg.add(pedCollar);
+
+        // Middle Scalloped Zellige & Marble Basin filled with gleaming turquoise water
+        const midBowlOuter = new THREE.Mesh(new THREE.CylinderGeometry(1.62, 0.64, 0.42, 16), zelligeMat);
+        midBowlOuter.position.y = 2.24; midBowlOuter.castShadow = true; fg.add(midBowlOuter);
+        const midBowlRim = new THREE.Mesh(new THREE.TorusGeometry(1.56, 0.11, 8, 20), marbleMat);
+        midBowlRim.rotation.x = Math.PI / 2; midBowlRim.position.y = 2.52; fg.add(midBowlRim);
+        const midWater = new THREE.Mesh(new THREE.CircleGeometry(1.48, 18), LS.makeWaterMat(0.95));
+        midWater.rotation.x = -Math.PI / 2; midWater.position.y = 2.49; midWater.renderOrder = -1; fg.add(midWater);
+
+        // Upper Marble Stem & Hammered-Brass Moroccan Pineapple/Lotus Finial
+        const upStem = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.34, 0.85, 12), marbleMat);
+        upStem.position.y = 2.86; fg.add(upStem);
+        const upBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.24, 0.24, 14), marbleMat);
+        upBowl.position.y = 3.22; fg.add(upBowl);
+        const finialBulb = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), brassMat);
+        finialBulb.scale.set(0.88, 1.25, 0.88);
+        finialBulb.position.y = 3.55; fg.add(finialBulb);
+        const finialTip = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.34, 10), brassMat);
+        finialTip.position.y = 3.92; fg.add(finialTip);
+
+        // 8 Continuous Luminous Parabolic Water Jets (Upper Tier -> Middle Bowl & Middle Bowl -> Main Pool!)
+        if (LS.ghibli && LS.ghibli.createWaterJetArc) {
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            const ca = Math.cos(a), sa = Math.sin(a);
+            // Upper tier arcs (finial spout -> middle bowl)
+            fg.add(LS.ghibli.createWaterJetArc(
+              new THREE.Vector3(ca * 0.22, 3.45, sa * 0.22),
+              new THREE.Vector3(ca * 0.85, 3.78, sa * 0.85),
+              new THREE.Vector3(ca * 1.18, 2.52, sa * 1.18),
+              0.026
+            ));
+            // Lower tier graceful cascading arcs (middle bowl rim -> turquoise pool!)
+            const a2 = a + Math.PI / 8;
+            const c2 = Math.cos(a2), s2 = Math.sin(a2);
+            fg.add(LS.ghibli.createWaterJetArc(
+              new THREE.Vector3(c2 * 1.52, 2.52, s2 * 1.52),
+              new THREE.Vector3(c2 * 2.15, 2.75, s2 * 2.15),
+              new THREE.Vector3(c2 * 2.55, 0.82, s2 * 2.55),
+              0.036
+            ));
+          }
+        }
+
+        // 8 Expanding Concentric White Foam Splash Ripples on the Turquoise Pool!
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+          const rMat = new THREE.MeshBasicMaterial({
+            color: 0xf4feff, transparent: true, opacity: 0.72, side: THREE.DoubleSide, depthWrite: false
+          });
+          const ring = new THREE.Mesh(new THREE.RingGeometry(0.12, 0.22, 16), rMat);
+          ring.rotation.x = -Math.PI / 2;
+          ring.position.set(Math.cos(a) * 2.55, 0.85, Math.sin(a) * 2.55);
+          ring.renderOrder = 2;
+          fg.add(ring);
+          W.fountainRipples.push({ mesh: ring, phase: i * 0.28 });
+        }
+
+        // 24 Sparkling Animated Water Droplets flying along both tiers!
+        const dropMat = LS.makeEmissiveMat(0xe8fbff, 0x90e0ef, 0.65);
+        for (let i = 0; i < 24; i++) {
+          const isUpper = i < 8;
+          const drop = new THREE.Mesh(new THREE.SphereGeometry(isUpper ? 0.065 : 0.085, 8, 6), dropMat);
+          drop.userData = {
+            angle: isUpper ? ((i / 8) * Math.PI * 2) : (((i - 8) / 8) * Math.PI * 2 + Math.PI / 8),
+            phase: isUpper ? (i * 0.37) : ((i % 2) * 0.5 + (i % 8) * 0.14),
+            upper: isUpper
+          };
           fg.add(drop);
           W.fountainDrops.push(drop);
         }
 
+        // 10 Floating Fragrant Pink Rose Petals & White Orange Blossoms drifting on the pool!
+        const petalCols = [0xff8fab, 0xffb3c6, 0xfffdf6, 0xffd166];
+        for (let i = 0; i < 10; i++) {
+          const pm = new THREE.Mesh(new THREE.CircleGeometry(0.10, 7), LS.makeToonMat(petalCols[i % 4]));
+          pm.rotation.x = -Math.PI / 2;
+          pm.position.y = 0.84;
+          fg.add(pm);
+          W.fountainPetals.push({ mesh: pm, r: 1.55 + (i % 3) * 0.52, spd: 0.14 + (i % 4) * 0.03, phase: i * 0.68 });
+        }
+
         worldGroup.add(fg);
-        addCollider(0, 4.0, 3.8, 3.8);
+        addCollider(0, 4.0, 4.0, 4.0);
 
         // Teacher Youssef greeting Laila & Salma beside the fountain!
         const youssef = LS.createAnimeCharacter({
@@ -1248,10 +1337,28 @@ window.LailaSalma = window.LailaSalma || {};
           }
         });
         W.fountainDrops.forEach(d => {
-          const t = (elapsed * 1.45 + d.userData.phase) % 1.0;
-          const r = 0.22 + t * 2.25;
-          const y = 2.15 + Math.sin(t * Math.PI) * 0.95 - t * 1.38;
-          d.position.set(Math.cos(d.userData.angle) * r, Math.max(0.82, y), Math.sin(d.userData.angle) * r);
+          const t = (elapsed * 1.55 + d.userData.phase) % 1.0;
+          const u = 1 - t;
+          if (d.userData.upper) {
+            const r = u * u * 0.22 + 2 * u * t * 0.85 + t * t * 1.18;
+            const y = u * u * 3.45 + 2 * u * t * 3.78 + t * t * 2.52;
+            d.position.set(Math.cos(d.userData.angle) * r, y, Math.sin(d.userData.angle) * r);
+          } else {
+            const r = u * u * 1.52 + 2 * u * t * 2.15 + t * t * 2.55;
+            const y = u * u * 2.52 + 2 * u * t * 2.75 + t * t * 0.82;
+            d.position.set(Math.cos(d.userData.angle) * r, Math.max(0.82, y), Math.sin(d.userData.angle) * r);
+          }
+        });
+        W.fountainRipples.forEach(rp => {
+          const cyc = (elapsed * 1.15 + rp.phase) % 1.0;
+          const sc = 0.55 + cyc * 2.15;
+          rp.mesh.scale.set(sc, sc, 1);
+          rp.mesh.material.opacity = (1 - cyc) * 0.68;
+        });
+        W.fountainPetals.forEach(pt => {
+          const a = elapsed * pt.spd + pt.phase;
+          pt.mesh.position.set(Math.cos(a) * pt.r, 0.845, Math.sin(a) * pt.r);
+          pt.mesh.rotation.z = a;
         });
         W.teaSteam.forEach(p => {
           const t = (elapsed * 0.45 + p.userData.phase) % 1.0;

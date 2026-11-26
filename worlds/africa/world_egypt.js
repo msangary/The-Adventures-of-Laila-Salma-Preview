@@ -153,29 +153,43 @@ window.LailaSalma = window.LailaSalma || {};
     }, 1, 1);
   }
 
-  // Smooth sculpted Ghibli Date Palm builder (curved trunk + arching lush frond crown + dates!)
+  // Smooth sculpted Ghibli Date Palm builder (textured curved ringed trunk + feathered arching fronds + golden date clusters!)
   function createDatePalm(scale) {
     const s = scale || 1.0;
     const g = new THREE.Group();
-    const trunkMat = LS.makeToonMat(0x8c623d);
-    const ringMat = LS.makeToonMat(0x704b2d);
-    const frondA = LS.makeToonMat(0x3f8f46);
-    const frondB = LS.makeToonMat(0x58ab4f);
-    const dateMat = LS.makeToonMat(0xd4822a);
+    const barkTex = (LS.ghibli && LS.ghibli.getBarkTexture) ? LS.ghibli.getBarkTexture() : null;
+    const leafTex = (LS.ghibli && LS.ghibli.getLeafBrushTexture) ? LS.ghibli.getLeafBrushTexture() : null;
+    const trunkMat = LS.makeToonMat(0x8c623d, barkTex ? { map: barkTex } : undefined);
+    const ringMat = LS.makeToonMat(0x6e4a2c, barkTex ? { map: barkTex } : undefined);
+    const frondSun = LS.makeToonMat(0x66ba52, leafTex ? { map: leafTex } : undefined);
+    const frondMid = LS.makeToonMat(0x419645, leafTex ? { map: leafTex } : undefined);
+    const frondShade = LS.makeToonMat(0x2a6e38, leafTex ? { map: leafTex } : undefined);
+    const spineMat = LS.makeToonMat(0x769948);
+    const dateMat = LS.makeToonMat(0xe08a26);
+
+    // Flared sandy palm root collar
+    const rootCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * s, 0.46 * s, 0.45 * s, 10), ringMat);
+    rootCollar.position.y = 0.22 * s;
+    g.add(rootCollar);
 
     let px = 0, py = 0;
-    const segs = 9;
-    const segH = 0.72 * s;
+    const segs = 10;
+    const segH = 0.68 * s;
     for (let i = 0; i < segs; i++) {
       const t = i / (segs - 1);
-      const rBot = (0.30 - t * 0.12) * s;
-      const rTop = (0.27 - t * 0.11) * s;
-      const tilt = 0.08 + t * 0.12;
-      const seg = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, segH * 1.05, 10), i % 2 === 0 ? trunkMat : ringMat);
+      const rBot = (0.31 - t * 0.13) * s;
+      const rTop = (0.28 - t * 0.12) * s;
+      const tilt = 0.06 + t * 0.13;
+      const seg = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, segH * 1.08, 10), i % 2 === 0 ? trunkMat : ringMat);
       seg.position.set(px, py + segH * 0.5, 0);
       seg.rotation.z = -tilt;
       seg.castShadow = true;
       g.add(seg);
+      // Organic palm bark ridge collar
+      const ridge = new THREE.Mesh(new THREE.TorusGeometry(rTop * 1.02, 0.035 * s, 6, 10), ringMat);
+      ridge.rotation.x = Math.PI / 2;
+      ridge.position.set(px + Math.sin(tilt) * segH * 0.5, py + Math.cos(tilt) * segH * 0.5, 0);
+      g.add(ridge);
       px += Math.sin(tilt) * segH;
       py += Math.cos(tilt) * segH;
     }
@@ -184,32 +198,50 @@ window.LailaSalma = window.LailaSalma || {};
     crown.position.set(px, py, 0);
     g.add(crown);
 
+    // Fibrous woven palm crown heart
+    const heart = new THREE.Mesh(new THREE.SphereGeometry(0.42 * s, 12, 10), ringMat);
+    heart.scale.set(1.0, 1.15, 1.0);
+    crown.add(heart);
+
     // Golden hanging date clusters
-    for (let d = 0; d < 4; d++) {
-      const ang = (d / 4) * Math.PI * 2 + 0.4;
-      const cl = new THREE.Mesh(new THREE.SphereGeometry(0.24 * s, 10, 8), dateMat);
-      cl.scale.set(0.75, 1.35, 0.75);
-      cl.position.set(Math.cos(ang) * 0.36 * s, -0.25 * s, Math.sin(ang) * 0.36 * s);
+    for (let d = 0; d < 5; d++) {
+      const ang = (d / 5) * Math.PI * 2 + 0.3;
+      const cl = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 10, 8), dateMat);
+      cl.scale.set(0.72, 1.45, 0.72);
+      cl.position.set(Math.cos(ang) * 0.38 * s, -0.32 * s, Math.sin(ang) * 0.38 * s);
       crown.add(cl);
     }
 
-    // 10 gracefully arching multi-segment palm fronds
-    for (let f = 0; f < 10; f++) {
-      const ang = (f / 10) * Math.PI * 2;
+    // 12 Gracefully Arching Feathered Palm Fronds (curved spine + tapered chevron leaflets!)
+    for (let f = 0; f < 12; f++) {
+      const ang = (f / 12) * Math.PI * 2 + (f % 2) * 0.14;
       const fg = new THREE.Group();
       fg.rotation.y = ang;
-      const mat = f % 2 === 0 ? frondA : frondB;
-      const basePitch = f % 2 === 0 ? 0.35 : 0.62;
-      for (let k = 0; k < 4; k++) {
-        const len = (0.85 - k * 0.12) * s;
-        const w = (0.48 - k * 0.09) * s;
-        const leaf = new THREE.Mesh(new THREE.BoxGeometry(w, 0.06 * s, len), mat);
-        const dist = (0.45 + k * 0.68) * s;
-        const drop = Math.sin(basePitch) * dist - k * k * 0.16 * s;
-        leaf.position.set(0, drop + 0.15 * s, dist);
-        leaf.rotation.x = -basePitch + k * 0.34;
-        leaf.castShadow = true;
-        fg.add(leaf);
+      const isUpper = f % 3 === 0;
+      const mat = isUpper ? frondSun : (f % 3 === 1 ? frondMid : frondShade);
+      const basePitch = isUpper ? 0.58 : (f % 3 === 1 ? 0.36 : 0.18);
+      for (let k = 0; k < 5; k++) {
+        const u = k / 4;
+        const dist = (0.42 + k * 0.62) * s;
+        const drop = Math.sin(basePitch) * dist - k * k * 0.14 * s;
+        const pitch = -basePitch + k * 0.28;
+        // Central arching frond rib
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.045 * s, 0.66 * s, 6), spineMat);
+        rib.position.set(0, drop + 0.12 * s, dist);
+        rib.rotation.x = Math.PI / 2 + pitch;
+        fg.add(rib);
+        // Tapered V-angled feathered frond blades on left & right!
+        const bladeW = (0.42 - u * 0.26) * s;
+        const bladeL = (0.72 - u * 0.14) * s;
+        [-1, 1].forEach(side => {
+          const blade = new THREE.Mesh(new THREE.ConeGeometry(bladeW, bladeL, 4), mat);
+          blade.scale.set(1.0, 1.0, 0.18);
+          blade.position.set(side * (0.20 - u * 0.08) * s, drop + 0.08 * s, dist + 0.04 * s);
+          blade.rotation.x = Math.PI / 2 + pitch;
+          blade.rotation.z = side * -0.45;
+          blade.castShadow = k < 3;
+          fg.add(blade);
+        });
       }
       crown.add(fg);
     }
