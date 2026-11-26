@@ -330,28 +330,28 @@ window.LailaSalma = window.LailaSalma || {};
   LS.createGrassTexture = function (style) {
     const key = 'grass_' + (style || 'tokyo');
     if (texCache[key]) return texCache[key];
-    const S = LS.isHD ? 512 : 256;
+    const S = LS.isHD ? 1024 : 512;
     const sc = S / 256;
     const c = document.createElement('canvas');
     c.width = S; c.height = S;
     const ctx = c.getContext('2d');
     const isKyoto = style === 'kyoto';
     const isSafari = style === 'safari';
-    ctx.fillStyle = isSafari ? '#c8a956' : (isKyoto ? '#5d874b' : '#6ca656');
+    ctx.fillStyle = isSafari ? '#c8a956' : (isKyoto ? '#5b8749' : '#65a24f');
     ctx.fillRect(0, 0, S, S);
 
-    // Seamless painterly Ghibli meadow/savanna patches using hash scatter (zero linear banding!)
+    // Seamless painterly Ghibli meadow/savanna watercolor washes (zero linear banding!)
     const tones = isSafari
-      ? ['rgba(182,146,66,0.30)', 'rgba(218,188,98,0.26)', 'rgba(154,132,58,0.24)', 'rgba(232,202,118,0.20)']
+      ? ['rgba(176,138,58,0.30)', 'rgba(222,192,102,0.28)', 'rgba(148,126,52,0.24)', 'rgba(238,208,124,0.22)']
       : (isKyoto
-        ? ['rgba(74,114,58,0.28)', 'rgba(118,150,82,0.24)', 'rgba(84,102,56,0.2)', 'rgba(136,162,90,0.18)']
-        : ['rgba(90,148,70,0.28)', 'rgba(134,182,92,0.24)', 'rgba(80,132,62,0.22)', 'rgba(162,196,104,0.18)']);
-    const patchCount = LS.isHD ? 340 : 220;
+        ? ['rgba(68,110,54,0.28)', 'rgba(116,154,80,0.26)', 'rgba(78,98,52,0.22)', 'rgba(138,170,92,0.20)']
+        : ['rgba(78,138,62,0.30)', 'rgba(138,190,94,0.26)', 'rgba(66,118,54,0.24)', 'rgba(174,212,110,0.22)']);
+    const patchCount = LS.isHD ? 480 : 260;
     for (let i = 0; i < patchCount; i++) {
       ctx.fillStyle = tones[i % tones.length];
       const rx = hash01(i * 3.1 + 1.7) * S;
       const ry = hash01(i * 5.7 + 9.3) * S;
-      const r = (10 + hash01(i * 7.3) * 18) * sc;
+      const r = (9 + hash01(i * 7.3) * 19) * sc;
       for (let ox = -S; ox <= S; ox += S) {
         if (rx + ox < -r || rx + ox > S + r) continue;
         for (let oy = -S; oy <= S; oy += S) {
@@ -362,20 +362,43 @@ window.LailaSalma = window.LailaSalma || {};
         }
       }
     }
-    // Delicate randomly scattered grass blades & tiny specks
-    const bladeCount = LS.isHD ? 1400 : 420;
+
+    // Painterly curved grass-blade strokes in sweeping Ghibli brushstrokes!
+    const bladeCount = LS.isHD ? 3600 : 1100;
+    ctx.lineCap = 'round';
     for (let i = 0; i < bladeCount; i++) {
-      ctx.fillStyle = isSafari
-        ? (i % 4 === 0 ? 'rgba(246,226,154,0.28)' : (i % 4 === 1 ? 'rgba(134,104,42,0.24)' : 'rgba(182,154,68,0.24)'))
-        : (i % 4 === 0 ? 'rgba(230,244,184,0.24)' : (i % 4 === 1 ? 'rgba(42,74,34,0.24)' : 'rgba(92,146,66,0.22)'));
       const gx = hash01(i * 11.3 + 4.1) * S;
       const gy = hash01(i * 17.9 + 2.3) * S;
-      ctx.fillRect(gx, gy, 2 * sc, 5 * sc);
+      const len = (4.5 + hash01(i * 23.1) * 7.5) * sc;
+      const lean = (hash01(i * 31.7) - 0.42) * 5.0 * sc;
+      ctx.strokeStyle = isSafari
+        ? (i % 4 === 0 ? 'rgba(250,232,162,0.34)' : (i % 4 === 1 ? 'rgba(128,96,36,0.28)' : 'rgba(186,158,72,0.28)'))
+        : (i % 4 === 0 ? 'rgba(224,246,162,0.32)' : (i % 4 === 1 ? 'rgba(38,76,32,0.30)' : 'rgba(92,154,66,0.28)'));
+      ctx.lineWidth = (0.9 + hash01(i * 13.7) * 0.9) * sc;
+      ctx.beginPath();
+      ctx.moveTo(gx, gy);
+      ctx.quadraticCurveTo(gx + lean * 0.45, gy - len * 0.55, gx + lean, gy - len);
+      ctx.stroke();
     }
+
+    // Dainty scattered ground clover leaves & tiny painted wildflowers!
+    const speckCount = LS.isHD ? 220 : 80;
+    for (let i = 0; i < speckCount; i++) {
+      const fx = hash01(i * 41.3 + 7.2) * S;
+      const fy = hash01(i * 53.9 + 1.9) * S;
+      const fr = (1.1 + hash01(i * 19.3) * 1.4) * sc;
+      ctx.fillStyle = isSafari
+        ? (i % 2 === 0 ? 'rgba(252,226,120,0.42)' : 'rgba(244,162,97,0.38)')
+        : (i % 3 === 0 ? 'rgba(255,253,242,0.52)' : (i % 3 === 1 ? 'rgba(255,224,102,0.48)' : 'rgba(255,182,202,0.44)'));
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     const tex = finalizeTex(new THREE.CanvasTexture(c));
     tex.wrapS = THREE.RepeatWrapping;
     tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(22, 22);
+    tex.repeat.set(20, 20);
     texCache[key] = tex;
     return tex;
   };

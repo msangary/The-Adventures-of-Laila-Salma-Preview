@@ -106,19 +106,19 @@ window.LailaSalma = window.LailaSalma || {};
         return 0;
       };
 
-      // Procedural & HD Tree Builders (Umbrella Acacia + Majestic Baobab)
+      // Procedural & HD Tree Builders (Umbrella Acacia + Majestic Baobab with Crisp Miyazaki Leaf Cards!)
       function addAcacia(x, z, scale, noCol) {
         const s = scale || 1.0;
+        const g = new THREE.Group();
+        g.position.set(x, 0, z);
+        g.rotation.y = x * 0.73 + z * 0.41;
         if (LS.isHD && LS.hdAssets && LS.hdAssets.has('anime_acacia')) {
           const m = LS.hdAssets.clone('anime_acacia');
-          m.position.set(x, 0, z);
-          m.rotation.y = x * 0.73 + z * 0.41;
           m.scale.setScalar(s * 1.12);
-          worldGroup.add(m);
+          g.add(m);
         } else {
-          const g = new THREE.Group();
-          g.position.set(x, 0, z);
-          const bark = LS.makeToonMat(0x7c5838);
+          const barkTex = (LS.ghibli && LS.ghibli.getBarkTexture) ? LS.ghibli.getBarkTexture() : null;
+          const bark = LS.makeToonMat(0x7c5838, barkTex ? { map: barkTex } : undefined);
           const leafA = LS.makeToonMat(0x6b8e3e), leafB = LS.makeToonMat(0x94ad48);
           const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22 * s, 0.34 * s, 2.8 * s, 8), bark);
           trunk.position.y = 1.4 * s; trunk.rotation.z = 0.06; trunk.castShadow = true; g.add(trunk);
@@ -132,22 +132,37 @@ window.LailaSalma = window.LailaSalma || {};
             cap.position.set(c[0] * s, c[1] * s, c[2] * s);
             cap.castShadow = true; g.add(cap);
           });
-          worldGroup.add(g);
         }
+        // Feathery olive-emerald Miyazaki alpha-cutout leaf cards fringing the flat umbrella acacia crown!
+        if (LS.ghibli && LS.ghibli.addLeafCardShell) {
+          const shell = new THREE.Group();
+          LS.ghibli.addLeafCardShell(shell, [
+            [0.0, 4.25, 0.0, 1.15, 1, 1, 1, 'sun'],
+            [1.65, 4.10, 0.55, 0.95, 1, 1, 1, 'sun'],
+            [-1.70, 4.15, -0.45, 0.95, 1, 1, 1, 'mid'],
+            [0.45, 4.05, -1.55, 0.90, 1, 1, 1, 'shade'],
+            [-0.55, 4.08, 1.55, 0.90, 1, 1, 1, 'mid']
+          ], { sunHex: 0xaed062, midHex: 0x6f9840, shadeHex: 0x3e622b, style: 'leaf', cardsPerCluster: 2, cardScale: 1.55, cacheKey: 'safari_acacia_v1' });
+          shell.scale.setScalar(s);
+          g.add(shell);
+        }
+        worldGroup.add(g);
         if (!noCol) addCollider(x, z, 0.55 * s, 0.55 * s);
       }
 
       function addBaobab(x, z, scale) {
         const s = scale || 1.0;
+        const g = new THREE.Group();
+        g.position.set(x, 0, z);
+        g.rotation.y = x * 0.5 + z * 0.3;
         if (LS.isHD && LS.hdAssets && LS.hdAssets.has('anime_baobab')) {
           const m = LS.hdAssets.clone('anime_baobab');
-          m.position.set(x, 0, z);
-          m.rotation.y = x * 0.5 + z * 0.3;
           m.scale.setScalar(s * 1.15);
-          worldGroup.add(m);
+          g.add(m);
         } else {
-          const g = new THREE.Group(); g.position.set(x, 0, z);
-          const bark = LS.makeToonMat(0x8c684c), leaf = LS.makeToonMat(0x558c42);
+          const barkTex = (LS.ghibli && LS.ghibli.getBarkTexture) ? LS.ghibli.getBarkTexture() : null;
+          const bark = LS.makeToonMat(0x8c684c, barkTex ? { map: barkTex } : undefined);
+          const leaf = LS.makeToonMat(0x558c42);
           const trunk = new THREE.Mesh(new THREE.CylinderGeometry(1.1 * s, 1.45 * s, 3.8 * s, 12), bark);
           trunk.position.y = 1.9 * s; trunk.castShadow = true; g.add(trunk);
           for (let i = 0; i < 6; i++) {
@@ -160,8 +175,19 @@ window.LailaSalma = window.LailaSalma || {};
             puff.position.set(Math.cos(ang) * 1.65 * s, 5.2 * s, Math.sin(ang) * 1.65 * s);
             puff.castShadow = true; g.add(puff);
           }
-          worldGroup.add(g);
         }
+        if (LS.ghibli && LS.ghibli.addLeafCardShell) {
+          const shell = new THREE.Group();
+          const bCenters = [];
+          for (let i = 0; i < 6; i++) {
+            const ang = (i / 6) * Math.PI * 2;
+            bCenters.push([Math.cos(ang) * 1.7, 5.45, Math.sin(ang) * 1.7, 0.95, 1, 1, 1, i % 2 === 0 ? 'sun' : 'mid']);
+          }
+          LS.ghibli.addLeafCardShell(shell, bCenters, { sunHex: 0x8ed15e, midHex: 0x4f8c3e, shadeHex: 0x2c5c2d, style: 'leaf', cardsPerCluster: 2, cardScale: 1.55, cacheKey: 'safari_baobab_v1' });
+          shell.scale.setScalar(s);
+          g.add(shell);
+        }
+        worldGroup.add(g);
         addCollider(x, z, 1.45 * s, 1.45 * s);
       }
 

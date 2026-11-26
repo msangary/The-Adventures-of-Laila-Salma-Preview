@@ -418,26 +418,57 @@ window.LailaSalma = window.LailaSalma || {};
     },
 
     // Wind-Swept 3D Grass Blade Clusters in 1 GPU Draw Call (quality-scaled for Android phones!)
-    addInstancedGrass: function (parent, bounds, isClearFn, style) {
+    addInstancedGrass: function (parent, bounds, isClearFn, style, countOverride) {
       const qCfg = (LS.ghibli && LS.ghibli.getQualityConfig) ? LS.ghibli.getQualityConfig() : { grassScale: 1.0 };
       if (qCfg.grassScale <= 0) return null;
-      const count = Math.round(14000 * qCfg.grassScale);
+      const baseCount = countOverride || 14000;
+      const count = Math.round(baseCount * qCfg.grassScale);
       const isKyoto = style === 'kyoto';
       const isSafari = style === 'safari';
       const isHome = style === 'home';
-      // Delicate 4-blade fanning grass tuft (slender blades, natural uneven heights & lean!)
-      const positions = [
-        -0.036, 0, -0.02,   0.036, 0, -0.02,  -0.06, 0.34, -0.05,
-        -0.028, 0,  0.03,   0.034, 0,  0.03,   0.07, 0.31,  0.06,
-         0.01,  0, -0.035,  0.01,  0,  0.035,  0.04, 0.27, -0.06,
-        -0.02,  0, -0.03,  -0.02,  0,  0.03,  -0.05, 0.24,  0.07
+      const isEgypt = style === 'egypt';
+
+      // Plush 5-blade 2-segment curved arching meadow patch spread across 0.56m so neighboring patches weave into a lush Miyazaki grass carpet!
+      const positions = [];
+      const uvs = [];
+      const bladeDefs = [
+        { a: 0.15, r0: 0.05, w: 0.058, h: 0.40, lean: 0.20 },
+        { a: 1.40, r0: 0.20, w: 0.054, h: 0.30, lean: 0.17 },
+        { a: 2.66, r0: 0.27, w: 0.060, h: 0.43, lean: 0.22 },
+        { a: 3.92, r0: 0.18, w: 0.054, h: 0.26, lean: 0.15 },
+        { a: 5.18, r0: 0.25, w: 0.056, h: 0.35, lean: 0.18 }
       ];
-      const uvs = [
-        0, 0, 1, 0, 0.5, 1,
-        0, 0, 1, 0, 0.5, 1,
-        0, 0, 1, 0, 0.5, 1,
-        0, 0, 1, 0, 0.5, 1
-      ];
+      bladeDefs.forEach(b => {
+        const ca = Math.cos(b.a), sa = Math.sin(b.a);
+        const px = -sa, pz = ca; // perpendicular width axis
+        const bx = ca * b.r0, bz = sa * b.r0;
+        const mx = bx + ca * (b.lean * 0.42), mz = bz + sa * (b.lean * 0.42);
+        const tx = bx + ca * b.lean, tz = bz + sa * b.lean;
+        const mh = b.h * 0.56;
+        const w0 = b.w, w1 = b.w * 0.56;
+        // Lower quad (2 tris): base -> mid
+        positions.push(
+          bx - px * w0, 0,  bz - pz * w0,
+          bx + px * w0, 0,  bz + pz * w0,
+          mx + px * w1, mh, mz + pz * w1,
+
+          bx - px * w0, 0,  bz - pz * w0,
+          mx + px * w1, mh, mz + pz * w1,
+          mx - px * w1, mh, mz - pz * w1
+        );
+        uvs.push(
+          0, 0,  1, 0,  1, 0.55,
+          0, 0,  1, 0.55,  0, 0.55
+        );
+        // Upper tapered tip tri: mid -> gracefully arched tip
+        positions.push(
+          mx - px * w1, mh,  mz - pz * w1,
+          mx + px * w1, mh,  mz + pz * w1,
+          tx,           b.h, tz
+        );
+        uvs.push(0, 0.55,  1, 0.55,  0.5, 1.0);
+      });
+
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
       geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
@@ -446,9 +477,9 @@ window.LailaSalma = window.LailaSalma || {};
       const uniforms = {
         uTime: { value: 0.0 },
         uTimeMode: { value: LS.state ? LS.state.timeMode : 0.0 },
-        // Seamlessly blended root-to-meadow color -> sunlit golden-green or amber savanna tips!
-        uRootCol: { value: new THREE.Color(isSafari ? 0x9c823c : (isHome ? 0x4f9b4c : (isKyoto ? 0x4b773c : 0x5c9648))) },
-        uTipCol: { value: new THREE.Color(isSafari ? 0xe4c25e : (isHome ? 0x9ee066 : (isKyoto ? 0x86ba5c : 0x98d062))) }
+        uRootCol: { value: new THREE.Color(isSafari ? 0xb49240 : (isEgypt ? 0x3b843e : (isHome ? 0x529644 : (isKyoto ? 0x4b7d3c : 0x569644)))) },
+        uMidCol:  { value: new THREE.Color(isSafari ? 0xd4b050 : (isEgypt ? 0x5cb852 : (isHome ? 0x72c456 : (isKyoto ? 0x6ba64e : 0x78be58)))) },
+        uTipCol:  { value: new THREE.Color(isSafari ? 0xf6de7a : (isEgypt ? 0xb8f074 : (isHome ? 0xcbf47c : (isKyoto ? 0xaad86c : 0xbceb74)))) }
       };
       animatedUniforms.push(uniforms);
 
@@ -459,29 +490,38 @@ window.LailaSalma = window.LailaSalma || {};
           'uniform float uTime;',
           'varying float vH;',
           'varying float vVar;',
+          'varying float vGust;',
           'void main() {',
           '  vH = uv.y;',
           '  vec4 worldBase = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);',
           '  vVar = fract(sin(dot(worldBase.xz, vec2(12.9898, 78.233))) * 43758.5453);',
           '  vec3 pos = position;',
-          '  // Rolling Ghibli meadow wind wave!',
-          '  float sway = sin(uTime * 1.9 + worldBase.x * 0.24 + worldBase.z * 0.20 + vVar * 4.0) * 0.11;',
+          '  // 2-octave sweeping Studio Ghibli meadow wind wave (Totoro / Wind Rises ripple!)',
+          '  float gust = sin(uTime * 1.45 + worldBase.x * 0.14 + worldBase.z * 0.11);',
+          '  float flutter = sin(uTime * 3.1 + worldBase.x * 0.42 - worldBase.z * 0.35 + vVar * 6.28) * 0.35;',
+          '  float sway = (gust * 0.14 + flutter * 0.045);',
+          '  vGust = gust * 0.5 + 0.5;',
           '  pos.x += sway * vH * vH;',
-          '  pos.z += sway * 0.55 * vH * vH;',
+          '  pos.z += sway * 0.58 * vH * vH;',
+          '  pos.y -= abs(sway) * 0.18 * vH * vH;',
           '  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(pos, 1.0);',
           '}'
         ].join('\n'),
         fragmentShader: [
           'uniform vec3 uRootCol;',
+          'uniform vec3 uMidCol;',
           'uniform vec3 uTipCol;',
           'uniform float uTimeMode;',
           'varying float vH;',
           'varying float vVar;',
+          'varying float vGust;',
           'void main() {',
-          '  vec3 tip = mix(uTipCol, uTipCol * vec3(1.10, 1.03, 0.80), vVar * 0.55);',
-          '  vec3 col = mix(uRootCol, tip, pow(vH, 0.65));',
-          '  if (uTimeMode > 1.5) col *= vec3(0.42, 0.54, 0.78);',
-          '  else if (uTimeMode > 0.5) col *= vec3(1.10, 0.84, 0.62);',
+          '  vec3 tipVar = mix(uTipCol, uTipCol * vec3(1.10, 1.04, 0.80), vVar * 0.65);',
+          '  vec3 col = vH < 0.42 ? mix(uRootCol, uMidCol, vH / 0.42) : mix(uMidCol, tipVar, (vH - 0.42) / 0.58);',
+          '  // Luminous sunlit wind-ripple sheen sweeping across arched blade tips!',
+          '  col += vec3(0.11, 0.12, 0.05) * vGust * pow(vH, 1.6);',
+          '  if (uTimeMode > 1.5) col *= vec3(0.40, 0.54, 0.80);',
+          '  else if (uTimeMode > 0.5) col *= vec3(1.12, 0.84, 0.60);',
           '  gl_FragColor = vec4(col, 1.0);',
           '}'
         ].join('\n')
@@ -490,6 +530,8 @@ window.LailaSalma = window.LailaSalma || {};
       const mesh = new THREE.InstancedMesh(geo, mat, count);
       const dummy = new THREE.Object3D();
       let placed = 0;
+      const flowerSpots = [];
+      const maxFlowers = Math.round((countOverride ? countOverride * 0.16 : 1800) * qCfg.grassScale);
       const minX = bounds.minX, maxX = bounds.maxX, minZ = bounds.minZ, maxZ = bounds.maxZ;
       for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
         const x = minX + hash01(attempt * 3.17 + 1.1) * (maxX - minX);
@@ -497,15 +539,122 @@ window.LailaSalma = window.LailaSalma || {};
         if (isClearFn && !isClearFn(x, z)) continue;
         dummy.position.set(x, 0.0, z);
         dummy.rotation.set(0, hash01(attempt * 7.1) * Math.PI * 2, 0);
-        const sc = (isSafari ? 0.86 : 0.72) + hash01(attempt * 9.3) * 0.85;
-        dummy.scale.set(sc, sc * ((isSafari ? 0.82 : 0.68) + hash01(attempt * 2.3) * 0.72), sc);
+        const scXZ = (isSafari ? 1.15 : (isEgypt ? 1.10 : 1.12)) + hash01(attempt * 9.3) * 0.72;
+        const scY = (isSafari ? 0.90 : (isEgypt ? 0.92 : 0.72)) + hash01(attempt * 2.3) * 0.58;
+        dummy.scale.set(scXZ, scY, scXZ);
         dummy.updateMatrix();
         mesh.setMatrixAt(placed++, dummy.matrix);
+        if (flowerSpots.length < maxFlowers && (attempt % 7 === 0)) {
+          flowerSpots.push([x, z, scXZ, hash01(attempt * 13.7)]);
+        }
       }
       mesh.count = placed;
       mesh.instanceMatrix.needsUpdate = true;
       mesh.frustumCulled = false;
       parent.add(mesh);
+
+      // Swaying 3D Instanced Wildflower Duos (cupped 5-petal blooms + golden pollen centers dancing in sync with the wind!)
+      if (flowerSpots.length > 0) {
+        const fPos = [];
+        const fUv = [];
+        const fColType = [];
+        function addBlossom(ox, oz, h, pr) {
+          fPos.push(ox - 0.014, 0.0, oz,  ox + 0.014, 0.0, oz,  ox, h, oz);
+          fUv.push(0, 0,  1, 0,  0.5, 0.92);
+          fColType.push(0, 0, 0);
+          for (let p = 0; p < 5; p++) {
+            const a0 = (p / 5) * Math.PI * 2;
+            const a1 = a0 + 0.56;
+            const a2 = a0 - 0.56;
+            fPos.push(
+              ox, h, oz,
+              ox + Math.cos(a1) * pr, h + pr * 0.42, oz + Math.sin(a1) * pr,
+              ox + Math.cos(a2) * pr, h + pr * 0.42, oz + Math.sin(a2) * pr
+            );
+            fUv.push(0.5, 1.0,  1.0, 1.0,  0.0, 1.0);
+            fColType.push(1, 1, 1);
+          }
+          // Sunny golden pollen center triangle!
+          const cr = pr * 0.36;
+          fPos.push(
+            ox, h + 0.024, oz + cr,
+            ox - cr * 0.88, h + 0.024, oz - cr * 0.55,
+            ox + cr * 0.88, h + 0.024, oz - cr * 0.55
+          );
+          fUv.push(0.5, 1.0,  1.0, 1.0,  0.0, 1.0);
+          fColType.push(2, 2, 2);
+        }
+        addBlossom(0.0, 0.0, 0.38, 0.105);
+        addBlossom(0.13, 0.09, 0.30, 0.082);
+
+        const fGeo = new THREE.BufferGeometry();
+        fGeo.setAttribute('position', new THREE.Float32BufferAttribute(fPos, 3));
+        fGeo.setAttribute('uv', new THREE.Float32BufferAttribute(fUv, 2));
+        fGeo.setAttribute('aPart', new THREE.Float32BufferAttribute(fColType, 1));
+        fGeo.computeVertexNormals();
+
+        const fUniforms = {
+          uTime: uniforms.uTime,
+          uTimeMode: uniforms.uTimeMode,
+          uStemCol: { value: new THREE.Color(isSafari ? 0x7e8a38 : 0x459442) },
+          uColA: { value: new THREE.Color(isSafari ? 0xffd86b : (isEgypt ? 0xfff8dc : 0xffffff)) },
+          uColB: { value: new THREE.Color(isSafari ? 0xf58458 : (isEgypt ? 0xffd166 : 0xffe266)) },
+          uColC: { value: new THREE.Color(isSafari ? 0xfff3b0 : (isEgypt ? 0x7dd3fc : 0xff9ec2)) },
+          uColD: { value: new THREE.Color(isSafari ? 0xf9c74f : (isEgypt ? 0xf9a8d4 : 0x93c5fd)) }
+        };
+        const fMat = new THREE.ShaderMaterial({
+          uniforms: fUniforms,
+          side: THREE.DoubleSide,
+          vertexShader: [
+            'attribute float aPart;',
+            'uniform float uTime;',
+            'varying float vPart;',
+            'varying float vVar;',
+            'void main() {',
+            '  vPart = aPart;',
+            '  float h = uv.y;',
+            '  vec4 worldBase = modelMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);',
+            '  vVar = fract(sin(dot(worldBase.xz, vec2(37.13, 91.7))) * 43758.5453);',
+            '  vec3 pos = position;',
+            '  float gust = sin(uTime * 1.45 + worldBase.x * 0.14 + worldBase.z * 0.11);',
+            '  float sway = gust * 0.14;',
+            '  pos.x += sway * h * h;',
+            '  pos.z += sway * 0.58 * h * h;',
+            '  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(pos, 1.0);',
+            '}'
+          ].join('\n'),
+          fragmentShader: [
+            'uniform vec3 uStemCol;',
+            'uniform vec3 uColA;',
+            'uniform vec3 uColB;',
+            'uniform vec3 uColC;',
+            'uniform vec3 uColD;',
+            'uniform float uTimeMode;',
+            'varying float vPart;',
+            'varying float vVar;',
+            'void main() {',
+            '  vec3 pCol = vVar < 0.32 ? uColA : (vVar < 0.58 ? uColB : (vVar < 0.82 ? uColC : uColD));',
+            '  vec3 col = vPart < 0.5 ? uStemCol : (vPart > 1.5 ? vec3(1.0, 0.82, 0.22) : pCol);',
+            '  if (uTimeMode > 1.5) col *= vec3(0.45, 0.58, 0.84);',
+            '  else if (uTimeMode > 0.5) col *= vec3(1.10, 0.86, 0.66);',
+            '  gl_FragColor = vec4(col, 1.0);',
+            '}'
+          ].join('\n')
+        });
+        const fMesh = new THREE.InstancedMesh(fGeo, fMat, flowerSpots.length);
+        flowerSpots.forEach((fs, idx) => {
+          dummy.position.set(fs[0], 0.0, fs[1]);
+          dummy.rotation.set(0, fs[3] * Math.PI * 2, 0);
+          const fsc = 0.90 + fs[3] * 0.62;
+          dummy.scale.set(fsc, fsc, fsc);
+          dummy.updateMatrix();
+          fMesh.setMatrixAt(idx, dummy.matrix);
+        });
+        fMesh.instanceMatrix.needsUpdate = true;
+        fMesh.frustumCulled = false;
+        parent.add(fMesh);
+      }
+
       return mesh;
     },
 

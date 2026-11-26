@@ -153,22 +153,96 @@ window.LailaSalma = window.LailaSalma || {};
     }, 1, 1);
   }
 
-  // Smooth sculpted Ghibli Date Palm builder (textured curved ringed trunk + feathered arching fronds + golden date clusters!)
+  let cachedPalmFrondTex = null;
+  function getPalmFrondTex() {
+    if (cachedPalmFrondTex) return cachedPalmFrondTex;
+    const w = 256, h = 512;
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+
+    // Tapered central golden-green palm rib
+    ctx.strokeStyle = '#9ec45a';
+    ctx.lineWidth = 10;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.5, h - 8);
+    ctx.lineTo(w * 0.5, 22);
+    ctx.stroke();
+
+    // 40 individually painted lush curving palm leaflets fanning gracefully off both sides!
+    const pairs = 20;
+    for (let i = 0; i < pairs; i++) {
+      const t = i / (pairs - 1); // 0 = base, 1 = tip
+      const y = h - 34 - t * (h - 68);
+      const env = Math.sin(Math.pow(t, 0.70) * Math.PI * 0.92 + 0.14);
+      const span = 34 + env * 92;
+      const sweep = 26 + (1 - t) * 18;
+      const thick = 14.5 - t * 4.8;
+
+      [-1, 1].forEach(side => {
+        ctx.fillStyle = i % 3 === 0 ? '#ffffff' : (i % 3 === 1 ? '#e4eedc' : '#cde0c2');
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, y + thick * 0.55);
+        ctx.quadraticCurveTo(w * 0.5 + side * span * 0.54, y - sweep * 0.45, w * 0.5 + side * span, y - sweep);
+        ctx.quadraticCurveTo(w * 0.5 + side * span * 0.52, y - sweep * 0.08 + thick, w * 0.5, y - thick * 0.55);
+        ctx.closePath();
+        ctx.fill();
+      });
+    }
+    // Lush pointed tip leaflet
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.moveTo(w * 0.5 - 10, 52);
+    ctx.lineTo(w * 0.5, 4);
+    ctx.lineTo(w * 0.5 + 10, 52);
+    ctx.closePath();
+    ctx.fill();
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    tex.anisotropy = 4;
+    tex.needsUpdate = true;
+    cachedPalmFrondTex = tex;
+    return tex;
+  }
+
+  let cachedArchedFrondGeo = null;
+  function getArchedFrondGeo() {
+    if (cachedArchedFrondGeo) return cachedArchedFrondGeo;
+    // Gently arching, V-creased 7-segment palm frond ribbon!
+    const geo = new THREE.PlaneGeometry(1.78, 3.65, 2, 7);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const rawY = pos.getY(i);
+      const t = (rawY + 1.825) / 3.65; // 0 = attached at crown, 1 = drooping frond tip
+      const z = t * 3.65;
+      const archY = Math.sin(t * Math.PI * 0.78) * 0.92 - t * t * 1.24;
+      const vFold = -Math.abs(x) * 0.22; // natural V-shaped palm leaflet droop!
+      pos.setXYZ(i, x, archY + vFold, z);
+    }
+    geo.computeVertexNormals();
+    cachedArchedFrondGeo = geo;
+    return geo;
+  }
+
+  // Smooth sculpted Ghibli Date Palm builder (textured curved ringed trunk + 14 feathered alpha-cutout palm fronds + golden date clusters!)
   function createDatePalm(scale) {
     const s = scale || 1.0;
     const g = new THREE.Group();
     const barkTex = (LS.ghibli && LS.ghibli.getBarkTexture) ? LS.ghibli.getBarkTexture() : null;
-    const leafTex = (LS.ghibli && LS.ghibli.getLeafBrushTexture) ? LS.ghibli.getLeafBrushTexture() : null;
+    const frondTex = getPalmFrondTex();
     const trunkMat = LS.makeToonMat(0x8c623d, barkTex ? { map: barkTex } : undefined);
     const ringMat = LS.makeToonMat(0x6e4a2c, barkTex ? { map: barkTex } : undefined);
-    const frondSun = LS.makeToonMat(0x66ba52, leafTex ? { map: leafTex } : undefined);
-    const frondMid = LS.makeToonMat(0x419645, leafTex ? { map: leafTex } : undefined);
-    const frondShade = LS.makeToonMat(0x2a6e38, leafTex ? { map: leafTex } : undefined);
-    const spineMat = LS.makeToonMat(0x769948);
+    const frondSun = LS.makeToonMat(0x7ed45c, { map: frondTex, alphaTest: 0.28, side: THREE.DoubleSide, emissive: 0x529c3a, emissiveIntensity: 0.14 });
+    const frondMid = LS.makeToonMat(0x4ca848, { map: frondTex, alphaTest: 0.28, side: THREE.DoubleSide, emissive: 0x357a34, emissiveIntensity: 0.12 });
+    const frondShade = LS.makeToonMat(0x2f783a, { map: frondTex, alphaTest: 0.28, side: THREE.DoubleSide, emissive: 0x22582c, emissiveIntensity: 0.10 });
     const dateMat = LS.makeToonMat(0xe08a26);
 
     // Flared sandy palm root collar
-    const rootCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * s, 0.46 * s, 0.45 * s, 10), ringMat);
+    const rootCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.32 * s, 0.48 * s, 0.45 * s, 10), ringMat);
     rootCollar.position.y = 0.22 * s;
     g.add(rootCollar);
 
@@ -185,8 +259,7 @@ window.LailaSalma = window.LailaSalma || {};
       seg.rotation.z = -tilt;
       seg.castShadow = true;
       g.add(seg);
-      // Organic palm bark ridge collar
-      const ridge = new THREE.Mesh(new THREE.TorusGeometry(rTop * 1.02, 0.035 * s, 6, 10), ringMat);
+      const ridge = new THREE.Mesh(new THREE.TorusGeometry(rTop * 1.02, 0.036 * s, 6, 10), ringMat);
       ridge.rotation.x = Math.PI / 2;
       ridge.position.set(px + Math.sin(tilt) * segH * 0.5, py + Math.cos(tilt) * segH * 0.5, 0);
       g.add(ridge);
@@ -212,38 +285,19 @@ window.LailaSalma = window.LailaSalma || {};
       crown.add(cl);
     }
 
-    // 12 Gracefully Arching Feathered Palm Fronds (curved spine + tapered chevron leaflets!)
-    for (let f = 0; f < 12; f++) {
-      const ang = (f / 12) * Math.PI * 2 + (f % 2) * 0.14;
-      const fg = new THREE.Group();
-      fg.rotation.y = ang;
-      const isUpper = f % 3 === 0;
-      const mat = isUpper ? frondSun : (f % 3 === 1 ? frondMid : frondShade);
-      const basePitch = isUpper ? 0.58 : (f % 3 === 1 ? 0.36 : 0.18);
-      for (let k = 0; k < 5; k++) {
-        const u = k / 4;
-        const dist = (0.42 + k * 0.62) * s;
-        const drop = Math.sin(basePitch) * dist - k * k * 0.14 * s;
-        const pitch = -basePitch + k * 0.28;
-        // Central arching frond rib
-        const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.045 * s, 0.66 * s, 6), spineMat);
-        rib.position.set(0, drop + 0.12 * s, dist);
-        rib.rotation.x = Math.PI / 2 + pitch;
-        fg.add(rib);
-        // Tapered V-angled feathered frond blades on left & right!
-        const bladeW = (0.42 - u * 0.26) * s;
-        const bladeL = (0.72 - u * 0.14) * s;
-        [-1, 1].forEach(side => {
-          const blade = new THREE.Mesh(new THREE.ConeGeometry(bladeW, bladeL, 4), mat);
-          blade.scale.set(1.0, 1.0, 0.18);
-          blade.position.set(side * (0.20 - u * 0.08) * s, drop + 0.08 * s, dist + 0.04 * s);
-          blade.rotation.x = Math.PI / 2 + pitch;
-          blade.rotation.z = side * -0.45;
-          blade.castShadow = k < 3;
-          fg.add(blade);
-        });
-      }
-      crown.add(fg);
+    // 14 Sweeping Hand-Painted Feathered Date-Palm Fronds (2 graceful tiers!)
+    const frondGeo = getArchedFrondGeo();
+    for (let f = 0; f < 14; f++) {
+      const isTopTier = f < 6;
+      const ang = isTopTier ? ((f / 6) * Math.PI * 2) : (((f - 6) / 8) * Math.PI * 2 + 0.28);
+      const mat = isTopTier ? frondSun : (f % 2 === 0 ? frondMid : frondShade);
+      const frond = new THREE.Mesh(frondGeo, mat);
+      frond.scale.setScalar((isTopTier ? 0.88 : 1.08) * s);
+      frond.rotation.order = 'YXZ';
+      frond.rotation.y = ang;
+      frond.rotation.x = isTopTier ? -0.46 : -0.10;
+      frond.position.y = (isTopTier ? 0.24 : 0.06) * s;
+      crown.add(frond);
     }
 
     return { root: g, crown };
@@ -878,10 +932,24 @@ window.LailaSalma = window.LailaSalma || {};
         const rim = new THREE.Mesh(new THREE.TorusGeometry(6.2, 0.55, 10, 32), limestoneMat);
         rim.rotation.x = Math.PI / 2; rim.position.set(-26, 0.16, 10); worldGroup.add(rim);
         const oasisWater = new THREE.Mesh(new THREE.CircleGeometry(6.0, 32), LS.makeWaterMat(0.92));
-        oasisWater.rotation.x = -Math.PI / 2; oasisWater.position.set(-26, 0.10, 10); worldGroup.add(oasisWater);
-        const grassRing = new THREE.Mesh(new THREE.RingGeometry(6.0, 9.8, 32), LS.makeToonMat(0x52a34b));
+        oasisWater.rotation.x = -Math.PI / 2; oasisWater.position.set(-26, 0.10, 10); oasisWater.renderOrder = -1; worldGroup.add(oasisWater);
+        const grassRingMat = LS.createGrassTexture ? LS.makeSurfaceMat(LS.createGrassTexture('tokyo'), { roughness: 0.90 }) : LS.makeToonMat(0x52a34b);
+        const grassRing = new THREE.Mesh(new THREE.RingGeometry(6.0, 10.4, 36), grassRingMat);
         grassRing.rotation.x = -Math.PI / 2; grassRing.position.set(-26, 0.04, 10); worldGroup.add(grassRing);
         addCollider(-26, 10, 5.2, 5.2);
+
+        // Wind-swept 3D Emerald Oasis Grass, Nile Riverbank Reeds & Wildflowers!
+        if (LS.hdAssets && LS.hdAssets.addInstancedGrass) {
+          // 1) Dense lush grass & wildflowers ringing the Emerald Date-Palm Oasis
+          LS.hdAssets.addInstancedGrass(worldGroup, { minX: -36.6, maxX: -15.4, minZ: -0.6, maxZ: 20.6 }, (x, z) => {
+            const dOasis = Math.hypot(x + 26, z - 10);
+            return dOasis > 6.45 && dOasis < 10.25;
+          }, 'egypt', 2400);
+          // 2) Verdant Nile Riverbank grass & reed fringe (clear of wooden pier Z=0.4..5.6!)
+          LS.hdAssets.addInstancedGrass(worldGroup, { minX: 18.5, maxX: 22.4, minZ: -33.5, maxZ: 29.5 }, (x, z) => {
+            return z < 0.2 || z > 5.8;
+          }, 'egypt', 1800);
+        }
 
         // Lush ring of gracefully curved Date Palms around the Oasis & Nile!
         const palmSpots = [
