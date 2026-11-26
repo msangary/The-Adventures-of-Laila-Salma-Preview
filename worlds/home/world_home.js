@@ -2200,7 +2200,7 @@ window.LailaSalma = window.LailaSalma || {};
     LS.spawnWorldNPCs(worldGroup, [
       {
         name: 'Mom ☕',
-        line: 'Good morning sweeties! Play us a song on the piano, Laila! We love you! 💛🎹',
+        line: 'Good morning {leader}! Play us a song on the piano — we love you! 💛🎹',
         pos: new THREE.Vector3(2.04, 0.04, -3.4),
         baseRot: Math.PI / 2,
         seated: true,
@@ -2208,7 +2208,7 @@ window.LailaSalma = window.LailaSalma || {};
       },
       {
         name: 'Dad ☕',
-        line: 'Best coffee in the world with my two favorite adventurers! Ready for school or the Magic Globe? 🌍☕',
+        line: 'Good morning {leader}! Drive the Qashqai to the Airport for flights, or open our Enchanted Bookshelf for Ancient Egypt! ✈️📚',
         pos: new THREE.Vector3(5.16, 0.02, -3.4),
         baseRot: -Math.PI / 2,
         seated: true,
@@ -2217,9 +2217,9 @@ window.LailaSalma = window.LailaSalma || {};
     ]);
 
     // -----------------------------------------------------------------------
-    // ROOM 3: TV & VIDEO GAME ROOM (Southwest)
-    // Woven patterned sage rug, sofa with blanket & pillows, storybook bookcase,
-    // wall shelf with trailing plant, retro console & soundbar!
+    // ROOM 3: TV & VIDEO GAME ROOM + ENCHANTED STORYBOOK BOOKSHELF! (Southwest)
+    // Woven patterned sage rug, sofa with blanket & pillows, magical storybook
+    // portal bookshelf (Ancient Egypt & Outer Space!), retro console & soundbar!
     // -----------------------------------------------------------------------
     const rugSW = new THREE.Mesh(
       new THREE.PlaneGeometry(6.2, 4.8),
@@ -2245,17 +2245,52 @@ window.LailaSalma = window.LailaSalma || {};
     });
     addCol(-3.0, 4.1, 0.74, 1.78);
 
-    // Tall Storybook Bookcase along South TV-Room Wall! (X=-5.6, Z=7.45)
-    const bookCase = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.25, 0.55), trimMat);
-    bookCase.position.set(-5.6, 1.12, 7.45); bookCase.castShadow = true; worldGroup.add(bookCase);
+    // ENCHANTED STORYBOOK PORTAL BOOKSHELF along South Apartment Wall! (X=-5.6, Z=7.45)
+    // Open storybooks here to visit Ancient Egypt, Outer Space & magical non-present-day realms!
+    const bookCase = new THREE.Mesh(new THREE.BoxGeometry(2.75, 2.38, 0.58), trimMat);
+    bookCase.position.set(-5.6, 1.19, 7.45); bookCase.castShadow = true; worldGroup.add(bookCase);
+    const shelfCrown = new THREE.Mesh(new THREE.BoxGeometry(2.94, 0.16, 0.68), LS.makeToonMat(0x7c4e2e));
+    shelfCrown.position.set(-5.6, 2.42, 7.44); worldGroup.add(shelfCrown);
+    const crownEmblem = new THREE.Mesh(new THREE.OctahedronGeometry(0.14, 0), LS.makeEmissiveMat(0xffe066, 0xffc300, 0.85));
+    crownEmblem.position.set(-5.6, 2.58, 7.22); worldGroup.add(crownEmblem);
     const bCols = [0xe63946, 0xf4a261, 0x2a9d8f, 0x457b9d, 0xa855f7, 0xffd166];
-    [0.55, 1.15, 1.72].forEach((by, bi) => {
+    [0.55, 1.15, 1.78].forEach((by, bi) => {
       for (let i = 0; i < 8; i++) {
-        const bk = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.36 + (i % 2) * 0.08, 0.32), LS.makeToonMat(bCols[(i + bi * 2) % bCols.length]));
-        bk.position.set(-6.55 + i * 0.27, by, 7.28); worldGroup.add(bk);
+        const isGoldEgyptBook = (bi === 1 && i === 3);
+        const isSpaceAtlasBook = (bi === 1 && i === 4);
+        const bMat = isGoldEgyptBook
+          ? LS.makeEmissiveMat(0xffd166, 0xffaa00, 0.82)
+          : (isSpaceAtlasBook
+            ? LS.makeEmissiveMat(0x7dd3fc, 0x38bdf8, 0.78)
+            : LS.makeToonMat(bCols[(i + bi * 2) % bCols.length]));
+        const bk = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.38 + (i % 2) * 0.09, 0.34), bMat);
+        bk.position.set(-6.55 + i * 0.27, by, (isGoldEgyptBook || isSpaceAtlasBook) ? 7.18 : 7.28);
+        if (i === 7 && bi === 2) bk.rotation.z = -0.22;
+        worldGroup.add(bk);
       }
     });
-    addCol(-5.6, 7.45, 1.35, 0.4);
+    if (LS.createGlowSprite) {
+      const bHalo = LS.createGlowSprite(0xffd166, 2.35);
+      bHalo.position.set(-5.6, 1.38, 7.02);
+      worldGroup.add(bHalo);
+    }
+    W.bookshelfStars = [];
+    for (let s = 0; s < 5; s++) {
+      const st = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.065, 0),
+        LS.makeEmissiveMat(s % 2 === 0 ? 0xfff3b0 : 0x93c5fd, s % 2 === 0 ? 0xffd166 : 0x38bdf8, 0.92)
+      );
+      st.userData = { phase: s * 1.25, bx: -6.4 + s * 0.42, bz: 6.95 + (s % 2) * 0.14 };
+      worldGroup.add(st);
+      W.bookshelfStars.push(st);
+    }
+    addCol(-5.6, 7.45, 1.42, 0.42);
+    W.zones.push({
+      id: 'magic_bookshelf',
+      label: 'Open Enchanted Storybook Bookshelf (Ancient Egypt & Beyond) 📚✨',
+      pos: new THREE.Vector3(-5.6, 0, 6.2),
+      radius: 2.5
+    });
 
     // Standing Floor Lamp with warm halo beside sofa
     const flPole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.9, 6), trimMat);
@@ -2456,6 +2491,7 @@ window.LailaSalma = window.LailaSalma || {};
     W.getZoneLabel = function (x, z) {
       if (x < 0 && z < 0) return 'Home Kitchen 🍎';
       if (x >= 0 && z < 0) return 'Dining Room & Piano 🎹☕';
+      if (x < 0 && z >= 5.2) return 'Enchanted Storybook Bookshelf 📚✨';
       if (x < 0 && z >= 0) return 'TV & Game Room 📺🎮';
       return "Sisters' Bedroom & Magic Globe 🌍";
     };
@@ -2471,6 +2507,15 @@ window.LailaSalma = window.LailaSalma || {};
         st.position.set(Math.cos(a) * 0.84, 1.50 + Math.sin(a * 2 + i) * 0.22, Math.sin(a) * 0.84);
         st.rotation.y = elapsed * 2.2;
       });
+      if (W.bookshelfStars) {
+        W.bookshelfStars.forEach((st, i) => {
+          const u = st.userData;
+          const cyc = (elapsed * 0.45 + u.phase) % 1.0;
+          st.position.set(u.bx + Math.sin(elapsed * 1.8 + i) * 0.14, 0.72 + cyc * 1.65, u.bz);
+          st.rotation.y = elapsed * 2.5 + i;
+          st.scale.setScalar(0.55 + Math.sin(cyc * Math.PI) * 0.65);
+        });
+      }
       W.coffeeSteams.forEach(st => {
         const t = (elapsed * 0.55 + st.userData.phase) % 1.0;
         st.position.y = st.userData.baseY + t * 0.55;
@@ -2504,7 +2549,7 @@ window.LailaSalma = window.LailaSalma || {};
       ctx.fillStyle = '#3d2c1e'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('KITCHEN', toX(-5), toY(-3.5));
       ctx.fillText('PIANO/DINING', toX(5), toY(-3.5));
-      ctx.fillText('TV ROOM', toX(-5), toY(4));
+      ctx.fillText('TV & BOOKS 📚', toX(-5), toY(4));
       ctx.fillText('BEDROOM 🌍', toX(5), toY(4));
     };
 

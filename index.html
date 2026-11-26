@@ -408,14 +408,14 @@
     </div>
   </div>
 
-  <!-- Haneda-Tokyo International Airport Departures Modal -->
+  <!-- International Airport Departures Modal (Present-Day Flights!) -->
   <div id="airport-modal" class="modal-backdrop hidden">
     <div class="modal-box parchment-modal">
       <div class="modal-top">
-        <h2>✈️ Haneda-Tokyo International Airport</h2>
+        <h2 id="airport-modal-title">✈️ Sunnyside International Airport</h2>
         <button class="close-btn" data-close="airport-modal">✕</button>
       </div>
-      <p class="ramen-sub">“Welcome aboard, Laila &amp; Salma! Gate A1 is NOW BOARDING for African Safari &amp; Wildlife Zoo, plus 16 more exciting worlds on the horizon!”</p>
+      <p id="airport-modal-sub" class="ramen-sub">“Welcome aboard! Pick any present-day destination to fly to!”</p>
       <div id="airport-flights-grid" class="ramen-menu"></div>
     </div>
   </div>
@@ -768,7 +768,7 @@
         <h2>🚙 Gray Nissan Qashqai — Where To?</h2>
         <button class="close-btn" data-close="qashqai-modal">✕</button>
       </div>
-      <p class="ramen-sub">Hop into the family gray Nissan Qashqai! Pick a destination for Laila &amp; Salma to visit:</p>
+      <p id="qashqai-greeting" class="ramen-sub">Hop into the family gray Nissan Qashqai! Pick a destination to visit:</p>
       <div id="qashqai-dest-list" class="ramen-menu"></div>
     </div>
   </div>
@@ -780,7 +780,7 @@
         <h2>🍲 Eatery Restaurant</h2>
         <button class="close-btn" data-close="eatery-modal">✕</button>
       </div>
-      <p class="ramen-sub">“Ahlan Laila &amp; Salma! Sit together at our warm family table — what sounds yummy today?”</p>
+      <p id="eatery-greeting" class="ramen-sub">“Ahlan! Sit together at our warm family table — what sounds yummy today?”</p>
       <div class="ramen-menu">
         <div class="ramen-item featured">
           <div>
@@ -808,7 +808,7 @@
         <h2>🥟 Yiwan Restaurant</h2>
         <button class="close-btn" data-close="yiwan-modal">✕</button>
       </div>
-      <p class="ramen-sub">“Welcome to Yiwan, Laila &amp; Salma! Order a favorite dish or mix &amp; match your own combination feast!”</p>
+      <p id="yiwan-greeting" class="ramen-sub">“Welcome to Yiwan! Order a favorite dish or mix &amp; match your own combination feast!”</p>
       <div class="ramen-menu">
         <div class="ramen-item">
           <div>
@@ -881,7 +881,7 @@
         <h2>🧀🍝 Mai &amp; Mostafa's Kitchen</h2>
         <button class="close-btn" data-close="mai-lasagna-modal">✕</button>
       </div>
-      <p class="ramen-sub"><strong>Mai smiles warmly:</strong> “Welcome to our home, Laila &amp; Salma! I just pulled hot, cheesy homemade lasagna out of the oven — would you girls like to have some?”</p>
+      <p id="mai-lasagna-greeting" class="ramen-sub"><strong>Mai smiles warmly:</strong> “Hi Lailouta, I made you your favorite food! I just pulled hot, cheesy homemade lasagna out of the oven — would you like to have some?”</p>
       <div class="modal-actions" style="margin-top:12px;">
         <button id="btn-yes-lasagna" class="btn-primary" type="button">🧀 Yes please, Mai! Eat Lasagna (+15c, +24 XP)</button>
         <button class="btn-secondary" data-close="mai-lasagna-modal" type="button">Maybe later! Let's play first 🎲</button>
@@ -900,6 +900,18 @@
       <div id="bg-grid" class="bg-board-grid"></div>
       <div id="bg-log" class="omikuji-box" style="margin-top:10px;margin-bottom:10px;"></div>
       <button id="btn-roll-dice" class="btn-primary" style="width:100%;" type="button">🎲 Roll Dice!</button>
+    </div>
+  </div>
+
+  <!-- Enchanted Adventure Bookshelf Modal (Time-Travel, Outer Space & Magic Realms!) -->
+  <div id="bookshelf-modal" class="modal-backdrop hidden">
+    <div class="modal-box parchment-modal">
+      <div class="modal-top">
+        <h2>📚 Laila's Enchanted Adventure Bookshelf</h2>
+        <button class="close-btn" data-close="bookshelf-modal">✕</button>
+      </div>
+      <p id="bookshelf-greeting" class="ramen-sub">Open a glowing storybook to transport to places that don't exist today or can't be reached by airplane — like Ancient Egypt or Outer Space! ✨</p>
+      <div id="bookshelf-worlds-list" class="ramen-menu"></div>
     </div>
   </div>
 
@@ -927,6 +939,7 @@
   <script src="engine/gameplay/gameplay.js"></script>
   <script src="worlds/home/world_home.js"></script>
   <script src="worlds/home/world_home_destinations.js"></script>
+  <script src="worlds/home/world_airport.js"></script>
   <script src="worlds/tokyo/world_tokyo.js"></script>
   <script src="worlds/kyoto/world_kyoto.js"></script>
   <script src="worlds/safari/world_safari.js"></script>

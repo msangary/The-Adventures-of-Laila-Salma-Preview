@@ -1584,8 +1584,10 @@ window.LailaSalma = window.LailaSalma || {};
     worldGroup.add(bibo.root);
     W.biboChar = bibo;
 
-    const biboBub = LS.createSpeechBubbleSprite ? LS.createSpeechBubbleSprite('Bibo 🚗', 'Vroom vroom! Come play cars & board games with me! 🏎️') : null;
-    if (biboBub) { biboBub.scale.multiplyScalar(0.62); biboBub.position.set(6.4, 1.45, 2.2); worldGroup.add(biboBub); }
+    const biboBub = LS.createSpeechBubbleSprite ? LS.createSpeechBubbleSprite('Bibo 🚗', 'Laila Salma', { skipAutoLeader: true }) : null;
+    if (biboBub) { biboBub.scale.multiplyScalar(0.62); biboBub.position.set(6.4, 1.48, 2.2); worldGroup.add(biboBub); }
+    W.biboBub = biboBub;
+    W.nouziBub = nouziBub;
 
     // -----------------------------------------------------------------------
     // AREA 5 (Center): PAINTED 4-PLAYER KIDS' BOARD GAME TABLE! (X = 0, Z = -0.6)
@@ -1620,7 +1622,9 @@ window.LailaSalma = window.LailaSalma || {};
     LS.spawnWorldNPCs(worldGroup, [
       {
         name: 'Mai 🍝',
-        line: 'Welcome up to the 18th floor, Laila & Salma! I just baked homemade lasagna — would you like to have some? 🧀🍝💛',
+        line: 'Hi Lailouta, I made you your favorite food! 🧀🍝💛',
+        lineLaila: 'Hi Lailouta, I made you your favorite food! 🧀🍝💛',
+        lineSalma: 'Hi Salouma, I missed you! 🧀🍝💛',
         pos: new THREE.Vector3(-5.6, 0, -5.8),
         baseRot: 0,
         waveOnNear: true,
@@ -1628,7 +1632,7 @@ window.LailaSalma = window.LailaSalma || {};
       },
       {
         name: 'Mostafa (Dr.) 🩺🦴',
-        line: 'Hey Laila & Salma! How are my favorite nieces — are your bones okay? 🦴😄🩺',
+        line: 'Hey {leader}! How is my favorite niece — are your bones okay? 🦴😄🩺',
         pos: new THREE.Vector3(4.48, 0.02, -3.8),
         baseRot: Math.PI / 2,
         seated: true,
@@ -1660,6 +1664,15 @@ window.LailaSalma = window.LailaSalma || {};
 
     W.update = function (dt, elapsed) {
       if (W.tvObj) W.tvObj.update(elapsed);
+
+      // Show Bibo ("Laila Salma") & Nouzi speech bubbles when the active leader is nearby!
+      const activeChar = (LS.state && LS.state.activeLeader === 'salma' && LS.chars && LS.chars.salma)
+        ? LS.chars.salma : (LS.chars && LS.chars.laila);
+      if (activeChar && activeChar.root) {
+        const lp = activeChar.root.position;
+        if (W.biboBub) W.biboBub.visible = Math.hypot(lp.x - 6.4, lp.z - 2.2) < 7.2;
+        if (W.nouziBub) W.nouziBub.visible = Math.hypot(lp.x + 6.4, lp.z - 2.2) < 7.2;
+      }
 
       // Animate Nouzi doing real gymnastics moves on her mat (exact height clearance — ZERO floor clipping!)
       if (W.nouziChar) {

@@ -995,13 +995,13 @@ window.LailaSalma = window.LailaSalma || {};
     return tex;
   };
 
-  LS.createSpeechBubbleSprite = function (name, text) {
+  function renderSpeechBubbleCanvas(name, text) {
     const c = document.createElement('canvas');
     const measureCtx = c.getContext('2d');
     measureCtx.font = '600 22px sans-serif';
 
     const maxTextWidth = 392;
-    const words = text.split(' ');
+    const words = String(text || '').split(' ');
     const lines = [];
     let currentLine = '';
 
@@ -1058,7 +1058,13 @@ window.LailaSalma = window.LailaSalma || {};
     for (let i = 0; i < lines.length; i++) {
       ctx.fillText(lines[i], 40, 86 + i * lineHeight);
     }
+    return c;
+  }
 
+  LS.createSpeechBubbleSprite = function (name, text, opts) {
+    const cfg = opts || {};
+    const resolved = LS.personalizeLeaderLine ? LS.personalizeLeaderLine(text, cfg) : text;
+    const c = renderSpeechBubbleCanvas(name, resolved);
     const tex = new THREE.CanvasTexture(c);
     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
     const sprite = new THREE.Sprite(mat);
@@ -1066,7 +1072,41 @@ window.LailaSalma = window.LailaSalma || {};
     const worldHeight = 1.24 * (c.height / 180);
     sprite.scale.set(3.45, worldHeight, 1);
     sprite.visible = false;
+    sprite.userData.speechMeta = {
+      name: name,
+      rawText: text,
+      opts: cfg,
+      resolvedText: resolved,
+      origW: 3.45,
+      origH: worldHeight
+    };
+    if (!cfg.skipAutoLeader) {
+      LS.runtime = LS.runtime || {};
+      LS.runtime.dynamicBubbles = LS.runtime.dynamicBubbles || [];
+      LS.runtime.dynamicBubbles.push(sprite);
+    }
     return sprite;
+  };
+
+  LS.refreshSpeechBubblesForLeader = function () {
+    if (!LS.runtime || !LS.runtime.dynamicBubbles || !LS.personalizeLeaderLine) return;
+    LS.runtime.dynamicBubbles = LS.runtime.dynamicBubbles.filter(sp => sp && sp.parent);
+    LS.runtime.dynamicBubbles.forEach(sp => {
+      const m = sp.userData && sp.userData.speechMeta;
+      if (!m) return;
+      const nextText = LS.personalizeLeaderLine(m.rawText, m.opts);
+      if (nextText === m.resolvedText) return;
+      const prevMult = sp.scale.x / (m.origW || 3.45);
+      const c = renderSpeechBubbleCanvas(m.name, nextText);
+      const oldMap = sp.material && sp.material.map;
+      if (oldMap && oldMap.dispose) oldMap.dispose();
+      sp.material.map = new THREE.CanvasTexture(c);
+      sp.material.needsUpdate = true;
+      const nextH = 1.24 * (c.height / 180);
+      sp.scale.set(3.45 * prevMult, nextH * prevMult, 1);
+      m.origH = nextH;
+      m.resolvedText = nextText;
+    });
   };
 
   // Shared Natural Neighborhood Scenery Builders (zero extra lights, mobile-safe geometry)

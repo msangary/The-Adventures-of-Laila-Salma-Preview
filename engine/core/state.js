@@ -749,9 +749,50 @@ window.LailaSalma = window.LailaSalma || {};
     LS.saveState();
   };
 
+  LS.getLeaderName = function () {
+    return (LS.state && LS.state.activeLeader === 'salma') ? 'Salma' : 'Laila';
+  };
+
+  LS.getCompanionName = function () {
+    return (LS.state && LS.state.activeLeader === 'salma') ? 'Laila' : 'Salma';
+  };
+
+  LS.personalizeLeaderLine = function (text, opts) {
+    const cfg = opts || {};
+    const isSalma = !!(LS.state && LS.state.activeLeader === 'salma');
+    if (cfg.lineLaila !== undefined && cfg.lineSalma !== undefined) {
+      return isSalma ? cfg.lineSalma : cfg.lineLaila;
+    }
+    if (!text) return '';
+    if (cfg.skipAutoLeader) return text;
+    const leader = isSalma ? 'Salma' : 'Laila';
+    const companion = isSalma ? 'Laila' : 'Salma';
+    let out = String(text)
+      .replace(/\{leader\}/g, leader)
+      .replace(/\{companion\}/g, companion);
+    // Automatically convert paired or Laila-only NPC greetings to address whoever is leading!
+    out = out.replace(/Laila\s*(?:&|and)\s*Salma/gi, leader);
+    if (isSalma && /\bLaila\b/.test(out) && !/\bSalma\b/.test(out)) {
+      out = out.replace(/\bLaila\b/g, 'Salma');
+    }
+    // If an NPC greeting didn't mention a name yet, naturally address the active leader!
+    if (out.indexOf(leader) === -1) {
+      if (/^(Ahlan|Marhaba|Irasshaimase|Ohayo|Jambo|Bonjour|Buonasera)!/i.test(out)) {
+        out = out.replace(/^(Ahlan|Marhaba|Irasshaimase|Ohayo|Jambo|Bonjour|Buonasera)!/i, '$1, ' + leader + '!');
+      } else if (/^Welcome to /i.test(out)) {
+        out = out.replace(/^Welcome to /i, 'Welcome, ' + leader + ', to ');
+      } else if (/^Purr~ Welcome to /i.test(out)) {
+        out = out.replace(/^Purr~ Welcome to /i, 'Purr~ Welcome, ' + leader + ', to ');
+      } else if (!cfg.noFallbackPrefix) {
+        out = 'Hi ' + leader + '! ' + out;
+      }
+    }
+    return out;
+  };
+
   LS.updateHUD = function () {
     const worldMeta = LS.WORLDS[LS.state.currentWorld] || LS.WORLDS.home_neighborhood;
-    const isHomeContext = LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment' || LS.state.currentWorld === 'gedo_mahmoud_house';
+    const isHomeContext = LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment' || LS.state.currentWorld === 'gedo_mahmoud_house' || (LS.state.currentWorld && LS.state.currentWorld.indexOf('dest_') === 0);
     const isKyotoContext = LS.state.currentWorld === 'kyoto' || LS.state.currentWorld === 'kyoto_room';
     const isSafariContext = LS.state.currentWorld === 'safari' || LS.state.currentWorld === 'safari_tent';
     const isEgyptContext = LS.state.currentWorld === 'egypt' || LS.state.currentWorld === 'egypt_chamber';

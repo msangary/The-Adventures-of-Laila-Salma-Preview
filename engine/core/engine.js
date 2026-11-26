@@ -212,6 +212,7 @@ window.LailaSalma = window.LailaSalma || {};
     LS.setSalmaBubbleText(isSalma
       ? 'Lead the way, Salma! Big sister Laila is right behind you! 💖'
       : 'Yay! Laila is leading the adventure again! 🌸', 3600);
+    if (LS.refreshSpeechBubblesForLeader) LS.refreshSpeechBubblesForLeader();
     LS.showToast(isSalma ? '🧒 Now playing as Salma! (Laila follows)' : '👧 Now playing as Laila! (Salma follows)');
     if (LS.completeCozyMission) LS.completeCozyMission('swap');
     LS.updateHUD();
@@ -477,6 +478,7 @@ window.LailaSalma = window.LailaSalma || {};
     LS.state.currentWorld = worldId;
     if (!meta.isInterior) LS.saveState();
 
+    LS.runtime.dynamicBubbles = [];
     clearWorldGroup();
 
     scene.fog.near = meta.fogNear || 55;
@@ -855,7 +857,7 @@ window.LailaSalma = window.LailaSalma || {};
     travelMapRaf = requestAnimationFrame(frame);
   };
 
-  LS.travelToWorld = function (targetWorldId) {
+  LS.travelToWorld = function (targetWorldId, travelMode) {
     if (LS.runtime.traveling || !LS.WORLDS[targetWorldId]) return;
     if (LS.isWorldEnabled && !LS.isWorldEnabled(targetWorldId)) {
       LS.showToast('✨ Coming in a future wave!');
@@ -872,36 +874,48 @@ window.LailaSalma = window.LailaSalma || {};
     const fromId = LS.state.currentWorld;
     const fromMeta = LS.WORLDS[fromId];
     const toMeta = LS.WORLDS[targetWorldId];
-    const isShinkansen = (fromId === 'tokyo' && targetWorldId === 'kyoto') || (fromId === 'kyoto' && targetWorldId === 'tokyo');
+    const leader = LS.getLeaderName ? LS.getLeaderName() : 'Laila';
+    const isBook = travelMode === 'book';
+    const isShinkansen = !isBook && ((fromId === 'tokyo' && targetWorldId === 'kyoto') || (fromId === 'kyoto' && targetWorldId === 'tokyo'));
     const vehicleMode = isShinkansen ? 'train' : 'plane';
 
     const overlay = document.getElementById('travel-overlay');
     const animEl = overlay ? overlay.querySelector('.train-anim') : null;
     const titleEl = document.getElementById('travel-title');
     const subEl = document.getElementById('travel-sub');
-    if (animEl) animEl.textContent = isShinkansen ? '🚅💨' : '✈️🌍';
+    const mapCanvas = document.getElementById('travel-map-canvas');
+    if (animEl) animEl.textContent = isBook ? '📖✨' : (isShinkansen ? '🚅💨' : '✈️🌍');
     if (titleEl) {
-      titleEl.textContent = (isShinkansen ? '🚅 Shinkansen Express: ' : '✈️ International Flight: ') + fromMeta.title + ' → ' + toMeta.title;
+      titleEl.textContent = isBook
+        ? ('📖 Enchanted Storybook Portal → ' + toMeta.title)
+        : ((isShinkansen ? '🚅 Shinkansen Express: ' : '✈️ International Flight: ') + fromMeta.title + ' → ' + toMeta.title);
     }
     if (subEl) {
-      subEl.textContent = isShinkansen
-        ? 'All aboard, Laila, Salma & Mochi! Zooming across Japan on the bullet train at 300 km/h...'
-        : 'Fasten seatbelts, Laila & Salma! Flying across the world map straight to ' + toMeta.title + '!';
+      subEl.textContent = isBook
+        ? ('Turning the glowing pages for ' + leader + '... Stepping right into ' + toMeta.title + '! ✨')
+        : (isShinkansen
+          ? ('All aboard, ' + leader + '! Zooming across Japan on the bullet train at 300 km/h...')
+          : ('Fasten seatbelts, ' + leader + '! Flying across the world map straight to ' + toMeta.title + '!'));
     }
     if (overlay) overlay.classList.remove('hidden');
-    if (LS.playWorldMapAnimation) LS.playWorldMapAnimation(fromId, targetWorldId, vehicleMode, 2150);
+    if (isBook) {
+      stopWorldMapAnimation();
+      if (mapCanvas) mapCanvas.classList.add('hidden');
+    } else if (LS.playWorldMapAnimation) {
+      LS.playWorldMapAnimation(fromId, targetWorldId, vehicleMode, 2150);
+    }
 
-    LS.playSFX('train');
+    LS.playSFX(isBook ? 'levelup' : 'train');
 
     setTimeout(() => {
-      LS.loadWorld(targetWorldId, true);
+      LS.loadWorld(targetWorldId, !isBook);
     }, 1150);
 
     setTimeout(() => {
       stopWorldMapAnimation();
       if (overlay) overlay.classList.add('hidden');
       LS.runtime.traveling = false;
-      LS.showToast(toMeta.emoji + ' Welcome to ' + toMeta.title + ' — ' + toMeta.subtitle + '!');
+      LS.showToast(toMeta.emoji + ' Welcome to ' + toMeta.title + ', ' + leader + ' — ' + toMeta.subtitle + '!');
     }, 2300);
   };
 
@@ -918,6 +932,7 @@ window.LailaSalma = window.LailaSalma || {};
     if (mapCanvas) mapCanvas.classList.add('hidden');
     LS.runtime.traveling = true;
     const toMeta = LS.WORLDS[targetWorldId];
+    const leader = LS.getLeaderName ? LS.getLeaderName() : 'Laila';
     const overlay = document.getElementById('travel-overlay');
     const animEl = overlay ? overlay.querySelector('.train-anim') : null;
     const titleEl = document.getElementById('travel-title');
@@ -925,13 +940,15 @@ window.LailaSalma = window.LailaSalma || {};
     if (animEl) animEl.textContent = '🚙💨';
     if (titleEl) titleEl.textContent = 'Gray Nissan Qashqai → ' + toMeta.title;
     if (subEl) {
-      subEl.textContent = targetWorldId === 'dest_mai_mostafa'
-        ? "Buckle up, Laila & Salma! Driving the gray Qashqai & riding the elevator up to Mai & Mostafa's Home!"
-        : (targetWorldId === 'dest_ngsc'
-          ? 'Buckle up, Laila & Salma! Driving the gray Qashqai to NGSC Sports Club for squash & swimming!'
-          : (targetWorldId === 'home_neighborhood'
-            ? 'Driving the gray Nissan Qashqai back home to Sunnyside Gated Community...'
-            : 'Buckle up, Laila & Salma! Cruising in the gray Nissan Qashqai to ' + toMeta.title + '...'));
+      subEl.textContent = targetWorldId === 'dest_airport'
+        ? ('Buckle up, ' + leader + '! Driving the gray Qashqai to Sunnyside International Airport for your flight! ✈️')
+        : (targetWorldId === 'dest_mai_mostafa'
+          ? ('Buckle up, ' + leader + "! Driving the gray Qashqai & riding the elevator up to Mai & Mostafa's Home!")
+          : (targetWorldId === 'dest_ngsc'
+            ? ('Buckle up, ' + leader + '! Driving the gray Qashqai to NGSC Sports Club for squash & swimming!')
+            : (targetWorldId === 'home_neighborhood'
+              ? ('Driving the gray Nissan Qashqai back home to Sunnyside Gated Community for ' + leader + '...')
+              : ('Buckle up, ' + leader + '! Cruising in the gray Nissan Qashqai to ' + toMeta.title + '...'))));
     }
     if (overlay) overlay.classList.remove('hidden');
     LS.playSFX('train');
@@ -1442,6 +1459,8 @@ window.LailaSalma = window.LailaSalma || {};
     else if (zid === 'home_piano') LS.openPianoModal();
     else if (zid === 'home_tv_room') LS.openTvGameModal();
     else if (zid === 'magic_globe') LS.openGlobeModal();
+    else if (zid === 'magic_bookshelf') LS.openBookshelfModal();
+    else if (zid === 'airport_departures') LS.openAirportModal();
     else if (zid === 'home_school') LS.openSchoolModal('home_neighborhood');
     else if (zid === 'home_restaurant') LS.openHomeRestaurantModal();
     else if (zid === 'home_qashqai') LS.openQashqaiModal();

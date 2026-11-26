@@ -1781,7 +1781,7 @@ window.LailaSalma = window.LailaSalma || {};
       LS.runtime.salmaHintUntil = 0;
       return;
     }
-    const nb = LS.createSpeechBubbleSprite(speakerName, text);
+    const nb = LS.createSpeechBubbleSprite(speakerName, text, { skipAutoLeader: true });
     const inRoom = LS.WORLDS && LS.WORLDS[LS.state.currentWorld] && LS.WORLDS[LS.state.currentWorld].isInterior;
     if (inRoom) {
       nb.scale.multiplyScalar(0.54);
@@ -1811,7 +1811,11 @@ window.LailaSalma = window.LailaSalma || {};
         model.rightArm.rotation.z = 0.06;
         if (LS.applyArticulatedPose) LS.applyArticulatedPose(model, 0, 'chair_sit', 0);
       }
-      const bubble = LS.createSpeechBubbleSprite(cfg.name, cfg.line);
+      const bubble = LS.createSpeechBubbleSprite(cfg.name, cfg.line, {
+        lineLaila: cfg.lineLaila,
+        lineSalma: cfg.lineSalma,
+        skipAutoLeader: cfg.skipAutoLeader
+      });
       if (inRoom) {
         bubble.scale.multiplyScalar(0.58);
         bubble.position.set(0, 2.02, 0);

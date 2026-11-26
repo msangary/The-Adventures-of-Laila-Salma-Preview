@@ -408,6 +408,26 @@ window.LailaSalma = window.LailaSalma || {};
       arrivalSpawn: { x: 0, y: 0, z: 4.6, rotY: Math.PI },
       fogNear: 28,
       fogFar: 80
+    },
+    dest_airport: {
+      id: 'dest_airport',
+      title: 'International Airport',
+      subtitle: 'Fly to Present-Day World Destinations ✈️',
+      emoji: '✈️',
+      badgeColor: '#0284c7',
+      unlocked: true,
+      isInterior: false,
+      parentWorld: 'home_neighborhood',
+      exitPos: { x: -2.0, y: 0, z: 31.2, rotY: Math.PI },
+      collectibleLabel: 'Puppies',
+      collectibleEmoji: '🐶',
+      collectibleTotal: 5,
+      bounds: { minX: -16.8, maxX: 16.8, minZ: -6.2, maxZ: 12.8 },
+      mapBounds: { minX: -18.5, maxX: 18.5, minZ: -16.5, maxZ: 14.5 },
+      spawn: { x: 0, y: 0, z: 9.8, rotY: Math.PI },
+      arrivalSpawn: { x: 0, y: 0, z: 9.8, rotY: Math.PI },
+      fogNear: 85,
+      fogFar: 250
     }
   };
 
