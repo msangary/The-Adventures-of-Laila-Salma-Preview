@@ -452,7 +452,7 @@ window.LailaSalma = window.LailaSalma || {};
   };
 
   LS.getEnabledOutdoorWorlds = function () {
-    return ['home_neighborhood', 'safari', 'egypt', 'marrakech', 'tokyo', 'kyoto'].filter(wid => LS.isWorldEnabled(wid));
+    return ['home_neighborhood', 'safari', 'egypt', 'marrakech', 'tokyo'].filter(wid => LS.isWorldEnabled(wid));
   };
 
   LS.getActivePassportStamps = function () {

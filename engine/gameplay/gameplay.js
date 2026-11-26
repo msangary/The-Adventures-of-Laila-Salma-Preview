@@ -329,10 +329,10 @@ window.LailaSalma = window.LailaSalma || {};
     LS.runtime.modalOpen = true;
     const worldsBox = document.getElementById('passport-worlds');
     const stampsBox = document.getElementById('passport-stamps');
-    const enabledWorlds = LS.getEnabledOutdoorWorlds ? LS.getEnabledOutdoorWorlds() : ['home_neighborhood', 'safari', 'tokyo', 'kyoto'];
+    const enabledWorlds = LS.getEnabledOutdoorWorlds ? LS.getEnabledOutdoorWorlds() : ['home_neighborhood', 'safari', 'egypt', 'marrakech', 'tokyo'];
     const pSub = document.querySelector('#passport-modal .ramen-sub');
     if (pSub) {
-      const names = enabledWorlds.map(wid => (LS.WORLDS[wid] ? LS.WORLDS[wid].title : wid));
+      const names = enabledWorlds.map(wid => (wid === 'tokyo' ? 'Japan (Tokyo & Kyoto)' : (LS.WORLDS[wid] ? LS.WORLDS[wid].title : wid)));
       pSub.textContent = 'Travel between ' + names.join(', ') + ' anytime — coins, outfits, toys, and stamps travel with you!';
     }
     if (worldsBox) {
@@ -340,7 +340,14 @@ window.LailaSalma = window.LailaSalma || {};
       enabledWorlds.forEach(wid => {
         const w = LS.WORLDS[wid];
         if (!w) return;
-        const isHere = LS.state.currentWorld === wid || (wid === 'home_neighborhood' && LS.state.currentWorld === 'home_apartment');
+        const curW = LS.state.currentWorld;
+        const isJapan = wid === 'tokyo';
+        const inTokyo = curW === 'tokyo' || curW === 'tokyo_room';
+        const inKyoto = curW === 'kyoto' || curW === 'kyoto_room';
+        const isHere = isJapan
+          ? (inTokyo || inKyoto)
+          : (curW === wid || (wid === 'home_neighborhood' && (curW === 'home_apartment' || curW.indexOf('dest_') === 0)) || (wid === 'safari' && curW === 'safari_tent'));
+
         const foundCount = wid === 'home_neighborhood'
           ? (LS.state.foundHomePets ? LS.state.foundHomePets.length : 0)
           : (wid === 'safari'
@@ -349,37 +356,55 @@ window.LailaSalma = window.LailaSalma || {};
               ? (LS.state.foundEgyptCats ? LS.state.foundEgyptCats.length : 0)
               : (wid === 'marrakech'
                 ? (LS.state.foundMarrakechFoxes ? LS.state.foundMarrakechFoxes.length : 0)
-                : (wid === 'kyoto' ? LS.state.foundKitsune.length : LS.state.foundCats.length))));
+                : (LS.state.foundCats ? LS.state.foundCats.length : 0))));
+        const kyotoCount = LS.state.foundKitsune ? LS.state.foundKitsune.length : 0;
         const remMs = LS.getAnimalResetRemainingMs(wid);
         const resetHtml = foundCount >= 5
           ? ('<div class="ramen-desc" style="color:#1b7a43;font-weight:700;">✨ All 5 found! New hiding spots in ' +
              (remMs > 0 ? formatMs(remMs) : 'Ready now!') + '</div>')
           : '';
+
+        const displayEmoji = isJapan ? '🇯🇵' : w.emoji;
+        const displayTitle = isJapan ? 'Japan (Tokyo & Kyoto)' : w.title;
+        const displaySub = isJapan ? 'Sakura-cho Tokyo • Kyoto Lanterns & Shrine (Connected by Shinkansen 🚅)' : w.subtitle;
+        const displayDesc = isJapan
+          ? 'Land in expanded Sakura-cho Tokyo and ride the Shinkansen Bullet Train straight to Kyoto! Quiz with Sensei Haruka & Sensei Kenji, share ramen & matcha, visit Gion Lantern Street & Bamboo Grove, and find 5 Tokyo Cats + 5 Kyoto Kitsune Foxes!'
+          : w.description;
+        const progressHtml = isJapan
+          ? ('🐱 ' + foundCount + '/5 • 🦊 ' + kyotoCount + '/5')
+          : (w.collectibleEmoji + ' ' + foundCount + '/5');
+
         const card = document.createElement('div');
         card.className = 'passport-world-card' + (isHere ? ' current-world' : '');
         card.innerHTML =
           '<div class="pw-head">' +
-            '<div><strong>' + w.emoji + ' ' + w.title + '</strong> <span class="pw-sub">' + w.subtitle + '</span></div>' +
-            '<span class="pw-progress">' + w.collectibleEmoji + ' ' + foundCount + '/5</span>' +
+            '<div><strong>' + displayEmoji + ' ' + displayTitle + '</strong> <span class="pw-sub">' + displaySub + '</span></div>' +
+            '<span class="pw-progress">' + progressHtml + '</span>' +
           '</div>' +
-          '<p class="ramen-desc">' + w.description + '</p>' + resetHtml;
+          '<p class="ramen-desc">' + displayDesc + '</p>' + resetHtml;
 
         const actions = document.createElement('div');
         actions.className = 'modal-actions';
         const btn = document.createElement('button');
         if (isHere) {
           btn.className = 'btn-secondary';
-          btn.textContent = 'Currently Here ✓';
+          btn.textContent = isJapan ? (inKyoto ? 'Currently in Kyoto ✓' : 'Currently in Tokyo ✓') : 'Currently Here ✓';
           btn.disabled = true;
+          actions.appendChild(btn);
+          if (isJapan) {
+            const shinkBtn = document.createElement('button');
+            shinkBtn.className = 'btn-primary';
+            shinkBtn.textContent = inKyoto ? '🚅 Ride Shinkansen to Tokyo' : '🚅 Ride Shinkansen to Kyoto';
+            shinkBtn.onclick = () => LS.travelToWorld(inKyoto ? 'tokyo' : 'kyoto');
+            actions.appendChild(shinkBtn);
+          }
         } else {
           btn.className = 'btn-primary';
-          const curW = LS.state.currentWorld;
-          const isGlobe = wid === 'home_neighborhood' || curW === 'home_neighborhood' || curW === 'home_apartment';
-          const isShinkansen = (curW === 'tokyo' && wid === 'kyoto') || (curW === 'kyoto' && wid === 'tokyo');
-          btn.textContent = (isGlobe ? '🌍 Magic Globe to ' : (isShinkansen ? '🚅 Ride Shinkansen to ' : '✈️ Fly to ')) + w.title;
+          const isGlobe = wid === 'home_neighborhood' || curW === 'home_neighborhood' || curW === 'home_apartment' || curW.indexOf('dest_') === 0;
+          btn.textContent = (isGlobe ? '🌍 Magic Globe to ' : '✈️ Fly to ') + (isJapan ? 'Japan' : w.title);
           btn.onclick = () => LS.travelToWorld(wid);
+          actions.appendChild(btn);
         }
-        actions.appendChild(btn);
 
         if (foundCount >= 5) {
           const resetBtn = document.createElement('button');
@@ -441,11 +466,14 @@ window.LailaSalma = window.LailaSalma || {};
       const candidateFlights = inSafari
         ? [
           { id: 'home_neighborhood', emoji: '🏡', title: 'Home Community (Egypt)', gate: 'Gate H0 • Live', desc: 'Fly straight home to Laila & Salma\'s Apartment, Gedo Mahmoud & Nana Omaima\'s House, and the Family Qashqai!' },
-          { id: 'tokyo', emoji: '🗼', title: 'Tokyo (Haneda Airport)', gate: 'Gate H1 • Live', desc: 'Fly to Sakura-cho, Ichiban Ramen, Pocket Park, Tokyo Room & Shinkansen Station!' },
-          { id: 'kyoto', emoji: '⛩️', title: 'Kyoto (Sakurako Shrine)', gate: 'Gate H2 • Live', desc: 'Fly directly to Kyoto’s Koi Lake, Arched Cedar Bridge, Bamboo Grove & 5 Kitsune Foxes!' }
+          { id: 'egypt', emoji: '🐪', title: 'Ancient Egypt (Pyramids & Nile)', gate: 'Gate E1 • Wave 1', desc: 'Explore the Great Pyramids, smiling Sphinx, painted Temple of Hieroglyphs & white-sailed Nile Feluccas!' },
+          { id: 'marrakech', emoji: '🏮', title: 'Marrakech Lantern Bazaar (Morocco)', gate: 'Gate M1 • Wave 1', desc: 'Craft glowing stained-glass lanterns, sip Riad mint tea & find big-eared Sahara Fennec Foxes!' },
+          { id: 'tokyo', emoji: '🇯🇵', title: 'Japan (Tokyo & Kyoto)', gate: 'Gate J1 • Wave 2A', desc: 'Fly to Sakura-cho Tokyo and ride the Shinkansen Bullet Train straight to Kyoto\'s Shrine & Bamboo Grove!' }
         ]
         : [
           { id: 'safari', emoji: '🦁', title: 'African Safari & Wildlife Zoo', gate: 'Gate A1 • NOW OPEN!', desc: 'Ride a zebra-striped Safari Jeep, feed tall giraffes & elephants, explore Pride Rock, collect wildlife stickers & find 5 playful lion cubs!' },
+          { id: 'egypt', emoji: '🐪', title: 'Ancient Egypt (Pyramids & Nile)', gate: 'Gate E1 • Wave 1', desc: 'Explore the Great Pyramids, smiling Sphinx & sail a Nile Felucca!' },
+          { id: 'marrakech', emoji: '🏮', title: 'Marrakech Lantern Bazaar (Morocco)', gate: 'Gate M1 • Wave 1', desc: 'Stroll the glowing lantern bazaar, enjoy mint tea & meet Fennec Foxes!' },
           { id: 'home_neighborhood', emoji: '🏡', title: 'Home Community (Egypt)', gate: 'Gate H0 • Live', desc: 'Fly home to Laila & Salma\'s Gated Community!' }
         ];
       const liveFlights = candidateFlights.filter(fl => !LS.isWorldEnabled || LS.isWorldEnabled(fl.id));
@@ -2145,17 +2173,23 @@ window.LailaSalma = window.LailaSalma || {};
     const list = document.getElementById('globe-worlds-list');
     if (list) {
       list.innerHTML = '';
-      const enabledWorlds = LS.getEnabledOutdoorWorlds ? LS.getEnabledOutdoorWorlds() : ['home_neighborhood', 'safari', 'tokyo', 'kyoto'];
+      const enabledWorlds = LS.getEnabledOutdoorWorlds ? LS.getEnabledOutdoorWorlds() : ['home_neighborhood', 'safari', 'egypt', 'marrakech', 'tokyo'];
       enabledWorlds.forEach(wid => {
         const w = LS.WORLDS[wid];
         if (!w) return;
+        const isJapan = wid === 'tokyo';
+        const curW = LS.state.currentWorld;
         const row = document.createElement('div');
         row.className = 'ramen-item';
-        const isHere = LS.state.currentWorld === wid || (wid === 'home_neighborhood' && LS.state.currentWorld === 'home_apartment');
-        row.innerHTML = '<div><strong>' + w.emoji + ' ' + w.title + '</strong><div class="ramen-desc">' + w.subtitle + '</div></div>';
+        const isHere = isJapan
+          ? (curW === 'tokyo' || curW === 'kyoto' || curW === 'tokyo_room' || curW === 'kyoto_room')
+          : (curW === wid || (wid === 'home_neighborhood' && (curW === 'home_apartment' || curW.indexOf('dest_') === 0)));
+        const title = isJapan ? '🇯🇵 Japan (Tokyo & Kyoto)' : (w.emoji + ' ' + w.title);
+        const sub = isJapan ? 'Tokyo & Kyoto • Connected by Shinkansen Bullet Train 🚅' : w.subtitle;
+        row.innerHTML = '<div><strong>' + title + '</strong><div class="ramen-desc">' + sub + '</div></div>';
         const btn = document.createElement('button');
         btn.className = isHere ? 'btn-secondary' : 'btn-primary';
-        btn.textContent = isHere ? 'Home Base ✓' : 'Spin & Go ✨';
+        btn.textContent = isHere ? (wid === 'home_neighborhood' ? 'Home Base ✓' : 'Here ✓') : 'Spin & Go ✨';
         btn.disabled = isHere;
         btn.onclick = () => LS.travelToWorld(wid);
         row.appendChild(btn);

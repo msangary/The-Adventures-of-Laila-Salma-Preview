@@ -3009,6 +3009,7 @@ window.LailaSalma = window.LailaSalma || {};
     const taglineEl = document.querySelector('.title-tagline');
     if (taglineEl) {
       const parts = enabled.map(wid => {
+        if (wid === 'tokyo') return '🇯🇵 Japan';
         const w = LS.WORLDS[wid];
         return w ? (w.emoji + ' ' + w.title) : wid;
       });
