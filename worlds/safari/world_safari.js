@@ -1534,6 +1534,28 @@ window.LailaSalma = window.LailaSalma || {};
         }, 'safari');
       });
 
+      // 5 Animated Strolling Safari Visitors & Junior Rangers exploring Base Camp & Acacia Trails!
+      W.strollers = [];
+      safeRun('safari_strollers', () => {
+        const visitorDefs = [
+          { cx: 1.0, cz: 15.5, rx: 9.5, rz: 7.5, speed: 0.21, phase: 0.0, name: 'Ranger Amina 🌿', line: 'Look out for playful lion cubs peeking behind the acacias! 🦁', cfg: { scale: 0.96, hairColor: 0x1e1612, skinColor: 0x9b6440, topColor: 0xd9b37c, bottomColor: 0x5c4632, pants: true } },
+          { cx: 4.5, cz: 19.0, rx: 7.2, rz: 6.2, speed: -0.19, phase: 1.6, cfg: { scale: 0.92, hairColor: 0x3b2618, skinColor: 0xdba57e, topColor: 0x4f8a5b, bottomColor: 0xc29a68, hairBun: true } },
+          { cx: -12.0, cz: 8.5, rx: 5.5, rz: 6.8, speed: 0.22, phase: 3.1, cfg: { scale: 0.88, hairColor: 0x261a14, skinColor: 0xaa6f48, topColor: 0xf4a236, bottomColor: 0x3b5c42, pants: true } },
+          { cx: 11.5, cz: 6.0, rx: 6.4, rz: 5.8, speed: -0.20, phase: 4.4, cfg: { scale: 0.95, hairColor: 0x2c2018, skinColor: 0xcf976f, topColor: 0xe07a5f, bottomColor: 0x4a3b2c, longHair: true } },
+          { cx: -3.5, cz: 22.0, rx: 8.2, rz: 5.4, speed: 0.18, phase: 5.3, cfg: { scale: 0.99, hairColor: 0x1a1412, skinColor: 0x8d5836, topColor: 0xc8a46e, bottomColor: 0x4b5b3c, pants: true, faceOpts: { glasses: true } } }
+        ];
+        visitorDefs.forEach(vd => {
+          const ch = LS.createAnimeCharacter(vd.cfg);
+          if (vd.name && vd.line && LS.createSpeechBubbleSprite) {
+            const sb = LS.createSpeechBubbleSprite(vd.name, vd.line);
+            sb.position.set(0, 2.34, 0);
+            ch.root.add(sb);
+          }
+          worldGroup.add(ch.root);
+          W.strollers.push({ ch, cx: vd.cx, cz: vd.cz, rx: vd.rx, rz: vd.rz, speed: vd.speed, phase: vd.phase });
+        });
+      });
+
       W.getMochiIdleAnchor = function () { return { pos: new THREE.Vector3(2.2, 0, 15.8), rotY: -Math.PI * 0.25 }; };
 
       W.getZoneLabel = function (px, pz) {
@@ -1553,6 +1575,22 @@ window.LailaSalma = window.LailaSalma || {};
       W.update = function (dt, elapsed) {
         if (LS.runtime.safariFeedTimer > 0) LS.runtime.safariFeedTimer = Math.max(0, LS.runtime.safariFeedTimer - dt);
         const feeding = LS.runtime.safariFeedTimer > 0;
+
+        // Animated Strolling Safari Visitors & Junior Rangers
+        W.strollers.forEach(st => {
+          const a = elapsed * st.speed + st.phase;
+          const nx = st.cx + Math.cos(a) * st.rx;
+          const nz = st.cz + Math.sin(a) * st.rz;
+          const dx = -Math.sin(a) * st.rx * st.speed;
+          const dz = Math.cos(a) * st.rz * st.speed;
+          st.ch.root.position.set(nx, 0, nz);
+          st.ch.root.rotation.y = Math.atan2(dx, dz);
+          const sw = Math.sin(elapsed * 6.0 + st.phase) * 0.45;
+          st.ch.leftLeg.rotation.x = sw;
+          st.ch.rightLeg.rotation.x = -sw;
+          st.ch.leftArm.rotation.x = -sw * 0.65;
+          st.ch.rightArm.rotation.x = sw * 0.65;
+        });
 
         // Gentle Giraffe grazing & happy feeding nod!
         W.giraffes.forEach(g => {

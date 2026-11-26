@@ -86,6 +86,24 @@ window.LailaSalma = window.LailaSalma || {};
     { id: 'sunset_acacia', name: 'Serengeti Golden Sunset', cost: 95, label: '🌅 SERENGETI SUNSET 🐘', bg: '#5c2018', border: '#f59e0b', fg: '#ffedd5' }
   ];
 
+  LS.RIAD_RUGS = [
+    { id: 'riad_zellige', name: 'Cobalt Zellige Carpet', cost: 0, color: '#1f5692', accent: '#f4be44', hex: 0x1f5692 },
+    { id: 'riad_crimson', name: 'Berber Crimson Weave', cost: 65, color: '#c83e37', accent: '#f4be44', hex: 0xc83e37 },
+    { id: 'riad_emerald', name: 'Atlas Emerald Mosaic', cost: 90, color: '#1e8a7a', accent: '#ffd166', hex: 0x1e8a7a }
+  ];
+
+  LS.RIAD_CUSHIONS = [
+    { id: 'riad_saffron', name: 'Saffron Velvet Poufs', cost: 0, color: '#f4be44', hex: 0xf4be44 },
+    { id: 'riad_ruby', name: 'Ruby Marrakech Poufs', cost: 60, color: '#d84339', hex: 0xd84339 },
+    { id: 'riad_turquoise', name: 'Turquoise Oasis Poufs', cost: 85, color: '#22c7c7', hex: 0x22c7c7 }
+  ];
+
+  LS.RIAD_LANTERNS = [
+    { id: 'riad_gold_glow', name: 'Warm Saffron Brass Lanterns', cost: 0, color: '#ffb703', hex: 0xffb703 },
+    { id: 'riad_ruby_glow', name: 'Ruby Stained-Glass Lanterns', cost: 65, color: '#fb5687', hex: 0xfb5687 },
+    { id: 'riad_sapphire_glow', name: 'Sapphire Starlight Lanterns', cost: 85, color: '#38bdf8', hex: 0x38bdf8 }
+  ];
+
   LS.SAFARI_WILDLIFE_GUIDE = [
     { id: 'giraffe', name: 'Reticulated Giraffe', emoji: '🦒', spot: 'West Acacia Sanctuary', fact: 'Giraffes are the tallest land animals on Earth — and their purple tongues are 45 cm long to grab tasty acacia leaves!' },
     { id: 'elephant', name: 'African Bush Elephant', emoji: '🐘', spot: 'Northwest Elephant Oasis', fact: 'Elephants have over 40,000 muscles in their trunks! Baby elephants love spraying sparkling water to cool off.' },
@@ -245,7 +263,11 @@ window.LailaSalma = window.LailaSalma || {};
       safariTentRug: 'savanna_gold',
       safariTentCushion: 'acacia_amber',
       safariTentTapestry: 'kilimanjaro_dawn',
-      unlockedSafariTentItems: ['savanna_gold', 'acacia_amber', 'kilimanjaro_dawn']
+      unlockedSafariTentItems: ['savanna_gold', 'acacia_amber', 'kilimanjaro_dawn'],
+      riadRug: 'riad_zellige',
+      riadCushion: 'riad_saffron',
+      riadLantern: 'riad_gold_glow',
+      unlockedRiadItems: ['riad_zellige', 'riad_saffron', 'riad_gold_glow']
     };
   }
 
@@ -279,7 +301,8 @@ window.LailaSalma = window.LailaSalma || {};
         safariPhotos: Array.isArray(parsed.safariPhotos) ? parsed.safariPhotos.slice() : [],
         unlockedRoomItems: Array.isArray(parsed.unlockedRoomItems) ? parsed.unlockedRoomItems.slice() : ['sakura_cream', 'strawberry_puff', 'tokyo_sketches'],
         unlockedRyokanItems: Array.isArray(parsed.unlockedRyokanItems) ? parsed.unlockedRyokanItems.slice() : ['classic_tatami', 'sakura_zabuton', 'kyoto_torii'],
-        unlockedSafariTentItems: Array.isArray(parsed.unlockedSafariTentItems) ? parsed.unlockedSafariTentItems.slice() : ['savanna_gold', 'acacia_amber', 'kilimanjaro_dawn']
+        unlockedSafariTentItems: Array.isArray(parsed.unlockedSafariTentItems) ? parsed.unlockedSafariTentItems.slice() : ['savanna_gold', 'acacia_amber', 'kilimanjaro_dawn'],
+        unlockedRiadItems: Array.isArray(parsed.unlockedRiadItems) ? parsed.unlockedRiadItems.slice() : ['riad_zellige', 'riad_saffron', 'riad_gold_glow']
       });
     } catch (e) {
       return makeDefaultState();
@@ -314,7 +337,8 @@ window.LailaSalma = window.LailaSalma || {};
     prideRoarTimer: 0,
     safariFeedTimer: 0,
     koiFeedTimer: 0,
-    salmaHintUntil: 0
+    salmaHintUntil: 0,
+    wave1Anim: null
   };
 
   LS.saveState = function () {
@@ -323,9 +347,43 @@ window.LailaSalma = window.LailaSalma || {};
     } catch (e) {}
   };
 
+  LS.hasAfricaMasterBonus = function () {
+    const sp = LS.state.storyProgress || {};
+    return (sp.safari || 0) >= 3 && (sp.egypt || 0) >= 3 && (sp.marrakech || 0) >= 3;
+  };
+
+  LS.activateMagicCarpetGlide = function (silent) {
+    if (!LS.hasAfricaMasterBonus()) return false;
+    const now = Date.now();
+    LS.runtime.buff = {
+      name: 'Magic Carpet Glide',
+      short: '🪄Carpet',
+      speedMult: 1.38,
+      infiniteStamina: true,
+      expiresAt: now + 120000
+    };
+    LS.runtime.sparkleUntil = Math.max(LS.runtime.sparkleUntil || 0, now + 120000);
+    LS.runtime.stamina = 100;
+    LS.updateHUD();
+    if (!silent) {
+      LS.playSFX('levelup');
+      LS.showToast('🪄✨ Magic Carpet Glide Activated! Zoom across any world with golden sparkles for 2 minutes!');
+    }
+    return true;
+  };
+
+  function toBaseStoryWorld(wid) {
+    if (wid === 'home_apartment' || wid === 'gedo_mahmoud_house') return 'home_neighborhood';
+    if (wid === 'kyoto_room') return 'kyoto';
+    if (wid === 'safari_tent') return 'safari';
+    if (wid === 'egypt_chamber') return 'egypt';
+    if (wid === 'marrakech_riad') return 'marrakech';
+    return wid;
+  }
+
   LS.getActiveStoryStep = function (worldId) {
     const wid = worldId || LS.state.currentWorld;
-    const baseWid = (wid === 'home_apartment') ? 'home_neighborhood' : wid;
+    const baseWid = toBaseStoryWorld(wid);
     const chap = LS.STORY_CHAPTERS[baseWid];
     if (!chap) return null;
     const idx = (LS.state.storyProgress && LS.state.storyProgress[baseWid]) || 0;
@@ -337,12 +395,12 @@ window.LailaSalma = window.LailaSalma || {};
       total: chap.steps.length,
       chapterTitle: chap.title,
       step: step,
-      targetZoneId: (wid === 'home_apartment' && step.interiorZoneId) ? step.interiorZoneId : step.zoneId
+      targetZoneId: ((wid === 'home_apartment' || wid === 'gedo_mahmoud_house') && step.interiorZoneId) ? step.interiorZoneId : step.zoneId
     };
   };
 
   LS.advanceStoryStep = function (worldId, stepId) {
-    const baseWid = (worldId === 'home_apartment') ? 'home_neighborhood' : worldId;
+    const baseWid = toBaseStoryWorld(worldId);
     const chap = LS.STORY_CHAPTERS[baseWid];
     if (!chap) return false;
     if (!LS.state.storyProgress) LS.state.storyProgress = {};
@@ -356,6 +414,15 @@ window.LailaSalma = window.LailaSalma || {};
       LS.addXP(chap.rewardXp);
       LS.playSFX('levelup');
       LS.showToast('📖✨ Chapter Complete: ' + chap.title + '! +' + chap.rewardCoins + 'c & +' + chap.rewardXp + ' XP!');
+      if (LS.hasAfricaMasterBonus() && !LS.state.stamps.includes('africa_master')) {
+        LS.unlockStamp('africa_master');
+        LS.addCoins(150);
+        LS.addXP(120);
+        LS.activateMagicCarpetGlide(true);
+        setTimeout(() => {
+          LS.showToast('🌍🪄 AFRICA MASTER EXPLORER UNLOCKED! +150c & Magic Carpet Glide boost forever in your Journal!');
+        }, 1800);
+      }
     } else {
       LS.addCoins(20);
       LS.addXP(15);
@@ -427,6 +494,8 @@ window.LailaSalma = window.LailaSalma || {};
     LS.runtime.cheetahRace = null;
     LS.runtime.watchtowerTimer = 0;
     LS.runtime.prideRoarTimer = 0;
+    LS.runtime.wave1Anim = null;
+    LS.runtime.ngscActivity = null;
 
     LS.saveState();
     if (LS.applyOutfit) {
@@ -682,11 +751,11 @@ window.LailaSalma = window.LailaSalma || {};
 
   LS.updateHUD = function () {
     const worldMeta = LS.WORLDS[LS.state.currentWorld] || LS.WORLDS.home_neighborhood;
-    const isHomeContext = LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment';
+    const isHomeContext = LS.state.currentWorld === 'home_neighborhood' || LS.state.currentWorld === 'home_apartment' || LS.state.currentWorld === 'gedo_mahmoud_house';
     const isKyotoContext = LS.state.currentWorld === 'kyoto' || LS.state.currentWorld === 'kyoto_room';
     const isSafariContext = LS.state.currentWorld === 'safari' || LS.state.currentWorld === 'safari_tent';
-    const isEgyptContext = LS.state.currentWorld === 'egypt';
-    const isMarrakechContext = LS.state.currentWorld === 'marrakech';
+    const isEgyptContext = LS.state.currentWorld === 'egypt' || LS.state.currentWorld === 'egypt_chamber';
+    const isMarrakechContext = LS.state.currentWorld === 'marrakech' || LS.state.currentWorld === 'marrakech_riad';
     const lvEl = document.getElementById('hud-level');
     const worldBadge = document.getElementById('hud-world-badge');
     const xpBar = document.getElementById('xp-bar');

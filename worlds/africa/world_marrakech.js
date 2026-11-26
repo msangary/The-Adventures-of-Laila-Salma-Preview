@@ -308,6 +308,12 @@ window.LailaSalma = window.LailaSalma || {};
         teaSteam: [],
         strollers: [],
         swayers: [],
+        doves: [],
+        bazaarCats: [],
+        silkBanners: [],
+        teaPourGroup: null,
+        teaRashid: null,
+        drumNotes: [],
         mochiStartPos: new THREE.Vector3(2.4, 0, 19.5)
       };
 
@@ -714,11 +720,60 @@ window.LailaSalma = window.LailaSalma || {};
         const tagCone = new THREE.Mesh(new THREE.ConeGeometry(0.40, 0.56, 16), LS.makeToonMat(0xc84b31));
         tagCone.position.set(0.45, 1.38, -0.85); rg.add(tagCone);
 
-        // Plush floor poufs around the tea table
-        [[-2.2, -0.8, 0xc83e37], [2.2, -0.8, 0x1e8a8a], [0, -2.5, 0xf4be44]].forEach(p => {
+        // Plush floor poufs around the tea table (front seats open for Laila & Salma!)
+        [[-2.2, -0.8, 0xc83e37], [2.2, -0.8, 0x1e8a8a], [-0.95, 1.15, 0xf4be44], [0.95, 1.15, 0xd84339]].forEach(p => {
           const pouf = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.58, 0.34, 16), LS.makeToonMat(p[2]));
           pouf.position.set(p[0], 0.52, p[1]); rg.add(pouf);
         });
+
+        // High-Pour Sparkling Golden Mint Tea Stream (visible during Live 3D Tea Animation!)
+        const pourG = new THREE.Group();
+        pourG.position.set(0, 0.98, -0.8);
+        const hiPot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), LS.makeToonMat(0xf1f5f9));
+        hiPot.position.set(0, 1.38, -0.32);
+        pourG.add(hiPot);
+        const hiSpout = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.06, 0.32, 8), LS.makeToonMat(0xe2e8f0));
+        hiSpout.position.set(0, 1.32, -0.08);
+        hiSpout.rotation.x = 0.95;
+        pourG.add(hiSpout);
+        const arcCurve = new THREE.QuadraticBezierCurve3(
+          new THREE.Vector3(0, 1.24, 0.04),
+          new THREE.Vector3(0, 0.72, 0.24),
+          new THREE.Vector3(0, 0.06, 0.32)
+        );
+        const streamMesh = new THREE.Mesh(
+          new THREE.TubeGeometry(arcCurve, 18, 0.032, 8, false),
+          LS.makeEmissiveMat(0xffe066, 0xf59e0b, 0.95)
+        );
+        pourG.add(streamMesh);
+        [-0.38, 0.38].forEach(gx => {
+          const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.22, 10), LS.makeEmissiveMat(0xffe999, 0xfbbf24, 0.55));
+          glass.position.set(gx, 0.11, 0.32);
+          pourG.add(glass);
+        });
+        if (LS.createGlowSprite) {
+          const splashGlow = LS.createGlowSprite(0xffe066, 1.25);
+          splashGlow.position.set(0, 0.22, 0.32);
+          pourG.add(splashGlow);
+        }
+        pourG.visible = false;
+        rg.add(pourG);
+        W.teaPourGroup = pourG;
+
+        // Glowing Riad Rooftop Suite Archway Door on East side of Riad!
+        const riadDoor = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 3.8), LS.makeEmissiveMat(0xffe599, 0xf59e0b, 0.65));
+        riadDoor.position.set(5.6, 2.24, 3.88);
+        rg.add(riadDoor);
+        const riadSign = new THREE.Mesh(
+          new THREE.BoxGeometry(3.4, 0.68, 0.14),
+          new THREE.MeshBasicMaterial({
+            map: LS.createSignTexture('🕌 RIAD ROOFTOP ↑', {
+              bg: '#1f5692', border: '#f4be44', color: '#fff9e6', font: 'bold 26px sans-serif', width: 380, height: 80
+            })
+          })
+        );
+        riadSign.position.set(5.6, 4.45, 4.15);
+        rg.add(riadSign);
 
         // Rising fragrant mint tea steam puffs
         for (let i = 0; i < 4; i++) {
@@ -754,13 +809,22 @@ window.LailaSalma = window.LailaSalma || {};
           sb.position.set(0, 2.38, 0); rashid.root.add(sb);
         }
         worldGroup.add(rashid.root);
+        W.teaRashid = { ch: rashid, basePos: new THREE.Vector3(-2.6, 0.34, -14.8), baseRotY: 0.28 };
 
-        W.zones.push({
-          id: 'marrakech_tea',
-          label: 'Enjoy Riad Mint Tea & Warm Tagine Feast 🫖🍊',
-          pos: new THREE.Vector3(0, 0, -14.2),
-          radius: 4.0
-        });
+        W.zones.push(
+          {
+            id: 'marrakech_tea',
+            label: 'Enjoy Live High-Poured Mint Tea & Tagine 🫖🍊',
+            pos: new THREE.Vector3(-0.8, 0, -14.2),
+            radius: 3.4
+          },
+          {
+            id: 'enter_marrakech_riad',
+            label: 'Visit & Decorate the Moroccan Riad Rooftop Suite 🕌🏮✨',
+            pos: new THREE.Vector3(5.6, 0, -14.2),
+            radius: 2.8
+          }
+        );
       });
 
       // ---------------------------------------------------------------------
@@ -779,6 +843,18 @@ window.LailaSalma = window.LailaSalma || {};
           head.position.set(dp[0], 0.69, dp[1]); worldGroup.add(head);
         });
 
+        // Floating Golden Musical Note Sparkles (animated during Live 3D Drum Circle Jam!)
+        const noteColors = [0xfacc15, 0xfb7185, 0x38bdf8, 0x34d399];
+        for (let i = 0; i < 10; i++) {
+          const note = new THREE.Mesh(
+            new THREE.OctahedronGeometry(0.16, 0),
+            LS.makeEmissiveMat(noteColors[i % 4], noteColors[i % 4], 0.95)
+          );
+          note.visible = false;
+          worldGroup.add(note);
+          W.drumNotes.push({ mesh: note, ang: (i / 10) * Math.PI * 2, phase: i * 0.62 });
+        }
+
         const hassan = LS.createAnimeCharacter({
           scale: 1.04, hairColor: 0x221a16, skinColor: 0xbf865c,
           topColor: 0xf4be44, bottomColor: 0x6b3222, pants: true,
@@ -794,7 +870,7 @@ window.LailaSalma = window.LailaSalma || {};
 
         W.zones.push({
           id: 'marrakech_drums',
-          label: 'Play the Evening Bazaar Drum Circle 🥁✨',
+          label: 'Jam in the Sunset Bazaar Drum Circle 🥁✨',
           pos: new THREE.Vector3(-10.5, 0, 21.5),
           radius: 3.8
         });
@@ -958,8 +1034,174 @@ window.LailaSalma = window.LailaSalma || {};
         });
       });
 
+      // ---------------------------------------------------------------------
+      // 9. Colorful Artisan Dye Vats Terrace, Kaftan Boutique, Doves & Cats!
+      // ---------------------------------------------------------------------
+      safeRun('dye_vats_boutique_and_wildlife', () => {
+        // A) Chouara-Inspired Artisan Dye Vats Terrace (Northeast X=15.8, Z=-16.8)
+        const dyeG = new THREE.Group();
+        dyeG.position.set(15.8, 0, -16.8);
+
+        const dyeDeck = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.28, 7.6), plasterMat);
+        dyeDeck.position.y = 0.14; dyeDeck.receiveShadow = true; dyeG.add(dyeDeck);
+
+        const vatColors = [
+          { x: -2.4, z: -1.6, hex: 0xf59e0b }, // Saffron Gold
+          { x: 0.0,  z: -1.6, hex: 0x1d4ed8 }, // Royal Cobalt
+          { x: 2.4,  z: -1.6, hex: 0xdc2626 }, // Ruby Crimson
+          { x: -2.4, z: 1.5,  hex: 0x059669 }, // Oasis Emerald
+          { x: 0.0,  z: 1.5,  hex: 0x9333ea }, // Plum Amethyst
+          { x: 2.4,  z: 1.5,  hex: 0x0891b2 }  // Zellige Turquoise
+        ];
+        vatColors.forEach(v => {
+          const rim = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.16, 10, 22), LS.makeToonMat(0xe5cfa8));
+          rim.rotation.x = Math.PI / 2;
+          rim.position.set(v.x, 0.42, v.z);
+          dyeG.add(rim);
+          const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.92, 0.88, 0.34, 20), LS.makeToonMat(0xd6b88e));
+          basin.position.set(v.x, 0.28, v.z);
+          dyeG.add(basin);
+          const liquid = new THREE.Mesh(
+            new THREE.CircleGeometry(0.86, 20),
+            LS.makeEmissiveMat(v.hex, v.hex, 0.28)
+          );
+          liquid.rotation.x = -Math.PI / 2;
+          liquid.position.set(v.x, 0.46, v.z);
+          dyeG.add(liquid);
+        });
+
+        // Timber Drying Rack & Fluttering Dyed Silk Banners overhead!
+        [[-3.8, 0], [3.8, 0]].forEach(p => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.12, 4.4, 8), cedarMat);
+          post.position.set(p[0], 2.2, p[1]); dyeG.add(post);
+        });
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 8.0, 8), cedarMat);
+        pole.rotation.z = Math.PI / 2;
+        pole.position.set(0, 4.35, 0);
+        dyeG.add(pole);
+
+        const bannerCols = [0xf59e0b, 0xdc2626, 0x1d4ed8, 0x10b981, 0xa855f7];
+        bannerCols.forEach((col, i) => {
+          const bMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.1, 2.2),
+            new THREE.MeshStandardMaterial({ color: col, roughness: 0.72, side: THREE.DoubleSide })
+          );
+          bMesh.position.set(-2.8 + i * 1.4, 3.22, 0);
+          dyeG.add(bMesh);
+          W.silkBanners.push({ mesh: bMesh, phase: i * 0.8 });
+        });
+
+        const dyeSign = new THREE.Mesh(
+          new THREE.BoxGeometry(5.6, 0.82, 0.14),
+          new THREE.MeshBasicMaterial({
+            map: LS.createSignTexture('🎨 ARTISAN DYE VATS & SILK', {
+              bg: '#7c2d12', border: '#f4be44', color: '#fff8e2', font: 'bold 26px sans-serif', width: 520, height: 88
+            })
+          })
+        );
+        dyeSign.position.set(0, 4.95, 0.12);
+        dyeG.add(dyeSign);
+
+        worldGroup.add(dyeG);
+        addCollider(15.8, -16.8, 4.6, 3.9);
+
+        const idris = LS.createAnimeCharacter({
+          scale: 1.02, hairColor: 0x221a16, skinColor: 0xc28a5e,
+          topColor: 0xf4be44, bottomColor: 0x1f5692, pants: true,
+          faceOpts: { mustache: true, eyeColor: '#2c1e16', eyeHighlight: '#8c623d' }
+        });
+        idris.root.position.set(11.8, 0, -12.6);
+        idris.root.rotation.y = -0.75;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Master Dyer Idris 🎨', 'Natural saffron, indigo & pomegranate dyes for Moroccan silk! 🎨✨');
+          sb.position.set(0, 2.36, 0); idris.root.add(sb);
+        }
+        worldGroup.add(idris.root);
+
+        // B) Moroccan Embroidered Kaftan Boutique (Northwest X=-15.2, Z=-16.0)
+        const kbG = new THREE.Group();
+        kbG.position.set(-15.2, 0, -16.0);
+        kbG.rotation.y = 0.45;
+        const kbCounter = new THREE.Mesh(new THREE.BoxGeometry(5.4, 1.02, 1.4), cedarMat);
+        kbCounter.position.set(0, 0.51, 0); kbCounter.castShadow = true; kbG.add(kbCounter);
+        const kbAwning = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.16, 2.9), LS.makeToonMat(0xb91c1c));
+        kbAwning.position.set(0, 3.05, 0.35); kbAwning.rotation.x = 0.18; kbG.add(kbAwning);
+        [-2.5, 2.5].forEach(px => {
+          const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.10, 3.05, 8), cedarMat);
+          post.position.set(px, 1.52, 0.9); kbG.add(post);
+        });
+        [[-1.6, 0xc83e37], [0, 0x1e8a7a], [1.6, 0xf4be44]].forEach(k => {
+          const dress = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 1.12, 12), LS.makeToonMat(k[1]));
+          dress.position.set(k[0], 1.58, 0.05); kbG.add(dress);
+          const trim = new THREE.Mesh(new THREE.BoxGeometry(0.10, 1.08, 0.34), brassMat);
+          trim.position.set(k[0], 1.58, 0.15); kbG.add(trim);
+        });
+        const kbSign = new THREE.Mesh(
+          new THREE.BoxGeometry(5.2, 0.82, 0.14),
+          new THREE.MeshBasicMaterial({
+            map: LS.createSignTexture('👗 MOROCCAN KAFTAN BOUTIQUE ✨', {
+              bg: '#8a1c3b', border: '#f4be44', color: '#fff8e2', font: 'bold 25px sans-serif', width: 520, height: 88
+            })
+          })
+        );
+        kbSign.position.set(0, 3.55, 1.25); kbG.add(kbSign);
+        worldGroup.add(kbG);
+        addCollider(-15.2, -16.0, 3.0, 1.8);
+
+        const zahara = LS.createAnimeCharacter({
+          scale: 0.96, hairColor: 0x1c1310, skinColor: 0xd09a72,
+          topColor: 0xb91c1c, bottomColor: 0xf4be44, longHair: true,
+          faceOpts: { eyeColor: '#3a2216', eyeHighlight: '#b07246', blush: 'rgba(226,114,98,0.42)' }
+        });
+        zahara.root.position.set(-13.4, 0, -13.6);
+        zahara.root.rotation.y = 0.52;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Tailor Zahara 👗', 'Try on hand-embroidered Ruby, Emerald & Saffron Kaftans! ✨');
+          sb.position.set(0, 2.26, 0); zahara.root.add(sb);
+        }
+        worldGroup.add(zahara.root);
+
+        W.zones.push({
+          id: 'marrakech_boutique',
+          label: 'Try On Embroidered Moroccan Kaftans 👗🏮✨',
+          pos: new THREE.Vector3(-12.8, 0, -12.8),
+          radius: 3.4
+        });
+
+        // C) 5 Fluttering White Courtyard Doves Circling the Zellige Fountain!
+        const doveMat = LS.makeToonMat(0xfffefb);
+        for (let i = 0; i < 5; i++) {
+          const dg = new THREE.Group();
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), doveMat);
+          body.scale.set(0.8, 0.72, 1.75); dg.add(body);
+          const lw = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.03, 0.18), doveMat);
+          lw.position.x = -0.25; dg.add(lw);
+          const rw = new THREE.Mesh(new THREE.BoxGeometry(0.50, 0.03, 0.18), doveMat);
+          rw.position.x = 0.25; dg.add(rw);
+          worldGroup.add(dg);
+          W.doves.push({ root: dg, lw, rw, r: 5.5 + i * 1.4, h: 6.2 + (i % 3) * 1.2, spd: 0.42 + i * 0.06, phase: i * 1.25 });
+        }
+
+        // D) 2 Sleepy Moroccan Bazaar Cats Curled on Rolled Berber Carpets!
+        if (LS.createCatModel) {
+          [[14.2, 8.8, 0xe8a85c, 0xc83e37, -1.2], [-14.2, 9.6, 0xd4d0c8, 0x1f5692, 1.1]].forEach((bc, idx) => {
+            const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.35, 14), LS.makeToonMat(bc[3]));
+            roll.rotation.z = Math.PI / 2;
+            roll.position.set(bc[0], 0.32, bc[1]);
+            worldGroup.add(roll);
+            const cat = LS.createCatModel(bc[2], 0x7c5334);
+            cat.root.position.set(bc[0], 0.58, bc[1]);
+            cat.root.rotation.y = bc[4];
+            worldGroup.add(cat.root);
+            W.bazaarCats.push({ cat, phase: idx * 2.1 });
+          });
+        }
+      });
+
       W.getZoneLabel = function (x, z) {
-        if (z < -11) return 'Riad Orange-Tree Tea Courtyard 🫖🍊';
+        if (x > 10 && z < -10) return 'Artisan Dye Vats & Silk Terrace 🎨';
+        if (x < -10 && z < -10) return 'Moroccan Kaftan Boutique 👗';
+        if (z < -11) return 'Riad Orange-Tree Tea Courtyard & Rooftop 🫖🕌';
         if (x < -10 && z < 14) return "Fatima's Lantern Bazaar Arcade 🏮";
         if (x > 10 && z < 14) return 'Spice Souk & Berber Rug Gallery 🧶';
         if (z > 16 && x < 0) return 'Jemaa el-Fnaa Drum Circle 🥁';
@@ -975,6 +1217,35 @@ window.LailaSalma = window.LailaSalma || {};
         });
         W.canopies.forEach(c => {
           c.mesh.rotation.x = 0.22 + Math.sin(elapsed * 1.8 + c.phase) * 0.03;
+        });
+        W.silkBanners.forEach(sb => {
+          sb.mesh.rotation.x = Math.sin(elapsed * 2.2 + sb.phase) * 0.14;
+        });
+        W.doves.forEach(dv => {
+          const a = elapsed * dv.spd + dv.phase;
+          dv.root.position.set(Math.cos(a) * dv.r, dv.h + Math.sin(elapsed * 2.1 + dv.phase) * 0.45, 4.0 + Math.sin(a) * dv.r);
+          dv.root.rotation.y = -a;
+          const flap = Math.sin(elapsed * 9.5 + dv.phase) * 0.45;
+          dv.lw.rotation.z = flap;
+          dv.rw.rotation.z = -flap;
+        });
+        W.bazaarCats.forEach(bc => {
+          if (bc.cat && bc.cat.tail) bc.cat.tail.rotation.z = Math.sin(elapsed * 2.4 + bc.phase) * 0.26;
+        });
+        const isDrumming = LS.runtime && LS.runtime.wave1Anim && LS.runtime.wave1Anim.mode === 'marrakech_drums';
+        W.drumNotes.forEach(dn => {
+          dn.mesh.visible = !!isDrumming;
+          if (isDrumming) {
+            const t = (elapsed * 0.85 + dn.phase) % 1.0;
+            const rad = 1.4 + t * 2.2;
+            dn.mesh.position.set(
+              -10.5 + Math.cos(dn.ang + elapsed * 1.2) * rad,
+              1.1 + t * 3.4,
+              21.5 + Math.sin(dn.ang + elapsed * 1.2) * rad
+            );
+            dn.mesh.rotation.y = elapsed * 3.5;
+            dn.mesh.scale.setScalar(0.6 + Math.sin(t * Math.PI) * 0.8);
+          }
         });
         W.fountainDrops.forEach(d => {
           const t = (elapsed * 1.45 + d.userData.phase) % 1.0;
@@ -1032,8 +1303,10 @@ window.LailaSalma = window.LailaSalma || {};
         ctx.font = 'bold 8px sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = '#fff9e8';
-        ctx.fillText('RIAD TEA 🫖', toMapX(0), toMapY(-19));
+        ctx.fillText('RIAD 🫖🕌', toMapX(0), toMapY(-19));
         ctx.fillStyle = '#5c2414';
+        ctx.fillText('KAFTANS', toMapX(-16), toMapY(-16));
+        ctx.fillText('DYE VATS', toMapX(16), toMapY(-16));
         ctx.fillText('LANTERNS', toMapX(-20), toMapY(2));
         ctx.fillText('SPICES', toMapX(20), toMapY(2));
         ctx.fillText('DRUMS 🥁', toMapX(-14), toMapY(24));

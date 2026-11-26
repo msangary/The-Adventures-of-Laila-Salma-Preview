@@ -390,10 +390,15 @@ window.LailaSalma = window.LailaSalma || {};
         palms: [],
         camels: [],
         feluccas: [],
+        rideFelucca: null,
         birds: [],
         butterflies: [],
         breadSteam: [],
         lotuses: [],
+        strollers: [],
+        swayers: [],
+        nileFish: [],
+        wadingIbises: [],
         mochiStartPos: new THREE.Vector3(2.2, 0, 16.5)
       };
 
@@ -677,12 +682,20 @@ window.LailaSalma = window.LailaSalma || {};
         addCollider(-6.2, -24.5, 3.8, 3.8);
         addCollider(6.2, -24.5, 3.8, 3.8);
 
-        W.zones.push({
-          id: 'egypt_hieroglyphs',
-          label: 'Crack the Temple Hieroglyph Code-Breaker 🔺📜',
-          pos: new THREE.Vector3(0, 0, -19.2),
-          radius: 3.6
-        });
+        W.zones.push(
+          {
+            id: 'egypt_hieroglyphs',
+            label: 'Crack the Temple Hieroglyph Code-Breaker 🔺📜',
+            pos: new THREE.Vector3(0, 0, -18.4),
+            radius: 2.9
+          },
+          {
+            id: 'enter_egypt_chamber',
+            label: 'Enter the Golden Pyramid Chamber 👑✨',
+            pos: new THREE.Vector3(0, 0, -22.6),
+            radius: 2.9
+          }
+        );
       });
 
       // ---------------------------------------------------------------------
@@ -693,6 +706,7 @@ window.LailaSalma = window.LailaSalma || {};
         const river = new THREE.Mesh(new THREE.PlaneGeometry(42, 180), waterMat);
         river.rotation.x = -Math.PI / 2;
         river.position.set(41.0, 0.08, -4);
+        river.renderOrder = -1;
         worldGroup.add(river);
 
         // Lush green Nile reed riverbank & sandstone quay wall
@@ -737,16 +751,67 @@ window.LailaSalma = window.LailaSalma || {};
           W.lotuses.push({ mesh: lg, phase: i * 0.7 });
         }
 
-        // Two Graceful Sailing Nile Feluccas!
+        // Dedicated Rideable Hero Felucca docked right beside the Wooden Lotus Pier!
+        const heroFel = createNileFelucca(0xf4c44e);
+        heroFel.root.position.set(29.8, 0.08, 3.0);
+        heroFel.root.rotation.y = Math.PI;
+        worldGroup.add(heroFel.root);
+        W.rideFelucca = { obj: heroFel, dockPos: new THREE.Vector3(29.8, 0.08, 3.0), dockRotY: Math.PI };
+
+        // Two Graceful Sailing Nile Feluccas cruising the far channel!
         const fel1 = createNileFelucca(0x1e8896);
-        fel1.root.position.set(32.5, 0.08, 4.0);
+        fel1.root.position.set(35.8, 0.08, -6.0);
         worldGroup.add(fel1.root);
-        W.feluccas.push({ obj: fel1, baseX: 32.5, baseZ: 4.0, speed: 0.24, range: 16, phase: 0 });
+        W.feluccas.push({ obj: fel1, baseX: 35.8, baseZ: -6.0, speed: 0.24, range: 16, phase: 0 });
 
         const fel2 = createNileFelucca(0xd1493f);
-        fel2.root.position.set(42.0, 0.08, -14.0);
+        fel2.root.position.set(44.0, 0.08, -14.0);
         worldGroup.add(fel2.root);
-        W.feluccas.push({ obj: fel2, baseX: 42.0, baseZ: -14.0, speed: -0.19, range: 20, phase: 2.2 });
+        W.feluccas.push({ obj: fel2, baseX: 44.0, baseZ: -14.0, speed: -0.19, range: 20, phase: 2.2 });
+
+        // 3 Leaping Silver Nile Fish arcing out of the sparkling turquoise river!
+        const silverMat = new THREE.MeshStandardMaterial({ color: 0xe2f4ff, roughness: 0.22, metalness: 0.55 });
+        [[31.5, -10.5], [34.2, 11.0], [29.8, -19.5]].forEach((fp, idx) => {
+          const fg = new THREE.Group();
+          const fBody = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), silverMat);
+          fBody.scale.set(0.55, 0.72, 1.85);
+          fg.add(fBody);
+          const fTail = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.28, 4), silverMat);
+          fTail.rotation.x = Math.PI / 2;
+          fTail.position.z = -0.38;
+          fg.add(fTail);
+          fg.position.set(fp[0], -0.4, fp[1]);
+          worldGroup.add(fg);
+          W.nileFish.push({ mesh: fg, baseX: fp[0], baseZ: fp[1], phase: idx * 2.15 });
+        });
+
+        // 3 Wading White Nile Ibises stepping gently along the green riverbank!
+        const ibisWhite = LS.makeToonMat(0xfffef8);
+        const ibisDark = LS.makeToonMat(0x2a2420);
+        [[21.2, -10.2], [21.6, 9.8], [21.0, -18.5]].forEach((ip, idx) => {
+          const ig = new THREE.Group();
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), ibisWhite);
+          body.scale.set(0.8, 0.85, 1.45);
+          body.position.y = 0.62;
+          ig.add(body);
+          const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.42, 8), ibisDark);
+          neck.position.set(0, 0.88, 0.25);
+          neck.rotation.x = 0.25;
+          ig.add(neck);
+          const beak = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.34, 6), ibisDark);
+          beak.rotation.x = Math.PI * 0.65;
+          beak.position.set(0, 0.98, 0.44);
+          ig.add(beak);
+          [-0.08, 0.08].forEach(lx => {
+            const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.56, 6), ibisDark);
+            leg.position.set(lx, 0.28, 0);
+            ig.add(leg);
+          });
+          ig.position.set(ip[0], 0.22, ip[1]);
+          ig.rotation.y = Math.PI * 0.45 + idx * 0.4;
+          worldGroup.add(ig);
+          W.wadingIbises.push({ mesh: ig, baseY: 0.22, phase: idx * 1.4 });
+        });
 
         // Captain Tarek welcoming Laila & Salma at the Nile Pier
         const cap = LS.createAnimeCharacter({
@@ -806,14 +871,14 @@ window.LailaSalma = window.LailaSalma || {};
         cam1.root.position.set(-16.2, 0, 13.4);
         cam1.root.rotation.y = 1.05;
         worldGroup.add(cam1.root);
-        W.camels.push({ obj: cam1, phase: 0 });
+        W.camels.push({ obj: cam1, phase: 0, basePos: new THREE.Vector3(-16.2, 0, 13.4), baseRotY: 1.05 });
         addCollider(-16.2, 13.4, 1.2, 1.6);
 
         const cam2 = createDesertCamel(0x1e8896);
         cam2.root.position.set(-18.2, 0, 8.2);
         cam2.root.rotation.y = 0.45;
         worldGroup.add(cam2.root);
-        W.camels.push({ obj: cam2, phase: 1.9 });
+        W.camels.push({ obj: cam2, phase: 1.9, basePos: new THREE.Vector3(-18.2, 0, 8.2), baseRotY: 0.45 });
         addCollider(-18.2, 8.2, 1.2, 1.6);
 
         const karim = LS.createAnimeCharacter({
@@ -1048,9 +1113,165 @@ window.LailaSalma = window.LailaSalma || {};
         }
       });
 
+      // ---------------------------------------------------------------------
+      // 10. Papyrus & Pottery Market Alley, Royal Boutique & 10+ Lively NPCs!
+      // ---------------------------------------------------------------------
+      safeRun('nile_bazaar_and_crowd', () => {
+        const woodMat = LS.makeToonMat(0x8e5c34);
+        const terracottaMat = LS.makeToonMat(0xc85b37);
+        const clothTurq = LS.makeToonMat(0x1f9c9c);
+        const clothGold = LS.makeToonMat(0xf4be44);
+        const clothLapis = LS.makeToonMat(0x1f4f94);
+
+        // Market Alley Pergola (East of Avenue: X=12.4, Z=-9.5)
+        const mg = new THREE.Group();
+        mg.position.set(12.4, 0, -9.5);
+        mg.rotation.y = -Math.PI / 2;
+
+        // 2 Timber Market Counters (Pottery & Papyrus + Royal Linen Boutique)
+        [-3.4, 3.4].forEach((sx, idx) => {
+          const counter = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.02, 1.45), woodMat);
+          counter.position.set(sx, 0.51, 0); counter.castShadow = true; counter.receiveShadow = true; mg.add(counter);
+          const canopy = new THREE.Mesh(new THREE.BoxGeometry(5.8, 0.16, 2.9), idx === 0 ? clothTurq : clothLapis);
+          canopy.position.set(sx, 3.05, 0.25); canopy.rotation.x = 0.16; canopy.castShadow = true; mg.add(canopy);
+          [-2.3, 2.3].forEach(px => {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.10, 3.05, 8), woodMat);
+            post.position.set(sx + px, 1.52, 0.72); mg.add(post);
+          });
+        });
+
+        // Painted Terracotta Amphorae & Rolled Golden Papyrus Scrolls on Left Stall!
+        for (let a = 0; a < 5; a++) {
+          const amp = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10), a % 2 === 0 ? terracottaMat : clothTurq);
+          amp.scale.set(0.82, 1.38, 0.82);
+          amp.position.set(-5.0 + a * 0.72, 1.35, 0.1);
+          mg.add(amp);
+          const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.22, 10), goldMat);
+          neck.position.set(-5.0 + a * 0.72, 1.74, 0.1);
+          mg.add(neck);
+        }
+        for (let s = 0; s < 4; s++) {
+          const scroll = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.56, 10), LS.makeToonMat(0xf5e1b0));
+          scroll.rotation.z = Math.PI / 2;
+          scroll.position.set(-1.9 + s * 0.18, 1.12 + (s % 2) * 0.14, 0.25);
+          mg.add(scroll);
+        }
+
+        // Royal Egyptian Gold-Collar Outfits & Turquoise Jewel Display on Right Stall!
+        [1.8, 3.4, 5.0].forEach((bx, idx) => {
+          const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.30, 0.92, 12), idx === 1 ? clothGold : LS.makeToonMat(0xfffaf0));
+          stand.position.set(bx, 1.48, 0.08); mg.add(stand);
+          const collar = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 16), goldMat);
+          collar.rotation.x = Math.PI / 2;
+          collar.position.set(bx, 1.88, 0.08); mg.add(collar);
+        });
+
+        const marketSign = new THREE.Mesh(
+          new THREE.BoxGeometry(5.2, 0.82, 0.14),
+          new THREE.MeshBasicMaterial({
+            map: LS.createSignTexture('🏺 PAPYRUS & POTTERY SOUK', {
+              bg: '#fff3d6', border: '#1f9c9c', color: '#1b3d54', font: 'bold 26px sans-serif', width: 500, height: 92
+            })
+          })
+        );
+        marketSign.position.set(-3.4, 3.48, 1.25); mg.add(marketSign);
+
+        const boutiqueSign = new THREE.Mesh(
+          new THREE.BoxGeometry(5.2, 0.82, 0.14),
+          new THREE.MeshBasicMaterial({
+            map: LS.createSignTexture('👑 ROYAL EGYPT BOUTIQUE ✨', {
+              bg: '#1c4478', border: '#f4c44e', color: '#fff8db', font: 'bold 26px sans-serif', width: 500, height: 92
+            })
+          })
+        );
+        boutiqueSign.position.set(3.4, 3.48, 1.25); mg.add(boutiqueSign);
+
+        worldGroup.add(mg);
+        addCollider(12.4, -9.5, 1.8, 6.2);
+
+        // 1) Potter Amenhotep beside the Pottery Stall
+        const amenhotep = LS.createAnimeCharacter({
+          scale: 1.02, hairColor: 0x221b17, skinColor: 0xc28a5e,
+          topColor: 0xf7ecd4, bottomColor: 0x9c4a2b, pants: true,
+          faceOpts: { mustache: true, eyeColor: '#2c1e16', eyeHighlight: '#8c623d' }
+        });
+        amenhotep.root.position.set(10.0, 0, -12.6);
+        amenhotep.root.rotation.y = -Math.PI / 2;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Potter Amenhotep 🏺', 'Hand-painted Nile clay jars & golden lotus amphorae! 🏺✨');
+          sb.position.set(0, 2.36, 0); amenhotep.root.add(sb);
+        }
+        worldGroup.add(amenhotep.root);
+
+        // 2) Royal Tailor & Papyrus Artist Merit at the Egyptian Boutique!
+        const merit = LS.createAnimeCharacter({
+          scale: 0.96, hairColor: 0x1a1412, skinColor: 0xd09a70,
+          topColor: 0xfff8e7, bottomColor: 0x1f4f94, longHair: true,
+          faceOpts: { eyeColor: '#3a2216', eyeHighlight: '#b07246', blush: 'rgba(226,114,98,0.4)' }
+        });
+        merit.root.position.set(10.0, 0, -6.2);
+        merit.root.rotation.y = -Math.PI / 2;
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Artist Merit 👑', 'Try on our Royal Gold-Collar Linen Outfits for Laila & Salma! 👗✨');
+          sb.position.set(0, 2.26, 0); merit.root.add(sb);
+        }
+        worldGroup.add(merit.root);
+
+        W.zones.push({
+          id: 'egypt_boutique',
+          label: 'Try On Royal Ancient Egyptian Outfits 👑👗✨',
+          pos: new THREE.Vector3(9.4, 0, -6.2),
+          radius: 3.4
+        });
+
+        // 3) Water-Jar Carrier Hapi walking peacefully along the Nile bank!
+        const hapi = LS.createAnimeCharacter({
+          scale: 0.95, hairColor: 0x1d1613, skinColor: 0xc89166,
+          topColor: 0x229999, bottomColor: 0xf7ecd4, hairBun: true
+        });
+        const headJar = new THREE.Mesh(new THREE.SphereGeometry(0.18, 10, 8), terracottaMat);
+        headJar.scale.set(0.85, 1.3, 0.85);
+        headJar.position.set(0, 1.88, 0);
+        hapi.root.add(headJar);
+        if (LS.createSpeechBubbleSprite) {
+          const sb = LS.createSpeechBubbleSprite('Hapi (Nile Carrier) 🏺', 'Fresh cool Nile water for our palm oasis gardens! 🪷💧');
+          sb.position.set(0, 2.45, 0); hapi.root.add(sb);
+        }
+        worldGroup.add(hapi.root);
+        W.strollers.push({ ch: hapi, rx: 1.6, rz: 10.5, cx: 16.5, cz: -4.0, speed: 0.22, phase: 0.4 });
+
+        // 4 & 5) Two Egyptian Harp & Tambourine Musicians swaying on the Sunlit Plaza!
+        const plazaMusicians = [
+          { x: 5.8, z: 12.2, rotY: -0.75, cfg: { scale: 1.0, hairColor: 0x241a15, skinColor: 0xc28a5c, topColor: 0xf4c44e, bottomColor: 0x1f4f94, pants: true } },
+          { x: 4.2, z: 13.8, rotY: -0.35, cfg: { scale: 0.94, hairColor: 0x1b1411, skinColor: 0xd19b72, topColor: 0x1e9b9b, bottomColor: 0xfff3d6, hairBun: true } }
+        ];
+        plazaMusicians.forEach((pm, idx) => {
+          const ch = LS.createAnimeCharacter(pm.cfg);
+          ch.root.position.set(pm.x, 0, pm.z);
+          ch.root.rotation.y = pm.rotY;
+          worldGroup.add(ch.root);
+          W.swayers.push({ ch, phase: idx * 1.4 });
+        });
+
+        // 6–10) Five Animated Strolling Ancient Egyptian Families & Explorers!
+        const egyptStrollers = [
+          { rx: 8.8, rz: 7.4, cx: 0.0, cz: 7.5, speed: 0.23, phase: 0.0, cfg: { scale: 0.98, hairColor: 0x241a15, skinColor: 0xc99166, topColor: 0xfff8e7, bottomColor: 0xc84b31, pants: true } },
+          { rx: 9.8, rz: 8.2, cx: -1.0, cz: 8.0, speed: -0.20, phase: 1.8, cfg: { scale: 0.94, hairColor: 0x1d1411, skinColor: 0xd29c74, topColor: 0x229999, bottomColor: 0xf7ecd4, longHair: true } },
+          { rx: 5.5, rz: 9.5, cx: -9.5, cz: 3.5, speed: 0.21, phase: 3.1, cfg: { scale: 0.86, hairColor: 0x2b1f18, skinColor: 0xc78f64, topColor: 0xf4be44, bottomColor: 0x1f4f94, pants: true } },
+          { rx: 10.6, rz: 6.4, cx: 1.5, cz: 9.2, speed: 0.18, phase: 4.5, cfg: { scale: 0.95, hairColor: 0x221712, skinColor: 0xce966c, topColor: 0xe05780, bottomColor: 0xfff5e0, hairBun: true } },
+          { rx: 6.8, rz: 6.8, cx: -1.5, cz: -5.5, speed: -0.24, phase: 5.6, cfg: { scale: 1.01, hairColor: 0x2a201a, skinColor: 0xc0885c, topColor: 0xf5e6c8, bottomColor: 0x1e6091, pants: true } }
+        ];
+        egyptStrollers.forEach(sd => {
+          const ch = LS.createAnimeCharacter(sd.cfg);
+          worldGroup.add(ch.root);
+          W.strollers.push({ ch, rx: sd.rx, rz: sd.rz, cx: sd.cx, cz: sd.cz, speed: sd.speed, phase: sd.phase });
+        });
+      });
+
       W.getZoneLabel = function (x, z) {
-        if (z < -16) return 'Painted Temple of Hieroglyphs 🔺';
+        if (z < -16) return 'Painted Temple & Pyramid Chamber 🔺👑';
         if (x < -11 && z < -4) return 'Great Sphinx Terrace 🦁';
+        if (x > 7 && z < -2 && x <= 16) return 'Papyrus, Pottery & Royal Boutique 🏺👑';
         if (x > 16) return 'Shimmering Nile Lotus Dock ⛵';
         if (x < -14 && z > 2 && z < 19) return 'Emerald Date-Palm Oasis 🐪';
         if (x < -7 && z >= 19) return 'Ancient Honey-Date Bakery 🍯';
@@ -1064,15 +1285,59 @@ window.LailaSalma = window.LailaSalma || {};
           p.obj.crown.rotation.z = Math.sin(elapsed * 1.2 + p.phase) * 0.045;
           p.obj.crown.rotation.x = Math.cos(elapsed * 0.9 + p.phase) * 0.03;
         });
+        const isCamelRiding = LS.runtime && LS.runtime.wave1Anim && LS.runtime.wave1Anim.mode === 'egypt_camel';
         W.camels.forEach(c => {
-          c.obj.neckPivot.rotation.x = Math.sin(elapsed * 1.4 + c.phase) * 0.08;
+          c.obj.neckPivot.rotation.x = Math.sin(elapsed * (isCamelRiding ? 3.2 : 1.4) + c.phase) * 0.09;
           c.obj.neckPivot.rotation.y = Math.sin(elapsed * 0.7 + c.phase) * 0.12;
         });
+        const isFeluccaSailing = LS.runtime && LS.runtime.wave1Anim && LS.runtime.wave1Anim.mode === 'egypt_felucca';
+        if (W.rideFelucca && !isFeluccaSailing) {
+          W.rideFelucca.obj.root.position.set(
+            W.rideFelucca.dockPos.x,
+            0.08 + Math.sin(elapsed * 2.0) * 0.05,
+            W.rideFelucca.dockPos.z
+          );
+          W.rideFelucca.obj.root.rotation.set(0, W.rideFelucca.dockRotY, Math.sin(elapsed * 1.5) * 0.04);
+        }
         W.feluccas.forEach(f => {
           const z = f.baseZ + Math.sin(elapsed * f.speed + f.phase) * f.range;
           f.obj.root.position.set(f.baseX + Math.cos(elapsed * 0.4 + f.phase) * 1.2, 0.08 + Math.sin(elapsed * 2.2 + f.phase) * 0.05, z);
           f.obj.root.rotation.z = Math.sin(elapsed * 1.6 + f.phase) * 0.045;
           f.obj.root.rotation.y = Math.cos(elapsed * f.speed + f.phase) >= 0 ? 0 : Math.PI;
+        });
+        W.nileFish.forEach(nf => {
+          const cyc = (elapsed * 0.42 + nf.phase) % 2.8;
+          if (cyc < 1.0) {
+            nf.mesh.visible = true;
+            const y = Math.sin(cyc * Math.PI) * 1.45 - 0.15;
+            nf.mesh.position.set(nf.baseX, y, nf.baseZ + (cyc - 0.5) * 2.2);
+            nf.mesh.rotation.x = -(0.5 - cyc) * 1.4;
+          } else {
+            nf.mesh.visible = false;
+          }
+        });
+        W.wadingIbises.forEach(ib => {
+          ib.mesh.position.y = ib.baseY + Math.abs(Math.sin(elapsed * 1.6 + ib.phase)) * 0.05;
+          ib.mesh.rotation.x = Math.max(0, Math.sin(elapsed * 1.2 + ib.phase) - 0.65) * 0.9;
+        });
+        W.strollers.forEach(st => {
+          const a = elapsed * st.speed + st.phase;
+          const nx = st.cx + Math.cos(a) * st.rx;
+          const nz = st.cz + Math.sin(a) * st.rz;
+          const dx = -Math.sin(a) * st.rx * st.speed;
+          const dz = Math.cos(a) * st.rz * st.speed;
+          st.ch.root.position.set(nx, 0, nz);
+          st.ch.root.rotation.y = Math.atan2(dx, dz);
+          const sw = Math.sin(elapsed * 6.2 + st.phase) * 0.46;
+          st.ch.leftLeg.rotation.x = sw;
+          st.ch.rightLeg.rotation.x = -sw;
+          st.ch.leftArm.rotation.x = -sw * 0.65;
+          st.ch.rightArm.rotation.x = sw * 0.65;
+        });
+        W.swayers.forEach(sw => {
+          sw.ch.leftArm.rotation.x = -0.68 + Math.sin(elapsed * 4.8 + sw.phase) * 0.22;
+          sw.ch.rightArm.rotation.x = -0.68 + Math.sin(elapsed * 4.8 + sw.phase + 0.5) * 0.22;
+          sw.ch.root.position.y = Math.abs(Math.sin(elapsed * 2.4 + sw.phase)) * 0.04;
         });
         W.lotuses.forEach(l => {
           l.mesh.position.y = 0.11 + Math.sin(elapsed * 2.0 + l.phase) * 0.025;
@@ -1121,8 +1386,9 @@ window.LailaSalma = window.LailaSalma || {};
         ctx.textAlign = 'center';
         ctx.fillStyle = '#7c4a12';
         ctx.fillText('🔺 PYRAMIDS', toMapX(0), toMapY(-46));
-        ctx.fillText('TEMPLE', toMapX(0), toMapY(-24));
+        ctx.fillText('CHAMBER 👑', toMapX(0), toMapY(-24));
         ctx.fillText('SPHINX', toMapX(-18), toMapY(-12));
+        ctx.fillText('SOUK 🏺', toMapX(12), toMapY(-10));
         ctx.fillText('OASIS 🐪', toMapX(-26), toMapY(11));
         ctx.fillText('BAKERY 🍯', toMapX(-12), toMapY(26));
         ctx.fillStyle = '#0f5156';

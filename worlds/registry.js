@@ -227,6 +227,48 @@ window.LailaSalma = window.LailaSalma || {};
       fogNear: 78,
       fogFar: 245
     },
+    egypt_chamber: {
+      id: 'egypt_chamber',
+      wave: 'wave1',
+      title: 'Golden Pyramid Chamber',
+      subtitle: 'Torch-Lit Royal Hieroglyphs & Treasure Vault',
+      emoji: '🔺',
+      badgeColor: '#b47b22',
+      unlocked: true,
+      isInterior: true,
+      parentWorld: 'egypt',
+      exitPos: { x: 0, y: 0, z: -17.5, rotY: 0 },
+      collectibleLabel: 'Mau Cats',
+      collectibleEmoji: '🐱',
+      collectibleTotal: 5,
+      bounds: { minX: -7.2, maxX: 7.2, minZ: -6.2, maxZ: 5.8 },
+      mapBounds: { minX: -8.2, maxX: 8.2, minZ: -7.2, maxZ: 6.8 },
+      spawn: { x: 0, y: 0, z: 4.5, rotY: Math.PI },
+      arrivalSpawn: { x: 0, y: 0, z: 4.5, rotY: Math.PI },
+      fogNear: 30,
+      fogFar: 90
+    },
+    marrakech_riad: {
+      id: 'marrakech_riad',
+      wave: 'wave1',
+      title: 'Moroccan Riad Rooftop',
+      subtitle: 'Decoratable Terrace Overlooking the Atlas Mountains',
+      emoji: '🕌',
+      badgeColor: '#1e8a7a',
+      unlocked: true,
+      isInterior: true,
+      parentWorld: 'marrakech',
+      exitPos: { x: 0, y: 0, z: -13.2, rotY: 0 },
+      collectibleLabel: 'Fennec Foxes',
+      collectibleEmoji: '🦊',
+      collectibleTotal: 5,
+      bounds: { minX: -7.8, maxX: 7.8, minZ: -6.2, maxZ: 5.8 },
+      mapBounds: { minX: -8.8, maxX: 8.8, minZ: -7.2, maxZ: 6.8 },
+      spawn: { x: 0, y: 0, z: 4.4, rotY: Math.PI },
+      arrivalSpawn: { x: 0, y: 0, z: 4.4, rotY: Math.PI },
+      fogNear: 85,
+      fogFar: 250
+    },
     dest_eatery: {
       id: 'dest_eatery',
       title: 'Eatery Restaurant',
@@ -433,7 +475,10 @@ window.LailaSalma = window.LailaSalma || {};
     { id: 'marrakech_quiz', world: 'marrakech', emoji: '🕌', title: 'Atlas Scholar', desc: 'Completed Teacher Youssef\'s Marrakech Quiz' },
     { id: 'marrakech_lantern', world: 'marrakech', emoji: '✨', title: 'Master Lantern Maker', desc: 'Crafted & lit a stained-glass Moroccan brass lantern' },
     { id: 'marrakech_tea', world: 'marrakech', emoji: '🫖', title: 'Riad Mint Tea Guest', desc: 'Shared high-poured mint tea & tagine in the Riad courtyard' },
-    { id: 'marrakech_foxes', world: 'marrakech', emoji: '🦊', title: 'Fennec Fox Friend', desc: 'Befriended all 5 big-eared Sahara Fennec Foxes' }
+    { id: 'marrakech_foxes', world: 'marrakech', emoji: '🦊', title: 'Fennec Fox Friend', desc: 'Befriended all 5 big-eared Sahara Fennec Foxes' },
+    { id: 'egypt_chamber', world: 'egypt', emoji: '👑', title: 'Royal Vault Explorer', desc: 'Stepped inside the Golden Pyramid Chamber & opened the Treasure Chest' },
+    { id: 'marrakech_riad', world: 'marrakech', emoji: '🕌', title: 'Riad Rooftop Designer', desc: 'Stepped onto & decorated your 3D Moroccan Riad Rooftop Terrace' },
+    { id: 'africa_master', world: 'safari', emoji: '🪄', title: 'Africa Master Explorer', desc: 'Completed all 3 Africa chapters & unlocked Magic Carpet Glide!' }
   ];
 
   // Release & Preview Wave Gating Helpers

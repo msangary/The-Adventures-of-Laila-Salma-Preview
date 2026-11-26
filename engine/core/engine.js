@@ -119,22 +119,26 @@ window.LailaSalma = window.LailaSalma || {};
     const meta = LS.WORLDS[wid] || LS.WORLDS.home_neighborhood;
     const btn = document.getElementById('btn-time');
 
-    if (hdCloudsGroup) hdCloudsGroup.visible = !meta.isInterior;
-    if (hdMotes) hdMotes.visible = !meta.isInterior;
+    const isOpenAir = !meta.isInterior || wid === 'marrakech_riad';
+    if (hdCloudsGroup) hdCloudsGroup.visible = isOpenAir;
+    if (hdMotes) hdMotes.visible = isOpenAir;
     if (hdPetals) hdPetals.visible = !meta.isInterior && (wid === 'tokyo' || wid === 'kyoto');
 
-    if (meta.isInterior) {
-      scene.fog.color.setHex(wid === 'kyoto_room' ? 0x3b2c26 : (wid === 'safari_tent' ? 0x5c3e26 : 0xffeef4));
-      dirLight.color.setHex(0xfff1d6);
+    if (meta.isInterior && wid !== 'marrakech_riad') {
+      scene.fog.color.setHex(
+        wid === 'egypt_chamber' ? 0x4a3118
+          : (wid === 'kyoto_room' ? 0x3b2c26 : (wid === 'safari_tent' ? 0x5c3e26 : 0xffeef4))
+      );
+      dirLight.color.setHex(wid === 'egypt_chamber' ? 0xffe4a0 : 0xfff1d6);
       dirLight.intensity = LS.isHD ? 0.85 : 0.62;
       hemiLight.color.setHex(0xfff4e2);
       hemiLight.groundColor.setHex(0x9a7d60);
-      streetLight.intensity = 0.32;
-      accentLight.intensity = 0.28;
+      streetLight.intensity = wid === 'egypt_chamber' ? 0.65 : 0.32;
+      accentLight.intensity = wid === 'egypt_chamber' ? 0.58 : 0.28;
       return;
     }
 
-    const isWarmAfrica = wid === 'safari' || wid === 'egypt' || wid === 'marrakech';
+    const isWarmAfrica = wid === 'safari' || wid === 'egypt' || wid === 'marrakech' || wid === 'marrakech_riad';
     if (mode === 1) {
       scene.fog.color.setHex(wid === 'marrakech' ? 0xe07658 : (isWarmAfrica ? 0xe88b4f : (wid === 'kyoto' ? 0xeb9b6c : 0xf2a772)));
       dirLight.color.setHex(0xffa054);
@@ -450,6 +454,8 @@ window.LailaSalma = window.LailaSalma || {};
     LS.runtime.parkActivity = null;
     if (LS.runtime.ngscActivity && LS.finishNGSCActivity) LS.finishNGSCActivity(true);
     LS.runtime.ngscActivity = null;
+    if (LS.runtime.wave1Anim && LS.finishWave1Anim) LS.finishWave1Anim(true);
+    LS.runtime.wave1Anim = null;
     LS.runtime.safariRide = null;
     LS.runtime.balloonRide = null;
     LS.runtime.cheetahRace = null;
@@ -569,7 +575,7 @@ window.LailaSalma = window.LailaSalma || {};
         ? '<i class="mm-dot mm-cat"></i>Pups'
         : ((worldId === 'safari' || worldId === 'safari_tent')
           ? '<i class="mm-dot mm-cat"></i>Cubs'
-          : ((worldId === 'kyoto' || worldId === 'kyoto_room' || worldId === 'marrakech')
+          : ((worldId === 'kyoto' || worldId === 'kyoto_room' || worldId === 'marrakech' || worldId === 'marrakech_riad')
             ? '<i class="mm-dot mm-cat"></i>Foxes'
             : '<i class="mm-dot mm-cat"></i>Cats'));
     }
@@ -578,11 +584,16 @@ window.LailaSalma = window.LailaSalma || {};
 
     if (worldId === 'home_apartment') {
       LS.setSalmaBubbleText('Home sweet home! Kitchen snacks, Laila\'s Piano, TV games, & our Magic Globe! 🎹🌍', 4500);
+    } else if (worldId === 'egypt_chamber') {
+      LS.setSalmaBubbleText("Whoa Laila!! Look at the Pharaoh's glowing Treasure Chest & Guardian Bastet!! 👑💎", 5000);
+    } else if (worldId === 'marrakech_riad') {
+      LS.setSalmaBubbleText('Look at the Atlas Mountains from our Riad Rooftop!! Let us decorate the carpets & lanterns!! 🕌🏮', 5000);
     } else if (meta.isInterior) {
       LS.setSalmaBubbleText(worldId === 'safari_tent'
         ? 'Whoa! Our cozy Safari Glamping Tent! Let us decorate the rug & cushions! ⛺✨'
         : 'Yay! Walk to the Decorate desk to redecorate our room in 3D! 🎨', 4200);
-      LS.unlockStamp(worldId === 'safari_tent' ? 'safari_tent_decor' : 'room_decorator');
+      if (worldId === 'safari_tent') LS.unlockStamp('safari_tent_decor');
+      else if (worldId === 'tokyo_room' || worldId === 'kyoto_room') LS.unlockStamp('room_decorator');
     } else if (worldId === 'home_neighborhood') {
       LS.setSalmaBubbleText("Our Gated Community! Visit our Apartment, School, Gedo Mahmoud & Nana Omaima's House, or hop in the Gray Qashqai! 🏡🚙", 0);
     } else if (worldId === 'dest_eatery') {
@@ -638,13 +649,14 @@ window.LailaSalma = window.LailaSalma || {};
   LS.enterInterior = function (roomId) {
     LS.playSFX('door');
     LS.loadWorld(roomId, false);
-    LS.showToast(roomId === 'home_apartment'
-      ? "🏡 Welcome inside Laila & Salma's 4-Room Home Apartment!"
-      : (roomId === 'safari_tent'
-        ? "⛺ Welcome inside Laila & Salma's Safari Glamping Tent!"
-        : (roomId === 'kyoto_room'
-          ? "🏮 Welcome inside Laila & Salma's Kyoto Ryokan Suite!"
-          : "🏡 Welcome inside Laila & Salma's Tokyo Room!")));
+    const toastMap = {
+      home_apartment: "🏡 Welcome inside Laila & Salma's 4-Room Home Apartment!",
+      safari_tent: "⛺ Welcome inside Laila & Salma's Safari Glamping Tent!",
+      kyoto_room: "🏮 Welcome inside Laila & Salma's Kyoto Ryokan Suite!",
+      egypt_chamber: '👑 Welcome inside the Golden Pyramid Chamber! Watch for glowing torches & treasure!',
+      marrakech_riad: '🕌✨ Welcome to the Moroccan Riad Rooftop Suite! Decorate your sunset terrace!'
+    };
+    LS.showToast(toastMap[roomId] || "🏡 Welcome inside Laila & Salma's Cozy Room!");
   };
 
   LS.exitInterior = function () {
@@ -673,8 +685,8 @@ window.LailaSalma = window.LailaSalma || {};
       if (id === 'tokyo' || id === 'tokyo_room') return 'tokyo';
       if (id === 'kyoto' || id === 'kyoto_room') return 'kyoto';
       if (id === 'safari' || id === 'safari_tent') return 'safari';
-      if (id === 'egypt') return 'egypt';
-      if (id === 'marrakech') return 'marrakech';
+      if (id === 'egypt' || id === 'egypt_chamber') return 'egypt';
+      if (id === 'marrakech' || id === 'marrakech_riad') return 'marrakech';
       return 'home';
     }
     const pins = {
@@ -1246,8 +1258,168 @@ window.LailaSalma = window.LailaSalma || {};
     }
   };
 
+  // =========================================================================
+  // LIVE 3D WAVE 1 (AFRICA) ANIMATIONS:
+  // 1) egypt_felucca   — Laila & Salma sail a white-sailed Felucca down the Nile!
+  // 2) egypt_camel     — Laila & Salma ride Habibi & Shams around the Oasis!
+  // 3) marrakech_tea   — Laila & Salma sit in the Riad while Rashid high-pours tea!
+  // 4) marrakech_drums — Laila & Salma jam in Hassan's Sunset Drum Circle!
+  // =========================================================================
+  LS.startWave1Anim = function (mode) {
+    if (LS.runtime.wave1Anim || LS.runtime.ngscActivity) return;
+    LS.closeAllModals();
+    const laila = LS.chars.laila;
+    if (!laila) return;
+
+    const dur = (mode === 'egypt_felucca' || mode === 'egypt_camel') ? 8.2 : 7.4;
+    LS.runtime.wave1Anim = { mode: mode, timer: dur, duration: dur, drumBeatTimer: 0 };
+    LS.runtime.nearZone = null;
+    const pEl = document.getElementById('interact-prompt');
+    const mEl = document.getElementById('btn-interact-mobile');
+    if (pEl) pEl.classList.add('hidden');
+    if (mEl) mEl.classList.add('hidden');
+    LS.playSFX(mode === 'egypt_felucca' ? 'splash' : 'jump');
+
+    const bannerCopy = {
+      egypt_felucca: '⛵ Laila & Salma are sailing a white-sailed Nile Felucca past the Great Pyramids! 🪷',
+      egypt_camel: '🐪 Laila & Salma are riding Habibi & Shams around the Golden Date-Palm Oasis! 🌴',
+      marrakech_tea: '🫖 Tea Master Rashid is high-pouring sparkling golden Mint Tea for Laila & Salma! 🍊',
+      marrakech_drums: '🥁 Laila & Salma are jamming in Hassan\'s Sunset Bazaar Drum Circle! ✨'
+    };
+    const bubbles = {
+      egypt_felucca: 'Look Laila!! The Great Pyramids & floating Nile lotuses from our boat!! ⛵🪷',
+      egypt_camel: 'Wheee!! Habibi & Shams are so gentle and tall!! 🐪🌴✨',
+      marrakech_tea: 'Whoa!! Look how high Rashid pours the sparkling golden mint tea!! 🫖✨',
+      marrakech_drums: 'Boom-tat-boom!! Everyone is dancing under the Marrakech lanterns!! 🥁🏮'
+    };
+    LS.setSalmaBubbleText(bubbles[mode] || 'Yay!! What a magical adventure!! ✨', dur * 1000 - 200);
+    LS.showToast(bannerCopy[mode] || '✨ Adventure time!');
+
+    if (mode === 'egypt_felucca') {
+      targetCamYaw = -Math.PI * 0.62;
+      targetCamPitch = 0.24;
+    } else if (mode === 'egypt_camel') {
+      targetCamYaw = Math.PI * 0.25;
+      targetCamPitch = 0.28;
+    } else if (mode === 'marrakech_tea') {
+      targetCamYaw = 0.0;
+      targetCamPitch = 0.26;
+      if (LS.activeWorld && LS.activeWorld.teaPourGroup) LS.activeWorld.teaPourGroup.visible = true;
+    } else if (mode === 'marrakech_drums') {
+      targetCamYaw = Math.PI * 0.12;
+      targetCamPitch = 0.28;
+    }
+
+    const ban = document.getElementById('eating-banner');
+    const st = document.getElementById('eating-status');
+    const skipBtn = document.getElementById('btn-skip-eat');
+    if (st) st.textContent = bannerCopy[mode] || '✨ Live Adventure!';
+    if (ban) ban.classList.remove('hidden');
+    if (skipBtn) {
+      skipBtn.onclick = () => {
+        if (LS.runtime.wave1Anim) LS.finishWave1Anim(false);
+        else if (LS.runtime.ngscActivity) LS.finishNGSCActivity(false);
+        else if (LS.runtime.eating) LS.finishEatingAnimation(scene);
+      };
+    }
+  };
+
+  LS.finishWave1Anim = function (silent) {
+    const wa = LS.runtime.wave1Anim;
+    if (!wa) return;
+    const mode = wa.mode;
+    LS.runtime.wave1Anim = null;
+
+    const laila = LS.chars.laila;
+    const salma = LS.chars.salma;
+    const w = LS.activeWorld;
+
+    [laila, salma].forEach(ch => {
+      if (!ch) return;
+      if (ch.bodyPivot) {
+        ch.bodyPivot.rotation.set(0, 0, 0);
+        ch.bodyPivot.position.y = 0;
+      }
+      if (ch.leftArm) ch.leftArm.rotation.set(0, 0, 0);
+      if (ch.rightArm) ch.rightArm.rotation.set(0, 0, 0);
+      if (ch.leftLeg) ch.leftLeg.rotation.set(0, 0, 0);
+      if (ch.rightLeg) ch.rightLeg.rotation.set(0, 0, 0);
+      if (ch.leftKnee) ch.leftKnee.rotation.set(0, 0, 0);
+      if (ch.rightKnee) ch.rightKnee.rotation.set(0, 0, 0);
+    });
+
+    if (mode === 'egypt_felucca') {
+      if (w && w.rideFelucca) {
+        w.rideFelucca.obj.root.position.copy(w.rideFelucca.dockPos);
+        w.rideFelucca.obj.root.rotation.set(0, w.rideFelucca.dockRotY, 0);
+      }
+      if (!silent) {
+        if (laila) { laila.root.position.set(20.6, 0, 2.8); laila.root.rotation.y = -Math.PI / 2; }
+        if (salma) { salma.root.position.set(20.2, 0, 4.1); salma.root.rotation.y = -Math.PI / 2; }
+      }
+    } else if (mode === 'egypt_camel') {
+      if (w && w.camels) {
+        w.camels.forEach(c => {
+          if (c.basePos) c.obj.root.position.copy(c.basePos);
+          if (typeof c.baseRotY === 'number') c.obj.root.rotation.set(0, c.baseRotY, 0);
+        });
+      }
+      if (!silent) {
+        if (laila) { laila.root.position.set(-13.4, 0, 11.4); laila.root.rotation.y = Math.PI / 2; }
+        if (salma) { salma.root.position.set(-13.4, 0, 10.0); salma.root.rotation.y = Math.PI / 2; }
+      }
+    } else if (mode === 'marrakech_tea') {
+      if (w && w.teaPourGroup) w.teaPourGroup.visible = false;
+      if (w && w.teaRashid) {
+        w.teaRashid.ch.root.position.copy(w.teaRashid.basePos);
+        w.teaRashid.ch.root.rotation.y = w.teaRashid.baseRotY;
+        if (w.teaRashid.ch.rightArm) w.teaRashid.ch.rightArm.rotation.set(0, 0, 0);
+      }
+      if (!silent) {
+        if (laila) { laila.root.position.set(-1.0, 0, -13.6); laila.root.rotation.y = 0; }
+        if (salma) { salma.root.position.set(0.8, 0, -13.6); salma.root.rotation.y = 0; }
+      }
+    } else if (mode === 'marrakech_drums') {
+      if (w && w.drumNotes) w.drumNotes.forEach(dn => { dn.mesh.visible = false; });
+      if (!silent) {
+        if (laila) { laila.root.position.set(-10.5, 0, 18.8); laila.root.rotation.y = 0; }
+        if (salma) { salma.root.position.set(-9.1, 0, 19.2); salma.root.rotation.y = 0; }
+      }
+    }
+
+    const ban = document.getElementById('eating-banner');
+    if (ban) ban.classList.add('hidden');
+
+    if (!silent) {
+      LS.addCoins(35);
+      LS.addXP(30);
+      LS.runtime.stamina = 100;
+      LS.playSFX('correct');
+      if (mode === 'egypt_felucca') {
+        LS.unlockStamp('egypt_felucca');
+        LS.advanceStoryStep('egypt', 'egypt_felucca');
+        LS.showToast('⛵✨ Glorious Nile Felucca Voyage complete! Captain Tarek cheers! (+35c & +30 XP!)');
+      } else if (mode === 'egypt_camel') {
+        LS.unlockStamp('egypt_camel');
+        if (LS.completeCozyMission) LS.completeCozyMission('play');
+        LS.showToast('🐪🌴 Wonderful Oasis Camel Caravan ride with Habibi & Shams! (+35c & +30 XP!)');
+      } else if (mode === 'marrakech_tea') {
+        LS.unlockStamp('marrakech_tea');
+        LS.advanceStoryStep('marrakech', 'marrakech_tea');
+        if (LS.completeCozyMission) LS.completeCozyMission('meal');
+        LS.runtime.buff = { name: 'Riad Mint Tea Refresh', short: 'MintTea🫖', speedMult: 1.26, infiniteStamina: true, expiresAt: Date.now() + 90000 };
+        LS.showToast('🫖🍊 Delicious high-poured Mint Tea & Tagine feast! (+35c, +30 XP & Speed Boost!)');
+      } else if (mode === 'marrakech_drums') {
+        LS.unlockStamp('marrakech_drums');
+        if (LS.completeCozyMission) LS.completeCozyMission('music');
+        LS.showToast('🥁✨ What a joyous Sunset Bazaar Drum Circle jam! (+35c & +30 XP!)');
+      }
+      LS.updateHUD();
+    }
+  };
+
   function triggerInteract() {
-    if (LS.runtime.titleScreenActive || LS.runtime.modalOpen || LS.runtime.eating || LS.runtime.traveling || LS.runtime.ngscActivity) return;
+    if (LS.runtime.titleScreenActive || LS.runtime.modalOpen || LS.runtime.eating || LS.runtime.traveling || LS.runtime.ngscActivity || LS.runtime.wave1Anim) return;
     if (LS.unlockAudio) LS.unlockAudio();
     if (LS.runtime.bikeRide) {
       LS.dismountYellowBike();
@@ -1264,6 +1436,8 @@ window.LailaSalma = window.LailaSalma || {};
     if (zid === 'tokyo_yellow_bike') LS.mountYellowBike();
     else if (zid === 'enter_home_apartment') LS.enterInterior('home_apartment');
     else if (zid === 'enter_gedo_mahmoud') LS.enterInterior('dest_gedo_mahmoud');
+    else if (zid === 'enter_egypt_chamber') LS.enterInterior('egypt_chamber');
+    else if (zid === 'enter_marrakech_riad') LS.enterInterior('marrakech_riad');
     else if (zid === 'home_kitchen_snack') LS.openKitchenModal();
     else if (zid === 'home_piano') LS.openPianoModal();
     else if (zid === 'home_tv_room') LS.openTvGameModal();
@@ -1280,9 +1454,24 @@ window.LailaSalma = window.LailaSalma || {};
     else if (zid === 'ngsc_swim') LS.startNGSCActivity('swim');
     else if (zid === 'egypt_teacher_quiz') LS.openSchoolModal('egypt');
     else if (zid === 'marrakech_teacher_quiz') LS.openSchoolModal('marrakech');
-    else if (
-      zid === 'egypt_hieroglyphs' || zid === 'egypt_felucca' || zid === 'egypt_camel' || zid === 'egypt_bakery' ||
-      zid === 'marrakech_lantern' || zid === 'marrakech_rug' || zid === 'marrakech_tea' || zid === 'marrakech_drums'
+    else if (zid === 'egypt_felucca' || zid === 'egypt_camel' || zid === 'marrakech_tea' || zid === 'marrakech_drums') {
+      LS.startWave1Anim(zid);
+    } else if (zid === 'egypt_boutique') {
+      LS.openShopModal('egypt');
+    } else if (zid === 'marrakech_boutique') {
+      LS.openShopModal('marrakech');
+    } else if (zid === 'decorate_marrakech_riad') {
+      LS.openRiadDecorModal();
+    } else if (zid === 'egypt_treasure_chest') {
+      LS.addCoins(55);
+      LS.addXP(45);
+      LS.unlockStamp('egypt_chamber');
+      LS.runtime.sparkleUntil = Math.max(LS.runtime.sparkleUntil || 0, Date.now() + 60000);
+      LS.playSFX('levelup');
+      LS.showToast("👑💎 Pharaoh's Golden Treasure Chest opened! Sparkling lapis & gold! (+55c, +45 XP & Sparkle Aura!)");
+    } else if (
+      zid === 'egypt_hieroglyphs' || zid === 'egypt_bakery' ||
+      zid === 'marrakech_lantern' || zid === 'marrakech_rug'
     ) LS.openWave1Activity(zid);
     else if (zid === 'visit_gedo_mahmoud') {
       LS.addCoins(18); LS.addXP(22);
@@ -2044,6 +2233,131 @@ window.LailaSalma = window.LailaSalma || {};
 
       if (na.timer <= 0) {
         LS.finishNGSCActivity(false);
+      }
+      return;
+    }
+
+    // Live 3D Wave 1 (Africa) Animations: Felucca Sail, Camel Caravan, High-Pour Tea & Drum Circle!
+    if (LS.runtime.wave1Anim) {
+      const wa = LS.runtime.wave1Anim;
+      wa.timer -= dt;
+      const t = Math.max(0, Math.min(1, 1 - (wa.timer / wa.duration)));
+      const w = LS.activeWorld;
+
+      if (wa.mode === 'egypt_felucca') {
+        // Glide smoothly out from Lotus Pier down the shimmering Nile past lotuses & Great Pyramids!
+        const loopU = Math.sin(t * Math.PI); // 0 -> 1 -> 0 smooth round trip
+        const boatX = 29.8 + loopU * 4.2 + Math.sin(elapsed * 0.9) * 0.6;
+        const boatZ = 3.0 - loopU * 23.0;
+        const boatY = 0.10 + Math.sin(elapsed * 2.4) * 0.06;
+        const roll = Math.sin(elapsed * 1.8) * 0.05;
+        const heading = t < 0.5 ? Math.PI : 0;
+
+        if (w && w.rideFelucca && w.rideFelucca.obj) {
+          w.rideFelucca.obj.root.position.set(boatX, boatY, boatZ);
+          w.rideFelucca.obj.root.rotation.set(0, heading, roll);
+        }
+        // Laila & Salma stand happily on the sunlit wooden Felucca deck waving at the Pyramids!
+        laila.root.position.set(boatX - 0.35, boatY + 0.62, boatZ - (t < 0.5 ? 0.85 : -0.85));
+        laila.root.rotation.y = heading - 0.55;
+        laila.leftArm.rotation.z = 2.15 + Math.sin(elapsed * 6.5) * 0.32;
+        laila.rightArm.rotation.z = -0.25;
+        laila.leftLeg.rotation.x = 0; laila.rightLeg.rotation.x = 0;
+
+        if (salma) {
+          salma.root.position.set(boatX + 0.42, boatY + 0.62, boatZ + (t < 0.5 ? 0.55 : -0.55));
+          salma.root.rotation.y = heading + 0.45;
+          salma.rightArm.rotation.z = -2.25 - Math.sin(elapsed * 7.2 + 0.6) * 0.35;
+          salma.leftArm.rotation.z = 0.25;
+          salma.leftLeg.rotation.x = 0; salma.rightLeg.rotation.x = 0;
+        }
+      } else if (wa.mode === 'egypt_camel') {
+        // Laila mounts Habibi (crimson saddle) & Salma mounts Shams (turquoise saddle) in an Oasis loop!
+        const ang = -0.35 + t * Math.PI * 2;
+        const cx = -13.5, cz = 4.2, rx = 4.8, rz = 8.4;
+        const bob1 = Math.abs(Math.sin(elapsed * 5.2)) * 0.09;
+        const bob2 = Math.abs(Math.sin(elapsed * 5.2 + 1.1)) * 0.09;
+
+        const c1x = cx + Math.cos(ang) * rx;
+        const c1z = cz + Math.sin(ang) * rz;
+        const c1rot = Math.atan2(-Math.sin(ang) * rx, Math.cos(ang) * rz);
+
+        const ang2 = ang - 0.38;
+        const c2x = cx + Math.cos(ang2) * rx;
+        const c2z = cz + Math.sin(ang2) * rz;
+        const c2rot = Math.atan2(-Math.sin(ang2) * rx, Math.cos(ang2) * rz);
+
+        if (w && w.camels && w.camels[0]) {
+          w.camels[0].obj.root.position.set(c1x, bob1, c1z);
+          w.camels[0].obj.root.rotation.set(0, c1rot, Math.sin(elapsed * 5.2) * 0.03);
+        }
+        if (w && w.camels && w.camels[1]) {
+          w.camels[1].obj.root.position.set(c2x, bob2, c2z);
+          w.camels[1].obj.root.rotation.set(0, c2rot, Math.sin(elapsed * 5.2 + 1.1) * 0.03);
+        }
+
+        laila.root.position.set(c1x, 2.28 + bob1, c1z);
+        laila.root.rotation.y = c1rot;
+        if (LS.applyArticulatedPose) LS.applyArticulatedPose(laila, 0, 'chair_sit', elapsed);
+        laila.rightArm.rotation.z = -2.2 - Math.sin(elapsed * 6.0) * 0.25;
+
+        if (salma) {
+          salma.root.position.set(c2x, 2.26 + bob2, c2z);
+          salma.root.rotation.y = c2rot;
+          if (LS.applyArticulatedPose) LS.applyArticulatedPose(salma, 0, 'chair_sit', elapsed + 0.8);
+          salma.leftArm.rotation.z = 2.2 + Math.sin(elapsed * 6.4) * 0.25;
+        }
+      } else if (wa.mode === 'marrakech_tea') {
+        // Laila & Salma sit cleanly on top of the plush Riad velvet poufs while Rashid high-pours sparkling golden tea!
+        laila.root.position.set(-0.95, 0.70, -18.35);
+        laila.root.rotation.y = Math.PI + 0.22;
+        if (LS.applyArticulatedPose) LS.applyArticulatedPose(laila, 0, 'chair_sit', elapsed);
+        laila.rightArm.rotation.x = -0.65 + Math.sin(elapsed * 3.0) * 0.14;
+
+        if (salma) {
+          salma.root.position.set(0.95, 0.70, -18.35);
+          salma.root.rotation.y = Math.PI - 0.22;
+          if (LS.applyArticulatedPose) LS.applyArticulatedPose(salma, 0, 'chair_sit', elapsed + 0.5);
+          salma.leftArm.rotation.x = -0.65 + Math.sin(elapsed * 3.2 + 0.6) * 0.14;
+        }
+
+        if (w && w.teaRashid && w.teaRashid.ch) {
+          w.teaRashid.ch.root.position.set(0.0, 0.34, -22.05);
+          w.teaRashid.ch.root.rotation.y = 0;
+          w.teaRashid.ch.rightArm.rotation.x = -2.15 + Math.sin(elapsed * 2.2) * 0.14;
+          w.teaRashid.ch.leftArm.rotation.x = -0.55;
+        }
+        if (w && w.teaPourGroup) {
+          w.teaPourGroup.visible = true;
+          w.teaPourGroup.rotation.y = Math.sin(elapsed * 1.4) * 0.28;
+        }
+      } else if (wa.mode === 'marrakech_drums') {
+        // Laila & Salma jam rhythmically on Hassan's woven sunset drum carpet with floating golden notes!
+        const beat = Math.sin(elapsed * 7.5);
+        laila.root.position.set(-11.55, Math.abs(beat) * 0.12, 21.1);
+        laila.root.rotation.y = 0.55;
+        laila.leftArm.rotation.x = -0.95 + Math.sin(elapsed * 9.5) * 0.42;
+        laila.rightArm.rotation.x = -0.95 + Math.sin(elapsed * 9.5 + Math.PI) * 0.42;
+        laila.leftLeg.rotation.x = 0; laila.rightLeg.rotation.x = 0;
+
+        if (salma) {
+          salma.root.position.set(-9.45, Math.abs(Math.sin(elapsed * 7.5 + 0.8)) * 0.16, 21.1);
+          salma.root.rotation.y = -0.55;
+          salma.leftArm.rotation.x = -0.95 + Math.sin(elapsed * 10.0 + 0.4) * 0.45;
+          salma.rightArm.rotation.x = -0.95 + Math.sin(elapsed * 10.0 + Math.PI + 0.4) * 0.45;
+          salma.leftLeg.rotation.x = 0; salma.rightLeg.rotation.x = 0;
+        }
+
+        wa.drumBeatTimer -= dt;
+        if (wa.drumBeatTimer <= 0 && LS.playDjembeSound) {
+          wa.drumBeatTimer = 0.62;
+          const kinds = ['bass', 'tone', 'slap', 'tone'];
+          LS.playDjembeSound(kinds[Math.floor(elapsed * 2) % kinds.length]);
+        }
+      }
+
+      if (wa.timer <= 0) {
+        LS.finishWave1Anim(false);
       }
       return;
     }

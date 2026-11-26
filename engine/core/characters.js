@@ -53,7 +53,27 @@ window.LailaSalma = window.LailaSalma || {};
     { id: 'salma_safari', who: 'salma', shop: 'safari', name: 'Little Safari Ranger', desc: 'Sunny khaki explorer outfit with a matching safari sun hat!', cost: 80, swatch: '#e9c46a',
       style: { topColor: 0xf4e4ba, bottomColor: 0x84a59d, shoeColor: 0x9c6644, backpackColor: 0xe76f51, hatType: 'kinder', hatColor: 0xe9c46a } },
     { id: 'salma_lioncub', who: 'salma', shop: 'safari', name: 'Playful Lion Cub Hoodie', desc: 'Cozy honey-gold safari hoodie with cute cub ears!', cost: 110, swatch: '#f59e0b',
-      style: { topColor: 0xfcd34d, bottomColor: 0xd97706, shoeColor: 0x78350f, backpackColor: 0xfef3c7, hatType: 'panda', hatColor: 0xf59e0b } }
+      style: { topColor: 0xfcd34d, bottomColor: 0xd97706, shoeColor: 0x78350f, backpackColor: 0xfef3c7, hatType: 'panda', hatColor: 0xf59e0b } },
+
+    // Ancient Egypt — Laila & Salma Royal Outfits!
+    { id: 'laila_egypt_royal', who: 'laila', shop: 'egypt', name: 'Royal Egyptian Gold-Collar Tunic', desc: 'Ivory linen tunic, lapis & turquoise trim with a golden lotus circlet!', cost: 85, swatch: '#22c7c7',
+      style: { topColor: 0xfff8e7, bottomColor: 0x1f4f94, shoeColor: 0xd4a359, backpackColor: 0x22c7c7, hatType: 'crown', hatColor: 0xf6c945 } },
+    { id: 'laila_egypt_nile', who: 'laila', shop: 'egypt', name: 'Nile Lotus Explorer Dress', desc: 'Turquoise Nile silk tunic with warm sandstone sash & golden crown', cost: 110, swatch: '#1e9b9b',
+      style: { topColor: 0x5eead4, bottomColor: 0xc98a2c, shoeColor: 0x9a6234, backpackColor: 0xf6c945, hatType: 'crown', hatColor: 0x22c7c7 } },
+    { id: 'salma_egypt_royal', who: 'salma', shop: 'egypt', name: 'Little Pharaoh Sun Princess', desc: 'Sunlit ivory & turquoise tunic with a sparkling golden Egyptian circlet!', cost: 80, swatch: '#f6c945',
+      style: { topColor: 0xfff8e7, bottomColor: 0x1e9b9b, shoeColor: 0xd4a359, backpackColor: 0xf6c945, hatType: 'crown', hatColor: 0xf6c945 } },
+    { id: 'salma_egypt_oasis', who: 'salma', shop: 'egypt', name: 'Oasis Lotus Blossom Set', desc: 'Lotus-pink & golden sand dress with a breezy desert sun hat', cost: 105, swatch: '#ff9ebb',
+      style: { topColor: 0xffd6e0, bottomColor: 0x229999, shoeColor: 0xe8b76b, backpackColor: 0xff9ebb, hatType: 'kinder', hatColor: 0xf6c945 } },
+
+    // Marrakech — Laila & Salma Embroidered Moroccan Kaftans!
+    { id: 'laila_marrakech_ruby', who: 'laila', shop: 'marrakech', name: 'Ruby Marrakech Embroidered Kaftan', desc: 'Festive crimson kaftan with saffron gold trim & jewel circlet!', cost: 90, swatch: '#c83e37',
+      style: { topColor: 0xd84339, bottomColor: 0x8a1c24, shoeColor: 0xf4be44, backpackColor: 0xf4be44, hatType: 'crown', hatColor: 0xf4be44 } },
+    { id: 'laila_marrakech_emerald', who: 'laila', shop: 'marrakech', name: 'Zellige Emerald Riad Kaftan', desc: 'Emerald-and-cobalt Moroccan silk kaftan inspired by Zellige tiles', cost: 115, swatch: '#1e8a7a',
+      style: { topColor: 0x22a699, bottomColor: 0x1f5692, shoeColor: 0xf4be44, backpackColor: 0xe07a5f, hatType: 'beret', hatColor: 0xf4be44 } },
+    { id: 'salma_marrakech_saffron', who: 'salma', shop: 'marrakech', name: 'Saffron Lantern Princess Kaftan', desc: 'Golden saffron kaftan with ruby slippers & sparkling crown!', cost: 85, swatch: '#f4be44',
+      style: { topColor: 0xf9cf58, bottomColor: 0xc83e37, shoeColor: 0xc83e37, backpackColor: 0x22a699, hatType: 'crown', hatColor: 0xf4be44 } },
+    { id: 'salma_marrakech_rose', who: 'salma', shop: 'marrakech', name: 'Atlas Rose Blossom Kaftan', desc: 'Warm coral-rose Moroccan dress with turquoise festival hair blossom', cost: 105, swatch: '#fb7185',
+      style: { topColor: 0xffa6b8, bottomColor: 0x1f5692, shoeColor: 0xf4be44, backpackColor: 0xf4be44, hatType: 'kanzashi', hatColor: 0x22c7c7 } }
   ];
 
   function buildHatMeshes(hatType, hatColor) {
@@ -158,6 +178,23 @@ window.LailaSalma = window.LailaSalma || {};
       mark.position.set(0, 0.02, 0.06);
       maskG.add(mark);
       group.add(maskG);
+    } else if (hatType === 'crown') {
+      // Gleaming golden royal circlet crown with turquoise centerpiece gem!
+      const goldMat = new THREE.MeshStandardMaterial({ color: hatColor || 0xf6c945, roughness: 0.25, metalness: 0.55 });
+      const gemMat = LS.makeEmissiveMat(0x22d3ee, 0x38bdf8, 0.75);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.285, 0.026, 8, 22), goldMat);
+      band.rotation.x = Math.PI / 2;
+      band.position.set(0, 0.20, 0);
+      group.add(band);
+      for (let i = -2; i <= 2; i++) {
+        const ang = i * 0.42;
+        const spire = new THREE.Mesh(new THREE.ConeGeometry(0.032, i === 0 ? 0.14 : 0.095, 5), goldMat);
+        spire.position.set(Math.sin(ang) * 0.275, 0.26 + (i === 0 ? 0.02 : 0), Math.cos(ang) * 0.275);
+        group.add(spire);
+      }
+      const gem = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), gemMat);
+      gem.position.set(0, 0.22, 0.30);
+      group.add(gem);
     }
     return group;
   }

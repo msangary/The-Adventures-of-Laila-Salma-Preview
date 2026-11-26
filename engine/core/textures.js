@@ -1037,8 +1037,9 @@ window.LailaSalma = window.LailaSalma || {};
     }
 
     const tex = new THREE.CanvasTexture(c);
-    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false });
     const sprite = new THREE.Sprite(mat);
+    sprite.renderOrder = 25;
     const worldHeight = 1.24 * (c.height / 180);
     sprite.scale.set(3.45, worldHeight, 1);
     sprite.visible = false;

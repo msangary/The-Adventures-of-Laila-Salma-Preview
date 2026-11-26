@@ -346,7 +346,11 @@ window.LailaSalma = window.LailaSalma || {};
         const inKyoto = curW === 'kyoto' || curW === 'kyoto_room';
         const isHere = isJapan
           ? (inTokyo || inKyoto)
-          : (curW === wid || (wid === 'home_neighborhood' && (curW === 'home_apartment' || curW.indexOf('dest_') === 0)) || (wid === 'safari' && curW === 'safari_tent'));
+          : (curW === wid
+            || (wid === 'home_neighborhood' && (curW === 'home_apartment' || curW.indexOf('dest_') === 0))
+            || (wid === 'safari' && curW === 'safari_tent')
+            || (wid === 'egypt' && curW === 'egypt_chamber')
+            || (wid === 'marrakech' && curW === 'marrakech_riad'));
 
         const foundCount = wid === 'home_neighborhood'
           ? (LS.state.foundHomePets ? LS.state.foundHomePets.length : 0)
@@ -571,7 +575,9 @@ window.LailaSalma = window.LailaSalma || {};
       const row = document.createElement('div');
       row.className = 'shop-item' + (isEquipped ? ' equipped' : '');
 
-      const originTag = item.shop === 'safari' ? '🦁' : (item.shop === 'kyoto' ? '⛩️' : '🗼');
+      const originTag = item.shop === 'egypt' ? '👑'
+        : (item.shop === 'marrakech' ? '🏮'
+          : (item.shop === 'safari' ? '🦁' : (item.shop === 'kyoto' ? '⛩️' : '🗼')));
       const info = document.createElement('div');
       info.innerHTML =
         '<strong><span class="swatch-dot" style="background:' + item.swatch + '"></span>' + item.name + ' ' + originTag + '</strong>' +
@@ -629,18 +635,26 @@ window.LailaSalma = window.LailaSalma || {};
     const titleEl = document.getElementById('shop-modal-title');
     const subEl = document.getElementById('shop-modal-sub');
     if (titleEl) {
-      titleEl.textContent = shopStyle === 'safari'
-        ? '🎒 Safari Outfitter Boutique — Explorer Gear'
-        : (shopStyle === 'kyoto'
-          ? '👘 Kyoto Kimono & Fox Mask Boutique'
-          : '🎀 Harajuku Kiosk — Outfits & Hats');
+      titleEl.textContent = shopStyle === 'egypt'
+        ? '👑 Royal Ancient Egypt Boutique — Gold-Collar Linen'
+        : (shopStyle === 'marrakech'
+          ? '🏮 Moroccan Kaftan Boutique — Embroidered Silks'
+          : (shopStyle === 'safari'
+            ? '🎒 Safari Outfitter Boutique — Explorer Gear'
+            : (shopStyle === 'kyoto'
+              ? '👘 Kyoto Kimono & Fox Mask Boutique'
+              : '🎀 Harajuku Kiosk — Outfits & Hats')));
     }
     if (subEl) {
-      subEl.textContent = shopStyle === 'safari'
-        ? '“Jambo, Laila & Salma! Gear up in khaki safari vests, sun hats & cozy lion cub hoodies — all outfits travel across every world!”'
-        : (shopStyle === 'kyoto'
-          ? '“Irasshaimase, Laila & Salma! Try silk kimonos & festival fox masks — all outfits travel across every world!”'
-          : '“Konnichiwa, Laila & Salma! Spend your coins on stylish outfits & hats — all outfits travel across every world!”');
+      subEl.textContent = shopStyle === 'egypt'
+        ? '“Ahlan, Laila & Salma! Try shimmering golden pharaoh collars & turquoise Nile tunics — all outfits travel across every world!”'
+        : (shopStyle === 'marrakech'
+          ? '“Marhaba, Laila & Salma! Try ruby, emerald & saffron embroidered Moroccan kaftans — all outfits travel across every world!”'
+          : (shopStyle === 'safari'
+            ? '“Jambo, Laila & Salma! Gear up in khaki safari vests, sun hats & cozy lion cub hoodies — all outfits travel across every world!”'
+            : (shopStyle === 'kyoto'
+              ? '“Irasshaimase, Laila & Salma! Try silk kimonos & festival fox masks — all outfits travel across every world!”'
+              : '“Konnichiwa, Laila & Salma! Spend your coins on stylish outfits & hats — all outfits travel across every world!”')));
     }
     document.getElementById('shop-msg').textContent = '';
     renderShopItems();
@@ -2212,6 +2226,38 @@ window.LailaSalma = window.LailaSalma || {};
     const misBox = document.getElementById('quest-missions-list');
     if (chapBox && LS.STORY_CHAPTERS) {
       chapBox.innerHTML = '';
+
+      // Africa Master Explorer Bonus Banner (completing Safari + Egypt + Marrakech unlocks Magic Carpet Glide!)
+      const sp = LS.state.storyProgress || {};
+      const africaDoneCount = ((sp.safari || 0) >= 3 ? 1 : 0) + ((sp.egypt || 0) >= 3 ? 1 : 0) + ((sp.marrakech || 0) >= 3 ? 1 : 0);
+      const hasMaster = LS.hasAfricaMasterBonus && LS.hasAfricaMasterBonus();
+      const bonusCard = document.createElement('div');
+      bonusCard.className = 'passport-world-card';
+      bonusCard.style.background = hasMaster
+        ? 'linear-gradient(135deg, #fff6d6 0%, #fde68a 100%)'
+        : 'linear-gradient(135deg, #f8fafc 0%, #fef3c7 100%)';
+      bonusCard.style.border = hasMaster ? '2px solid #d97706' : '2px dashed #d97706';
+      bonusCard.innerHTML =
+        '<div class="pw-head"><strong>🌍🪄 Wave 1 Africa Master Explorer Bonus</strong>' +
+        '<span class="pw-progress">' + africaDoneCount + '/3 Africa Chapters</span></div>' +
+        '<div class="ramen-desc" style="margin-top:4px;">' +
+        (hasMaster
+          ? 'You mastered Safari, Ancient Egypt & Marrakech! Activate your sparkling Magic Carpet Glide anytime!'
+          : 'Complete all 3 Africa Chapters (Safari, Ancient Egypt & Marrakech) to unlock the sparkling Magic Carpet Glide speed boost forever!') +
+        '</div>';
+      if (hasMaster) {
+        const glideBtn = document.createElement('button');
+        glideBtn.className = 'btn-primary';
+        glideBtn.style.marginTop = '8px';
+        glideBtn.textContent = '🪄 Activate Magic Carpet Glide Boost! ✨';
+        glideBtn.onclick = () => {
+          LS.closeAllModals();
+          LS.activateMagicCarpetGlide(false);
+        };
+        bonusCard.appendChild(glideBtn);
+      }
+      chapBox.appendChild(bonusCard);
+
       Object.keys(LS.STORY_CHAPTERS).forEach(wid => {
         if (LS.isWorldEnabled && !LS.isWorldEnabled(wid)) return;
         const chap = LS.STORY_CHAPTERS[wid];
@@ -2247,6 +2293,90 @@ window.LailaSalma = window.LailaSalma || {};
     }
     const m = document.getElementById('quest-modal');
     if (m) m.classList.remove('hidden');
+  };
+
+  // =========================================================================
+  // MOROCCAN RIAD ROOFTOP SUITE — LIVE 3D DECORATOR!
+  // =========================================================================
+  LS.openRiadDecorModal = function () {
+    LS.runtime.modalOpen = true;
+    const modal = document.getElementById('wave1-game-modal');
+    const titleEl = document.getElementById('wave1-game-title');
+    const bodyEl = document.getElementById('wave1-game-body');
+    const msgEl = document.getElementById('wave1-game-msg');
+    if (!modal || !bodyEl) return;
+    if (titleEl) titleEl.textContent = '🕌 Decorate the Moroccan Riad Rooftop Suite 🏮✨';
+    if (msgEl) msgEl.textContent = 'Every Zellige carpet, velvet pouf & glowing stained-glass lantern updates live in 3D!';
+
+    function renderRiadDecor() {
+      bodyEl.innerHTML = '';
+      const unlocked = LS.state.unlockedRiadItems || ['riad_zellige', 'riad_saffron', 'riad_gold_glow'];
+      const sections = [
+        { label: '🧶 Rooftop Zellige Carpets', items: LS.RIAD_RUGS || [], stateKey: 'riadRug' },
+        { label: '🛋️ Velvet Floor Poufs', items: LS.RIAD_CUSHIONS || [], stateKey: 'riadCushion' },
+        { label: '🏮 Stained-Glass Brass Lanterns', items: LS.RIAD_LANTERNS || [], stateKey: 'riadLantern' }
+      ];
+      sections.forEach(sec => {
+        const h = document.createElement('div');
+        h.style.cssText = 'font-weight:800;color:#5b2f12;margin:10px 0 6px;font-size:14px;';
+        h.textContent = sec.label;
+        bodyEl.appendChild(h);
+
+        const rowWrap = document.createElement('div');
+        rowWrap.style.cssText = 'display:grid;gap:6px;';
+        sec.items.forEach(it => {
+          const owned = unlocked.includes(it.id) || it.cost === 0;
+          const active = LS.state[sec.stateKey] === it.id;
+          const row = document.createElement('div');
+          row.className = 'shop-item' + (active ? ' equipped' : '');
+          row.innerHTML = '<div><strong><span class="swatch-dot" style="background:' + it.color + '"></span>' + it.name + '</strong></div>';
+          const btn = document.createElement('button');
+          if (active) {
+            btn.className = 'btn-secondary';
+            btn.textContent = 'Placed ✓';
+            btn.disabled = true;
+          } else if (owned) {
+            btn.className = 'btn-primary';
+            btn.textContent = 'Place ✨';
+            btn.onclick = () => {
+              LS.state[sec.stateKey] = it.id;
+              LS.saveState();
+              if (LS.activeWorld && LS.activeWorld.applyRiadDecor) LS.activeWorld.applyRiadDecor();
+              LS.unlockStamp('marrakech_riad');
+              LS.playSFX('coin');
+              if (msgEl) msgEl.textContent = '✨ Placed ' + it.name + ' on your Riad Rooftop!';
+              renderRiadDecor();
+            };
+          } else {
+            btn.className = 'btn-primary';
+            btn.textContent = it.cost + 'c';
+            btn.onclick = () => {
+              if (LS.state.coins < it.cost) {
+                if (msgEl) msgEl.textContent = 'Not enough coins (' + it.cost + 'c)! Play a Marrakech activity or quiz!';
+                LS.playSFX('wrong');
+                return;
+              }
+              LS.addCoins(-it.cost);
+              if (!LS.state.unlockedRiadItems) LS.state.unlockedRiadItems = [];
+              LS.state.unlockedRiadItems.push(it.id);
+              LS.state[sec.stateKey] = it.id;
+              LS.saveState();
+              if (LS.activeWorld && LS.activeWorld.applyRiadDecor) LS.activeWorld.applyRiadDecor();
+              LS.unlockStamp('marrakech_riad');
+              LS.playSFX('correct');
+              if (msgEl) msgEl.textContent = '🏮 Unlocked & placed ' + it.name + '!';
+              renderRiadDecor();
+            };
+          }
+          row.appendChild(btn);
+          rowWrap.appendChild(row);
+        });
+        bodyEl.appendChild(rowWrap);
+      });
+    }
+
+    renderRiadDecor();
+    modal.classList.remove('hidden');
   };
 
   // =========================================================================
