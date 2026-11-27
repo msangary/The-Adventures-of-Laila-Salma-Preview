@@ -55,6 +55,7 @@ window.LailaSalma = window.LailaSalma || {};
 
   LS.activeWorld = null;
   LS.getScene = function () { return scene; };
+  LS.getCamera = function () { return camera; };
   LS.getEngineStats = function () {
     return {
       zoneBeacons: zoneBeacons.length,

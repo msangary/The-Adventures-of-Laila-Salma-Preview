@@ -1557,7 +1557,7 @@ window.LailaSalma = window.LailaSalma || {};
           pos: new THREE.Vector3(24.2, 0, -5.8),
           baseRot: -Math.PI / 2,
           waveOnNear: true,
-          char: { scale: 0.90, skinColor: 0xe6b898, hairColor: 0xcfd4da, topColor: 0x2a9d8f, bottomColor: 0x4a5568, hairBun: true, faceOpts: { elder: true } }
+          char: { scale: 0.90, portraitStyle: 'nana_omaima' }
         },
         {
           name: 'Uncle Tariq (Gate)',

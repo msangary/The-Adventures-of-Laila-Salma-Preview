@@ -3219,8 +3219,9 @@ window.LailaSalma = window.LailaSalma || {};
   LS.createAnimeCharacter = function (cfg) {
     if (cfg && cfg.portraitStyle && PORTRAIT_PROFILES[cfg.portraitStyle]) {
       const charObj = buildUnifiedWatercolorCharacter(cfg);
-      if (LS.attachGLBIfConfigured) {
-        LS.attachGLBIfConfigured(charObj, cfg.portraitStyle);
+      const glbPromise = LS.attachGLBIfConfigured ? LS.attachGLBIfConfigured(charObj, cfg.portraitStyle) : null;
+      if (!glbPromise && LS.attachHD2DIfConfigured) {
+        LS.attachHD2DIfConfigured(charObj, cfg.portraitStyle);
       }
       return charObj;
     }
@@ -4058,6 +4059,10 @@ window.LailaSalma = window.LailaSalma || {};
       charObj.glbRig.playState(mode || 'idle');
       return;
     }
+    if (charObj && charObj.hd2dRig) {
+      charObj.hd2dRig.setMode(mode || 'idle');
+      return;
+    }
     if (!charObj || !charObj.leftKnee) return;
     if (mode === 'walk' || mode === 'run') {
       const kBoost = mode === 'run' ? 0.95 : 0.72;
@@ -4194,6 +4199,7 @@ window.LailaSalma = window.LailaSalma || {};
     });
 
     if (LS.updateGLBCharacters) LS.updateGLBCharacters(dt, elapsed);
+    if (LS.updateHD2DCharacters) LS.updateHD2DCharacters(dt, elapsed);
     if (LS.updateDynamicBubbleCycling) LS.updateDynamicBubbleCycling(dt);
 
     if (LS.chars.mochiHeart) {
