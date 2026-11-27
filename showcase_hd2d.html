@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:," />
+<title>HD-2D Watercolor Character Prototype — Laila & Salma (Preview)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5ecdc;
+    color: #2f2018;
+    overflow: hidden;
+    user-select: none;
+  }
+  canvas { display: block; width: 100vw; height: 100vh; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  #hud-top {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 250, 240, 0.94);
+    border: 2px solid #d4a86a;
+    border-radius: 18px;
+    padding: 9px 18px;
+    box-shadow: 0 6px 22px rgba(60, 38, 22, 0.16);
+    text-align: center;
+    z-index: 20;
+    backdrop-filter: blur(6px);
+    max-width: 92vw;
+  }
+  #hud-top h1 { font-size: 16px; color: #5b341e; letter-spacing: 0.2px; }
+  #hud-top p { font-size: 12px; color: #7b5a42; margin-top: 2px; }
+  #back-link {
+    position: fixed; top: 16px; left: 16px; z-index: 20;
+    background: rgba(255, 250, 240, 0.94);
+    border: 2px solid #d4a86a;
+    color: #5b341e;
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 4px 14px rgba(60, 38, 22, 0.12);
+  }
+  #bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 7px;
+    max-width: 96vw;
+    background: rgba(255, 250, 240, 0.94);
+    border: 2px solid #d4a86a;
+    border-radius: 18px;
+    padding: 9px 14px;
+    box-shadow: 0 6px 22px rgba(60, 38, 22, 0.18);
+    z-index: 20;
+  }
+  .btn {
+    border: 1.5px solid #c99d66;
+    background: #fffaf0;
+    color: #4d2e1b;
+    padding: 7px 13px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn:hover { background: #fbe9cc; transform: translateY(-1px); }
+  .btn.active { background: #d97a4a; color: #fff; border-color: #a95228; }
+  .btn.compare { background: #5a4278; color: #fff; border-color: #3d2a56; }
+  .btn.compare:hover { background: #6e5391; }
+  #badge-mode {
+    position: fixed; top: 16px; right: 16px; z-index: 20;
+    background: rgba(255, 250, 240, 0.94);
+    border: 2px solid #c8954c;
+    border-radius: 14px;
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #6b3c1e;
+    box-shadow: 0 4px 14px rgba(60, 38, 22, 0.14);
+  }
+</style>
+</head>
+<body>
+<a id="back-link" href="./index.html">← Play Game</a>
+<div id="hud-top">
+  <h1>🎨 HD-2D Studio Ghibli Watercolor Prototype (Exact Portrait Likeness!)</h1>
+  <p>Use <strong>WASD / Arrows</strong> or <strong>Click Floor</strong> to walk Laila (Salma follows!) • Drag to orbit 360° • Scroll to zoom</p>
+</div>
+<div id="badge-mode">Style: HD-2D Watercolor</div>
+<div id="bar">
+  <button class="btn active" id="btn-walk" type="button">🚶 Interactive Walk</button>
+  <button class="btn" id="btn-orbit" type="button">🔄 Auto-Orbit 360°</button>
+  <button class="btn" id="btn-lineup" type="button">👨‍👩‍👧‍👧 Family Lineup</button>
+  <button class="btn compare" id="btn-compare" type="button">🎭 Compare: Switch to 3D Stylized</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="engine/core/ghibli.js"></script>
+<script src="engine/core/textures.js"></script>
+<script src="engine/core/characters.js"></script>
+<script>
+(function () {
+  const LS = window.LailaSalma;
+  LS.isHD = true;
+  if (!LS.makeToonMat) {
+    LS.makeToonMat = function (color, opts) { return LS.ghibli.createGhibliMat(color, opts); };
+  }
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf6eedf);
+  scene.fog = new THREE.Fog(0xf5ead7, 16, 42);
+
+  const camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 0.1, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  // Warm sunlit Studio Ghibli room lighting
+  const hemi = new THREE.HemisphereLight(0xfffaf0, 0xcab092, 0.78);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff3dc, 0.92);
+  sun.position.set(5, 11, 8);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -8; sun.shadow.camera.right = 8;
+  sun.shadow.camera.top = 8; sun.shadow.camera.bottom = -6;
+  scene.add(sun);
+
+  // 1. COZY 3D STUDIO GHIBLI APARTMENT LIVING ROOM STAGE (so you see HD-2D sprites in real 3D!)
+  const floorTex = LS.ghibli.getPaintedTex('woodFloor', 5, 4);
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(18, 14),
+    new THREE.MeshStandardMaterial({ map: floorTex, color: 0xebd9be, roughness: 0.88 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const rugTex = LS.ghibli.getPaintedTex('wovenRug', 1, 1);
+  const rug = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.8, 4.6),
+    new THREE.MeshStandardMaterial({ map: rugTex, color: 0xfbf4e6, roughness: 0.95 })
+  );
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(0, 0.012, -0.35);
+  rug.receiveShadow = true;
+  scene.add(rug);
+
+  const wallTex = LS.ghibli.getPaintedTex('plaster', 4, 2);
+  const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, color: 0xf4e8d2, roughness: 0.94 });
+  const backWall = new THREE.Mesh(new THREE.PlaneGeometry(18, 6.2), wallMat);
+  backWall.position.set(0, 3.1, -4.4);
+  backWall.receiveShadow = true;
+  scene.add(backWall);
+
+  // Cozy left & right plaster walls so orbiting 360° stays inside a warm sunlit room
+  [-9, 9].forEach(wx => {
+    const sw = new THREE.Mesh(new THREE.PlaneGeometry(14, 6.2), wallMat);
+    sw.position.set(wx, 3.1, 2.6);
+    sw.rotation.y = wx < 0 ? Math.PI / 2 : -Math.PI / 2;
+    sw.receiveShadow = true;
+    scene.add(sw);
+  });
+
+  // Warm wooden baseboard & sunlit picture window on back wall
+  const trimMat = LS.makeToonMat(0xb68655);
+  const baseBoard = new THREE.Mesh(new THREE.BoxGeometry(18, 0.22, 0.08), trimMat);
+  baseBoard.position.set(0, 0.11, -4.36);
+  scene.add(baseBoard);
+
+  // Crisp clipped watercolor window vista (sky, soft clouds & sunlit garden hills inside frame!)
+  const winCanvas = document.createElement('canvas');
+  winCanvas.width = 512; winCanvas.height = 300;
+  const wctx = winCanvas.getContext('2d');
+  const skyGrad = wctx.createLinearGradient(0, 0, 0, 300);
+  skyGrad.addColorStop(0, '#8ed2f8');
+  skyGrad.addColorStop(0.65, '#d6f0ff');
+  skyGrad.addColorStop(1, '#fff3d6');
+  wctx.fillStyle = skyGrad; wctx.fillRect(0, 0, 512, 300);
+  wctx.fillStyle = 'rgba(255,255,255,0.92)';
+  [[130, 82, 58, 28], [182, 74, 44, 24], [365, 96, 62, 26], [412, 92, 38, 20]].forEach(c => {
+    wctx.beginPath(); wctx.ellipse(c[0], c[1], c[2], c[3], 0, 0, Math.PI * 2); wctx.fill();
+  });
+  wctx.fillStyle = '#8cc57a';
+  wctx.beginPath(); wctx.ellipse(150, 310, 260, 118, 0, 0, Math.PI * 2); wctx.fill();
+  wctx.fillStyle = '#73b366';
+  wctx.beginPath(); wctx.ellipse(390, 318, 240, 112, 0, 0, Math.PI * 2); wctx.fill();
+
+  const winFrame = new THREE.Group();
+  winFrame.position.set(0, 2.55, -4.33);
+  const skyPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(3.8, 2.2),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(winCanvas) })
+  );
+  winFrame.add(skyPlane);
+  // Window mullions & sill
+  [
+    [0, 1.12, 0.04, 4.05, 0.12, 0.12],
+    [0, -1.14, 0.06, 4.18, 0.14, 0.20],
+    [-1.96, 0, 0.04, 0.12, 2.34, 0.12],
+    [1.96, 0, 0.04, 0.12, 2.34, 0.12],
+    [0, 0, 0.04, 0.09, 2.22, 0.08],
+    [0, 0.08, 0.04, 3.92, 0.08, 0.08]
+  ].forEach(b => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(b[3], b[4], b[5]), trimMat);
+    m.position.set(b[0], b[1], b[2]);
+    winFrame.add(m);
+  });
+  scene.add(winFrame);
+
+  // Two cozy 3D Studio Ghibli armchairs & potted plants in background for world scale context!
+  function makeCozyChair(x, z, rotY, col) {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z); g.rotation.y = rotY;
+    const mat = LS.makeToonMat(col);
+    const wood = LS.makeToonMat(0x8a5b34);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.36, 0.92), mat);
+    seat.position.y = 0.36; seat.castShadow = true; seat.receiveShadow = true; LS.ghibli.addInkOutline(seat, 0.02); g.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.78, 0.24), mat);
+    back.position.set(0, 0.80, -0.34); back.castShadow = true; LS.ghibli.addInkOutline(back, 0.02); g.add(back);
+    [-0.50, 0.50].forEach(ax => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.44, 0.90), mat);
+      arm.position.set(ax, 0.54, 0.0); arm.castShadow = true; g.add(arm);
+    });
+    [[-0.42, -0.34], [0.42, -0.34], [-0.42, 0.34], [0.42, 0.34]].forEach(p => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.026, 0.22, 8), wood);
+      leg.position.set(p[0], 0.11, p[1]); g.add(leg);
+    });
+    scene.add(g);
+  }
+  makeCozyChair(-2.25, -2.55, 0.32, 0xe8a48c);
+  makeCozyChair(2.25, -2.55, -0.32, 0x7baeb8);
+
+  // Potted Ghibli lemon tree & flowers (real 3D props!)
+  if (LS.ghibli && LS.ghibli.createPottedPlant) {
+    const p1 = LS.ghibli.createPottedPlant({ type: 'lemon', scale: 1.05 });
+    p1.position.set(-4.1, 0, -3.3); scene.add(p1);
+    const p2 = LS.ghibli.createPottedPlant({ type: 'flowers', scale: 1.05 });
+    p2.position.set(4.1, 0, -3.3); scene.add(p2);
+  }
+
+  // 2. HD-2D WATERCOLOR CHARACTER FACTORY (4-pose camera-aware turnaround + silhouette cast shadow + Paper Mario walk!)
+  const texLoader = new THREE.TextureLoader();
+  const shadowTex = LS.createContactShadowTexture ? LS.createContactShadowTexture() : null;
+
+  function createHD2DCharacter(opts) {
+    const root = new THREE.Group();
+    root.position.set(opts.x, 0, opts.z);
+
+    // HD-2D Sprite Group
+    const hd2dGroup = new THREE.Group();
+    root.add(hd2dGroup);
+
+    const tex = texLoader.load(opts.stripUrl);
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    tex.wrapS = THREE.ClampToEdgeWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.repeat.set(0.25, 1.0);
+    tex.offset.set(0, 0);
+
+    const aspect = 384 / 512;
+    const planeW = opts.height * aspect;
+    const planeH = opts.height;
+    const geo = new THREE.PlaneGeometry(planeW, planeH);
+    geo.translate(0, planeH * 0.5, 0);
+
+    // Clean crisp matte watercolor shader (preserves exact hand-painted colors without harsh specular glare!)
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      transparent: true,
+      alphaTest: 0.12,
+      side: THREE.DoubleSide
+    });
+    const spriteMesh = new THREE.Mesh(geo, mat);
+    spriteMesh.castShadow = true;
+    // True alpha-masked silhouette shadow on the floor & rug (NO solid rectangular card shadow!)
+    spriteMesh.customDepthMaterial = new THREE.MeshDepthMaterial({
+      depthPacking: THREE.RGBADepthPacking,
+      map: tex,
+      alphaTest: 0.35
+    });
+    hd2dGroup.add(spriteMesh);
+
+    if (shadowTex) {
+      const sh = new THREE.Mesh(
+        new THREE.PlaneGeometry(opts.height * 0.62, opts.height * 0.62),
+        new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false, opacity: 0.72 })
+      );
+      sh.rotation.x = -Math.PI / 2;
+      sh.position.y = 0.022;
+      hd2dGroup.add(sh);
+    }
+
+    // Also create the 3D stylized version (hidden by default) for instant 1-tap side-by-side comparison!
+    const model3D = LS.createAnimeCharacter({ portraitStyle: opts.id });
+    model3D.root.visible = false;
+    root.add(model3D.root);
+
+    // Subtle floating name tag pill at feet
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = 'rgba(255, 249, 236, 0.92)';
+    ctx.strokeStyle = '#a87b48'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(14, 10, 228, 44, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#3b2416'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(opts.label, 128, 41);
+    const lbl = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+    lbl.scale.set(0.68, 0.17, 1);
+    lbl.position.set(0, -0.02, 0.42);
+    // Keep label hovering softly above head in walk mode or at feet in lineup
+    lbl.position.set(0, opts.height + 0.18, 0);
+    root.add(lbl);
+
+    scene.add(root);
+
+    return {
+      id: opts.id,
+      label: opts.label,
+      root,
+      hd2dGroup,
+      spriteMesh,
+      tex,
+      model3D,
+      height: opts.height,
+      facingYaw: 0, // 0 = facing +Z (toward viewer)
+      speed: 0,
+      walkPhase: 0,
+      flipSign: 1,
+      visualFlip: 1,
+      homeX: opts.x,
+      homeZ: opts.z
+    };
+  }
+
+  const laila = createHD2DCharacter({ id: 'laila', label: 'Laila', x: -0.55, z: 0.35, height: 1.24, stripUrl: 'assets/ghibli_showcase/hd2d/laila_strip.png' });
+  const salma = createHD2DCharacter({ id: 'salma', label: 'Salma', x: 0.45, z: 0.55, height: 1.04, stripUrl: 'assets/ghibli_showcase/hd2d/salma_strip.png' });
+  const mom   = createHD2DCharacter({ id: 'mom',   label: 'Mom',   x: -1.75, z: -0.95, height: 1.58, stripUrl: 'assets/ghibli_showcase/hd2d/mom_strip.png' });
+  const dad   = createHD2DCharacter({ id: 'dad',   label: 'Dad',   x: 1.75, z: -0.95, height: 1.72, stripUrl: 'assets/ghibli_showcase/hd2d/dad_strip.png' });
+  const cast = [laila, salma, mom, dad];
+
+  // Camera & interactive walk state
+  let mode = 'walk'; // 'walk' | 'orbit' | 'lineup'
+  let use3DCompare = false;
+  let camYaw = 0, camPitch = 0.22, camDist = 6.2;
+  let targetX = 0, targetY = 0.85, targetZ = -0.25;
+  let walkGoal = null;
+  const keys = {};
+
+  window.addEventListener('keydown', e => { keys[e.code] = true; walkGoal = null; });
+  window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+  // Orbit drag + click-to-walk on floor
+  let dragging = false, moved = false, lx = 0, ly = 0;
+  const raycaster = new THREE.Raycaster();
+  const mouseNdc = new THREE.Vector2();
+  renderer.domElement.addEventListener('pointerdown', e => {
+    dragging = true; moved = false; lx = e.clientX; ly = e.clientY;
+  });
+  window.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lx, dy = e.clientY - ly;
+    if (Math.abs(dx) + Math.abs(dy) > 4) moved = true;
+    camYaw -= dx * 0.008;
+    camPitch = Math.max(0.04, Math.min(0.62, camPitch + dy * 0.006));
+    lx = e.clientX; ly = e.clientY;
+  });
+  window.addEventListener('pointerup', e => {
+    if (dragging && !moved && mode === 'walk') {
+      mouseNdc.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseNdc.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouseNdc, camera);
+      const hits = raycaster.intersectObject(floor);
+      if (hits.length) {
+        const pt = hits[0].point;
+        walkGoal = new THREE.Vector3(Math.max(-4.5, Math.min(4.5, pt.x)), 0, Math.max(-2.6, Math.min(3.2, pt.z)));
+      }
+    }
+    dragging = false;
+  });
+  renderer.domElement.addEventListener('wheel', e => {
+    camDist = Math.max(2.6, Math.min(11.5, camDist + e.deltaY * 0.004));
+  }, { passive: true });
+
+  // UI Mode Buttons
+  const btnWalk = document.getElementById('btn-walk');
+  const btnOrbit = document.getElementById('btn-orbit');
+  const btnLineup = document.getElementById('btn-lineup');
+  const btnCompare = document.getElementById('btn-compare');
+  const badgeMode = document.getElementById('badge-mode');
+
+  function setMode(m) {
+    mode = m;
+    [btnWalk, btnOrbit, btnLineup].forEach(b => b.classList.remove('active'));
+    if (m === 'walk') {
+      btnWalk.classList.add('active');
+      camDist = 6.0; camPitch = 0.20;
+    } else if (m === 'orbit') {
+      btnOrbit.classList.add('active');
+      camDist = 5.8; camPitch = 0.16;
+    } else if (m === 'lineup') {
+      btnLineup.classList.add('active');
+      laila.root.position.set(-1.65, 0, 0); laila.facingYaw = 0; laila.speed = 0;
+      salma.root.position.set(-0.62, 0, 0); salma.facingYaw = 0; salma.speed = 0;
+      mom.root.position.set(0.55, 0, 0); mom.facingYaw = 0; mom.speed = 0;
+      dad.root.position.set(1.75, 0, 0); dad.facingYaw = 0; dad.speed = 0;
+      walkGoal = null;
+      camYaw = 0; camPitch = 0.08; camDist = 6.0;
+      targetX = 0.05; targetY = 0.90; targetZ = 0;
+    }
+  }
+  window.setDemoMode = setMode;
+  window.setCompare3D = function (v) {
+    use3DCompare = !!v;
+    cast.forEach(ch => {
+      ch.hd2dGroup.visible = !use3DCompare;
+      ch.model3D.root.visible = use3DCompare;
+    });
+    btnCompare.textContent = use3DCompare ? '🎨 Switch Back to HD-2D Watercolor' : '🎭 Compare: Switch to 3D Stylized';
+    badgeMode.textContent = use3DCompare ? 'Style: 3D Stylized' : 'Style: HD-2D Watercolor';
+  };
+  window.setDemoCam = function (yaw, pitch, dist) {
+    camYaw = yaw; camPitch = pitch; camDist = dist;
+  };
+
+  btnWalk.onclick = () => setMode('walk');
+  btnOrbit.onclick = () => setMode('orbit');
+  btnLineup.onclick = () => setMode('lineup');
+  btnCompare.onclick = () => window.setCompare3D(!use3DCompare);
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function normAngle(a) {
+    while (a > Math.PI) a -= Math.PI * 2;
+    while (a < -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
+  function updateHD2DSprite(ch, dt, elapsed) {
+    // 1. Always billboard horizontally toward camera around Y axis (classic HD-2D Octopath / Paper Mario!)
+    const dxCam = camera.position.x - ch.root.position.x;
+    const dzCam = camera.position.z - ch.root.position.z;
+    const camAngleToChar = Math.atan2(dxCam, dzCam);
+    ch.hd2dGroup.rotation.y = camAngleToChar;
+    ch.model3D.root.rotation.y = ch.facingYaw;
+
+    // 2. Relative angle between character's facing direction and vector toward camera
+    // rel = 0 -> facing camera (Front); +PI/2 -> facing camera's RIGHT; -PI/2 -> facing camera's LEFT; PI -> Back!
+    const rel = normAngle(ch.facingYaw - camAngleToChar);
+    const absRel = Math.abs(rel);
+    const isMoving = ch.speed > 0.12;
+
+    let frameIdx = 0;
+    let flip = 1; // +1 = normal (sheet side/3-4 faces right), -1 = horizontally flipped (faces left)
+
+    if (absRel < 0.45) {
+      // Facing camera (Front)
+      if (isMoving) {
+        // Alternate gently between front-3/4 right & left for lively forward walk!
+        const step = Math.sin(ch.walkPhase) >= 0 ? 1 : -1;
+        frameIdx = 1;
+        flip = step;
+      } else {
+        frameIdx = 0;
+        flip = 1;
+      }
+    } else if (absRel < 1.22) {
+      // Front 3/4 view!
+      frameIdx = 1;
+      flip = rel >= 0 ? 1 : -1;
+    } else if (absRel < 2.28) {
+      // Pure side profile view!
+      frameIdx = 2;
+      flip = rel >= 0 ? 1 : -1;
+    } else {
+      // Back view!
+      frameIdx = 3;
+      flip = isMoving ? (Math.sin(ch.walkPhase) >= 0 ? 1 : -1) : 1;
+    }
+
+    // Smooth quick Paper-Mario paper-flip transition when changing horizontal direction
+    ch.flipSign = flip;
+    ch.visualFlip += (ch.flipSign - ch.visualFlip) * Math.min(1, dt * 18);
+    if (Math.abs(ch.visualFlip) < 0.08) ch.visualFlip = ch.flipSign * 0.08;
+
+    // Apply UV frame offset (4 equal frames across 0..1)
+    ch.tex.offset.x = frameIdx * 0.25;
+
+    // Living Paper-Mario / Ghibli walk bounce + breathing sway!
+    if (isMoving) {
+      ch.walkPhase += dt * 9.5;
+      const bounce = Math.abs(Math.sin(ch.walkPhase)) * 0.095;
+      const squash = Math.sin(ch.walkPhase * 2) * 0.032;
+      ch.spriteMesh.position.y = bounce;
+      ch.spriteMesh.scale.set(ch.visualFlip * (1.0 - squash * 0.6), 1.0 + squash, 1.0);
+      ch.spriteMesh.rotation.z = Math.sin(ch.walkPhase) * 0.045;
+      // Also animate 3D comparison model if toggled
+      const sw = Math.sin(ch.walkPhase) * 0.52;
+      ch.model3D.leftLeg.rotation.x = sw;
+      ch.model3D.rightLeg.rotation.x = -sw;
+      ch.model3D.leftArm.rotation.x = -sw * 0.65;
+      ch.model3D.rightArm.rotation.x = sw * 0.65;
+    } else {
+      const breath = Math.sin(elapsed * 2.2 + ch.homeX) * 0.012;
+      ch.spriteMesh.position.y = 0;
+      ch.spriteMesh.scale.set(ch.visualFlip * (1.0 - breath * 0.5), 1.0 + breath, 1.0);
+      ch.spriteMesh.rotation.z = Math.sin(elapsed * 1.4 + ch.homeZ) * 0.008;
+      ch.model3D.leftLeg.rotation.x = 0;
+      ch.model3D.rightLeg.rotation.x = 0;
+      ch.model3D.leftArm.rotation.x = 0;
+      ch.model3D.rightArm.rotation.x = 0;
+    }
+  }
+
+  const clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const elapsed = clock.elapsedTime;
+    LS.ghibli.update(dt, elapsed);
+
+    if (mode === 'orbit') {
+      camYaw += dt * 0.58;
+      // Gentle stroll in place for Laila & Salma so you see walking + 360° turnaround!
+      laila.speed = 1.6;
+      salma.speed = 1.6;
+      mom.speed = 0;
+      dad.speed = 0;
+      targetX += (0 - targetX) * Math.min(1, dt * 5);
+      targetY += (0.88 - targetY) * Math.min(1, dt * 5);
+      targetZ += (-0.25 - targetZ) * Math.min(1, dt * 5);
+    } else if (mode === 'walk') {
+      // WASD / Arrow movement relative to camera yaw
+      let ix = 0, iz = 0;
+      if (keys['KeyW'] || keys['ArrowUp']) iz -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) iz += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) ix -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) ix += 1;
+
+      if (ix !== 0 || iz !== 0) {
+        const len = Math.hypot(ix, iz);
+        ix /= len; iz /= len;
+        const cosY = Math.cos(camYaw), sinY = Math.sin(camYaw);
+        const wx = ix * cosY + iz * sinY;
+        const wz = -ix * sinY + iz * cosY;
+        laila.root.position.x = Math.max(-4.8, Math.min(4.8, laila.root.position.x + wx * 2.5 * dt));
+        laila.root.position.z = Math.max(-2.6, Math.min(3.4, laila.root.position.z + wz * 2.5 * dt));
+        laila.facingYaw = Math.atan2(wx, wz);
+        laila.speed = 2.5;
+      } else if (walkGoal) {
+        const dx = walkGoal.x - laila.root.position.x;
+        const dz = walkGoal.z - laila.root.position.z;
+        const d = Math.hypot(dx, dz);
+        if (d > 0.14) {
+          const spd = Math.min(2.4, d * 3.0);
+          laila.root.position.x += (dx / d) * spd * dt;
+          laila.root.position.z += (dz / d) * spd * dt;
+          laila.facingYaw = Math.atan2(dx, dz);
+          laila.speed = spd;
+        } else {
+          walkGoal = null;
+          laila.speed = 0;
+        }
+      } else {
+        laila.speed = 0;
+      }
+
+      // Salma joyfully follows Laila!
+      const sdx = laila.root.position.x - salma.root.position.x;
+      const sdz = laila.root.position.z - salma.root.position.z;
+      const sd = Math.hypot(sdx, sdz);
+      if (sd > 1.05) {
+        const spd = Math.min(2.35, (sd - 0.85) * 2.8);
+        salma.root.position.x += (sdx / sd) * spd * dt;
+        salma.root.position.z += (sdz / sd) * spd * dt;
+        salma.facingYaw = Math.atan2(sdx, sdz);
+        salma.speed = spd;
+      } else {
+        salma.speed = 0;
+      }
+
+      // Mom & Dad warmly turn toward Laila as she walks around the living room!
+      [mom, dad].forEach(p => {
+        p.speed = 0;
+        const mdx = laila.root.position.x - p.root.position.x;
+        const mdz = laila.root.position.z - p.root.position.z;
+        p.facingYaw = Math.atan2(mdx, mdz);
+      });
+
+      targetX += (laila.root.position.x * 0.45 - targetX) * Math.min(1, dt * 4);
+      targetY += (0.86 - targetY) * Math.min(1, dt * 4);
+      targetZ += (laila.root.position.z * 0.45 - targetZ) * Math.min(1, dt * 4);
+    }
+
+    camera.position.set(
+      targetX + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
+      targetY + Math.sin(camPitch) * camDist,
+      targetZ + Math.cos(camYaw) * Math.cos(camPitch) * camDist
+    );
+    camera.lookAt(targetX, targetY, targetZ);
+
+    cast.forEach(ch => updateHD2DSprite(ch, dt, elapsed));
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>
