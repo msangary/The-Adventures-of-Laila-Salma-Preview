@@ -481,24 +481,37 @@ window.LailaSalma = window.LailaSalma || {};
     addCol(-10.5, 1.0, 3.4, 3.4);
 
     // 6. Cozy Skyview Airport Lounge & Seating (East Hall, X = 10.5, Z = 1.0)
-    const loungeMat = LS.makeToonMat(0xb67d52);
+    const loungeWoodTex = (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex('woodFloor', 1.4, 0.6) : null;
+    const loungeMat = LS.makeToonMat(0xc48b5c, loungeWoodTex ? { map: loungeWoodTex } : {});
+    const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
     [[9.5, -0.5], [9.5, 2.5], [13.2, 1.0]].forEach(bp => {
       const bench = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.46, 0.85), loungeMat);
-      bench.position.set(bp[0], 0.32, bp[1]); bench.castShadow = true; worldGroup.add(bench);
+      bench.position.set(bp[0], 0.32, bp[1]); bench.castShadow = true; addOut(bench, 0.015); worldGroup.add(bench);
       const back = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.55, 0.14), tealMat);
-      back.position.set(bp[0], 0.78, bp[1] - 0.36); worldGroup.add(back);
+      back.position.set(bp[0], 0.78, bp[1] - 0.36); addOut(back, 0.015); worldGroup.add(back);
       addCol(bp[0], bp[1], 1.15, 0.55);
     });
 
-    // Lush Studio Ghibli Potted Trees flanking the Airport Curb & Lounge!
-    const treeSpots = [[-14.5, 9.8, 0.82], [14.5, 9.8, 0.82], [-16.2, -3.5, 0.78], [16.2, -3.5, 0.78]];
+    // Hand-Painted Studio Ghibli Potted Lemon & Flowering Trees flanking the Airport Curb & Lounge (with solid circle colliders!)
+    const treeSpots = [
+      [-14.5, 9.8, 1.24, 'lemon'], [14.5, 9.8, 1.24, 'lemon'],
+      [-16.2, -3.5, 1.12, 'flowers'], [16.2, -3.5, 1.12, 'flowers']
+    ];
     treeSpots.forEach(ts => {
-      const tr = (LS.ghibli && LS.ghibli.buildOrangeTree)
-        ? LS.ghibli.buildOrangeTree(ts[2], { potHex: 0x0284c7, rimHex: 0xf4be44, bandHex: 0x38bdf8, fruitHex: null, withBlossoms: false })
+      const tr = (LS.ghibli && LS.ghibli.buildPaintedPottedPlant)
+        ? LS.ghibli.buildPaintedPottedPlant(ts[3], ts[2], { potHex: 0x1e6fa8, bandHex: 0xf4be44 })
         : new THREE.Group();
       tr.position.set(ts[0], 0, ts[1]);
       worldGroup.add(tr);
-      addCol(ts[0], ts[1], 0.65, 0.65);
+      W.colliders.push({ type: 'circle', x: ts[0], z: ts[1], r: 0.62 });
+    });
+    // Botanical trees framing the sunny airport entrance boulevard
+    [[-21.5, 13.5, 'sakura', 1.15], [21.5, 13.5, 'olive', 1.18]].forEach(bt => {
+      if (LS.ghibli && LS.ghibli.buildGhibliTree) {
+        const tr = LS.ghibli.buildGhibliTree(bt[2], bt[3]);
+        tr.position.set(bt[0], 0, bt[1]); worldGroup.add(tr);
+        W.colliders.push({ type: 'circle', x: bt[0], z: bt[1], r: 0.72 * bt[3] });
+      }
     });
 
     // 7. Parked Gray Nissan Qashqai waiting at Departures Curb to drive Home or anywhere local!

@@ -168,6 +168,9 @@ window.LailaSalma = window.LailaSalma || {};
       if (btn) btn.textContent = '🌤️';
     }
     if (LS.hdPost && LS.hdPost.setTimeMode) LS.hdPost.setTimeMode(mode);
+    if (LS.ghibli && LS.ghibli.setTimeLighting) {
+      LS.ghibli.setTimeLighting(mode, dirLight.position, scene.fog.color);
+    }
 
     if (hdCloudsGroup) {
       const topCol = mode === 1 ? 0xffe0b8 : (mode === 2 ? 0x6b80b0 : 0xfffdf8);
@@ -369,6 +372,9 @@ window.LailaSalma = window.LailaSalma || {};
   function clearWorldGroup() {
     if (LS.hdPost && LS.hdPost.clearAnimatedUniforms) {
       LS.hdPost.clearAnimatedUniforms();
+    }
+    if (LS.ghibli && LS.ghibli.clearWorldSway) {
+      LS.ghibli.clearWorldSway();
     }
     zoneBeacons = [];
     if (!worldGroup) return;
@@ -1820,21 +1826,61 @@ window.LailaSalma = window.LailaSalma || {};
     pos.z = Math.max(b.minZ, Math.min(b.maxZ, pos.z));
     const r = radius || 0.45;
     const cols = LS.activeWorld ? LS.activeWorld.colliders : [];
-    for (let i = 0; i < cols.length; i++) {
-      const c = cols[i];
-      if (pos.x + r > c.minX && pos.x - r < c.maxX && pos.z + r > c.minZ && pos.z - r < c.maxZ) {
-        const dL = Math.abs((pos.x + r) - c.minX);
-        const dR = Math.abs(c.maxX - (pos.x - r));
-        const dT = Math.abs((pos.z + r) - c.minZ);
-        const dB = Math.abs(c.maxZ - (pos.z - r));
-        const m = Math.min(dL, dR, dT, dB);
-        if (m === dL) pos.x = c.minX - r;
-        else if (m === dR) pos.x = c.maxX + r;
-        else if (m === dT) pos.z = c.minZ - r;
-        else pos.z = c.maxZ + r;
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < cols.length; i++) {
+        const c = cols[i];
+        if (c.type === 'circle') {
+          const dx = pos.x - c.x;
+          const dz = pos.z - c.z;
+          const minD = (c.r || 0.6) + r;
+          const dist = Math.hypot(dx, dz);
+          if (dist < minD) {
+            if (dist > 0.0001) {
+              pos.x = c.x + (dx / dist) * minD;
+              pos.z = c.z + (dz / dist) * minD;
+            } else {
+              pos.z = c.z + minD;
+            }
+          }
+        } else if (c.type === 'obb') {
+          const dx = pos.x - c.x;
+          const dz = pos.z - c.z;
+          const cos = Math.cos(c.rotY || 0);
+          const sin = Math.sin(c.rotY || 0);
+          // Transform world delta into bench-local frame
+          let lx = dx * cos - dz * sin;
+          let lz = dx * sin + dz * cos;
+          const hx = (c.hx || 0.95) + r;
+          const hz = (c.hz || 0.35) + r;
+          if (Math.abs(lx) < hx && Math.abs(lz) < hz) {
+            const penX = hx - Math.abs(lx);
+            const penZ = hz - Math.abs(lz);
+            if (penX < penZ) {
+              lx = lx >= 0 ? hx : -hx;
+            } else {
+              lz = lz >= 0 ? hz : -hz;
+            }
+            // Transform resolved local coordinates back to world space
+            pos.x = c.x + lx * cos + lz * sin;
+            pos.z = c.z - lx * sin + lz * cos;
+          }
+        } else if (pos.x + r > c.minX && pos.x - r < c.maxX && pos.z + r > c.minZ && pos.z - r < c.maxZ) {
+          const dL = Math.abs((pos.x + r) - c.minX);
+          const dR = Math.abs(c.maxX - (pos.x - r));
+          const dT = Math.abs((pos.z + r) - c.minZ);
+          const dB = Math.abs(c.maxZ - (pos.z - r));
+          const m = Math.min(dL, dR, dT, dB);
+          if (m === dL) pos.x = c.minX - r;
+          else if (m === dR) pos.x = c.maxX + r;
+          else if (m === dT) pos.z = c.minZ - r;
+          else pos.z = c.maxZ + r;
+        }
       }
+      pos.x = Math.max(b.minX, Math.min(b.maxX, pos.x));
+      pos.z = Math.max(b.minZ, Math.min(b.maxZ, pos.z));
     }
   }
+  LS.resolveCollisions = resolveCollisions;
 
   function updateSalmaCompanion(dt, elapsed, isRunning, speed) {
     const leader = getLeader();
@@ -2608,6 +2654,7 @@ window.LailaSalma = window.LailaSalma || {};
           if (d > 0.25) {
             mp.x += (dx / d) * 7.2 * dt;
             mp.z += (dz / d) * 7.2 * dt;
+            resolveCollisions(mp, 0.34);
             mp.y = getGroundH(mp.x, mp.z);
             mp.rotation.y = Math.atan2(dx, dz);
           } else {
@@ -2620,6 +2667,7 @@ window.LailaSalma = window.LailaSalma || {};
           if (d > 1.0) {
             mp.x += (dx / d) * 6.8 * dt;
             mp.z += (dz / d) * 6.8 * dt;
+            resolveCollisions(mp, 0.34);
             mp.y = getGroundH(mp.x, mp.z);
             mp.rotation.y = Math.atan2(dx, dz);
             if (LS.activeWorld.mochiBall) LS.activeWorld.mochiBall.position.set(mp.x, mp.y + 0.25, mp.z);
@@ -3293,6 +3341,7 @@ window.LailaSalma = window.LailaSalma || {};
         if (LS.tickSafariAmbience) LS.tickSafariAmbience(dt);
         updateZoneBeacons(elapsed);
         updateHDAtmosphere(dt, elapsed);
+        if (LS.ghibli && LS.ghibli.update) LS.ghibli.update(dt, elapsed);
         if (LS.hdPost && LS.hdPost.update) LS.hdPost.update(elapsed);
         updateSparklesAndStars(dt, elapsed);
         updateCamera(dt, elapsed);

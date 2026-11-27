@@ -5,34 +5,38 @@ window.LailaSalma = window.LailaSalma || {};
     try { fn(); } catch (e) { console.error('[Home:' + name + ']', e); }
   }
 
-  // Helper: Detailed Ghibli Wooden Park Bench (slatted seat, backrest & cast-iron armrests)
+  // Helper: Detailed Ghibli Wooden Park Bench (wood-grain slats, backrest, cast-iron armrests & ink outlines!)
   function createParkBench(woodHex, ironHex) {
     const g = new THREE.Group();
-    const wood = LS.makeToonMat(woodHex || 0x9c6644);
-    const iron = LS.makeToonMat(ironHex || 0x2d3a45);
+    const woodTex = (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex('woodFloor', 1.4, 0.5) : null;
+    const wood = LS.makeToonMat(woodHex || 0xb67b4d, woodTex ? { map: woodTex } : {});
+    const iron = LS.makeToonMat(ironHex || 0x2c363f);
+    const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
     // Seat slats
     [-0.14, 0.04, 0.22].forEach(z => {
-      const slat = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.06, 0.14), wood);
-      slat.position.set(0, 0.46, z);
-      slat.castShadow = true;
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.065, 0.14), wood);
+      slat.position.set(0, 0.48, z);
+      slat.castShadow = true; slat.receiveShadow = true;
+      addOut(slat, 0.015);
       g.add(slat);
     });
-    // Backrest slats
+    // Backrest slats (at local -Z so sitting front faces +Z!)
     [0.68, 0.86].forEach(y => {
-      const back = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.13, 0.06), wood);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.135, 0.06), wood);
       back.position.set(0, y, -0.26);
-      back.rotation.x = -0.14;
+      back.rotation.x = -0.16;
       back.castShadow = true;
+      addOut(back, 0.015);
       g.add(back);
     });
-    // Cast-iron side legs & curved armrests
+    // Cast-iron side legs & armrests
     [-0.92, 0.92].forEach(x => {
-      const legF = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.46, 0.08), iron);
-      legF.position.set(x, 0.23, 0.22); g.add(legF);
-      const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.92, 0.08), iron);
-      legB.position.set(x, 0.46, -0.24); g.add(legB);
+      const legF = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.48, 0.08), iron);
+      legF.position.set(x, 0.24, 0.22); legF.castShadow = true; g.add(legF);
+      const legB = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.94, 0.08), iron);
+      legB.position.set(x, 0.47, -0.24); legB.castShadow = true; g.add(legB);
       const arm = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.56), iron);
-      arm.position.set(x, 0.66, 0.0); g.add(arm);
+      arm.position.set(x, 0.67, 0.0); arm.castShadow = true; g.add(arm);
     });
     return g;
   }
@@ -60,45 +64,31 @@ window.LailaSalma = window.LailaSalma || {};
     return g;
   }
 
-  // Helper: Lush Ghibli Flower Planter / Raised Garden Bed
+  // Helper: Hand-Painted Studio Ghibli Stone & Terracotta Flower Planter (zero sphere blobs!)
   function createFlowerPlanter(w, d, flowerColors) {
     const g = new THREE.Group();
-    const stone = LS.makeToonMat(0xe5dac8);
-    const soil = LS.makeToonMat(0x5c4028);
-    const bush = LS.makeToonMat(0x4b9349);
+    const plasterTex = (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex('plaster', 1.4, 0.6) : null;
+    const stone = LS.makeToonMat(0xe5dac8, plasterTex ? { map: plasterTex } : {});
+    const rimMat = LS.makeToonMat(0xd4c3ab);
+    const soil = LS.makeToonMat(0x4b3322);
     const box = new THREE.Mesh(new THREE.BoxGeometry(w, 0.36, d), stone);
     box.position.y = 0.18; box.castShadow = true; box.receiveShadow = true; g.add(box);
-    const dirt = new THREE.Mesh(new THREE.BoxGeometry(w - 0.16, 0.08, d - 0.16), soil);
-    dirt.position.y = 0.35; g.add(dirt);
-    const cols = flowerColors || [0xff7aa2, 0xffd166, 0xc77dff, 0xff9f68];
-    const countX = Math.max(2, Math.floor(w * 1.45));
-    const countZ = d > 1.1 ? 2 : 1;
-    for (let ix = 0; ix < countX; ix++) {
-      for (let iz = 0; iz < countZ; iz++) {
-        const fx = -w * 0.36 + (countX > 1 ? (ix / (countX - 1)) * (w * 0.72) : 0);
-        const fz = countZ > 1 ? (-d * 0.24 + (iz / (countZ - 1)) * (d * 0.48)) : 0;
-        const leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(0.28, 0), bush);
-        leaf.scale.set(1.2, 0.78, 1.2);
-        leaf.position.set(fx, 0.48, fz);
-        g.add(leaf);
-        const fl = new THREE.Mesh(new THREE.SphereGeometry(0.12, 7, 6), LS.makeToonMat(cols[(ix + iz) % cols.length]));
-        fl.position.set(fx + ((ix % 2) ? 0.06 : -0.06), 0.67, fz);
-        g.add(fl);
-      }
+    const rim = new THREE.Mesh(new THREE.BoxGeometry(w + 0.10, 0.07, d + 0.10), rimMat);
+    rim.position.y = 0.37; g.add(rim);
+    const dirt = new THREE.Mesh(new THREE.BoxGeometry(w - 0.16, 0.06, d - 0.16), soil);
+    dirt.position.y = 0.375; g.add(dirt);
+    if (LS.ghibli && LS.ghibli.populateFlowerbox) {
+      LS.ghibli.populateFlowerbox(g, w, 0.39, 0, Math.max(3, Math.round(w * 2.1)));
     }
     return g;
   }
 
-  // Helper: Lush Studio Ghibli Potted Olive / Citrus Tree for Entrances & Patios
+  // Helper: Hand-Painted Studio Ghibli Potted Lemon / Flowering Tree for Entrances & Patios
   function createPottedTree(potHex, leafHex, fruitHex) {
-    if (LS.ghibli && LS.ghibli.buildOrangeTree) {
-      return LS.ghibli.buildOrangeTree(0.56, {
-        potHex: potHex || 0xc66b47,
-        rimHex: potHex || 0xd4966a,
-        bandHex: 0xf4e3c1,
-        midHex: leafHex || 0x4f9451,
-        fruitHex: fruitHex || null,
-        withBlossoms: !!fruitHex
+    if (LS.ghibli && LS.ghibli.buildPaintedPottedPlant) {
+      return LS.ghibli.buildPaintedPottedPlant(fruitHex ? 'lemon' : 'flowers', 1.08, {
+        potHex: potHex || 0xc9623f,
+        bandHex: 0xe39c72
       });
     }
     const g = new THREE.Group();
@@ -402,6 +392,12 @@ window.LailaSalma = window.LailaSalma || {};
     function addCollider(x, z, hw, hd) {
       W.colliders.push({ minX: x - hw, maxX: x + hw, minZ: z - hd, maxZ: z + hd });
     }
+    function addCircleCol(x, z, r) {
+      W.colliders.push({ type: 'circle', x: x, z: z, r: r });
+    }
+    function addObbCol(x, z, rotY, hx, hz) {
+      W.colliders.push({ type: 'obb', x: x, z: z, rotY: rotY, hx: hx, hz: hz });
+    }
 
     W.getGroundHeight = function () { return 0; };
 
@@ -418,11 +414,14 @@ window.LailaSalma = window.LailaSalma || {};
       }
     });
 
-    // Sunlit Ghibli Meadow, Stone-Curbed Avenues, Sidewalks & Crosswalks
+    // Sunlit Hand-Painted Ghibli Meadow, Stone-Curbed Avenues, Sidewalks & Crosswalks
     safeRun('ground', () => {
+      const meadowTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+        ? LS.ghibli.getPaintedTex('meadow', 14, 14)
+        : LS.createGrassTexture('tokyo');
       const grass = new THREE.Mesh(
         new THREE.PlaneGeometry(180, 180),
-        LS.makeSurfaceMat(LS.createGrassTexture('tokyo'))
+        LS.makeSurfaceMat(meadowTex)
       );
       grass.rotation.x = -Math.PI / 2;
       grass.receiveShadow = true;
@@ -481,21 +480,26 @@ window.LailaSalma = window.LailaSalma || {};
       addCrosswalk(-15.5, -4.5, Math.PI / 2, 6.6);
       addCrosswalk(15.5, -4.5, Math.PI / 2, 6.6);
 
-      // Central Cobblestone Fountain Courtyard Plaza with Concentric Stone Ring Border
+      // Central Hand-Painted Cobblestone Fountain Courtyard Plaza with Concentric Stone Ring Border
       const plazaBorder = new THREE.Mesh(new THREE.CircleGeometry(11.35, 36), curbMat);
       plazaBorder.rotation.x = -Math.PI / 2; plazaBorder.position.set(0, 0.025, 3.0); plazaBorder.receiveShadow = true; worldGroup.add(plazaBorder);
+      const cobbleTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+        ? LS.ghibli.getPaintedTex('cobble', 6, 6)
+        : LS.createStonePathTexture();
       const plaza = new THREE.Mesh(
         new THREE.CircleGeometry(10.65, 36),
-        LS.makeSurfaceMat(LS.createStonePathTexture())
+        LS.makeSurfaceMat(cobbleTex)
       );
       plaza.rotation.x = -Math.PI / 2; plaza.position.set(0, 0.030, 3.0); plaza.receiveShadow = true; worldGroup.add(plaza);
 
-      // Stepping-stone garden paths in the courtyard corners
-      [[-10.2, 11.2], [10.2, 11.2], [-10.2, -5.8], [10.2, -5.8]].forEach(p => {
+      // Hand-painted flowering stone garden beds in the courtyard corners (with solid OBB colliders!)
+      [[-10.4, 11.2], [10.4, 11.2], [-10.4, -5.8], [10.4, -5.8]].forEach(p => {
+        const rot = Math.atan2(-p[0], 3.0 - p[1]);
         const fb = createFlowerPlanter(3.0, 1.45, [0xff7aa2, 0xffd166, 0x90e0ef, 0xc77dff]);
         fb.position.set(p[0], 0, p[1]);
-        fb.rotation.y = Math.atan2(-p[0], 3.0 - p[1]);
+        fb.rotation.y = rot;
         worldGroup.add(fb);
+        addObbCol(p[0], p[1], rot, 1.55, 0.78);
       });
 
       // Instanced wind-swept Ghibli grass!
@@ -625,7 +629,7 @@ window.LailaSalma = window.LailaSalma || {};
       }
 
       worldGroup.add(fg);
-      addCollider(0, 3.0, 3.05, 3.05);
+      addCircleCol(0, 3.0, 3.35);
     });
 
     // -----------------------------------------------------------------------
@@ -723,10 +727,11 @@ window.LailaSalma = window.LailaSalma || {};
         }
       });
 
-      // Potted Citrus Trees flanking the Lobby Door!
+      // Hand-painted Potted Lemon Trees flanking the Lobby Door (with solid colliders!)
       [-3.15, 3.15].forEach(px => {
         const pt = createPottedTree(0xc66b47, 0x4b9450, 0xffc83d);
         pt.position.set(px, 0, 6.75); g.add(pt);
+        addCircleCol(px, -19.5 + 6.75, 0.56);
       });
 
       // Signboard above lobby
@@ -1443,19 +1448,25 @@ window.LailaSalma = window.LailaSalma || {};
       }
       W.zones.push({ id: 'park_hopscotch', label: 'Play Community Hopscotch 🎯', pos: new THREE.Vector3(20.6, 0, 19.2), radius: 2.4 });
 
-      // Detailed Slatted Community Benches around Courtyard & Avenues!
-      [
-        [-8.6, 3.0, Math.PI / 2], [8.6, 3.0, -Math.PI / 2],
-        [0, 14.2, Math.PI], [16.5, 20.5, Math.PI / 2],
-        [-14.5, 22.0, -Math.PI / 4]
-      ].forEach(b => {
+      // Properly Positioned Slatted Ghibli Benches (4 symmetrical inward-facing courtyard benches + 2 park/pond benches) with SOLID OBB Colliders!
+      const benchSpecs = [];
+      [42, -42, 138, -138].forEach(deg => {
+        const a = deg * Math.PI / 180;
+        const bx = Math.sin(a) * 8.45;
+        const bz = 3.0 + Math.cos(a) * 8.45;
+        benchSpecs.push([bx, bz, Math.atan2(0 - bx, 3.0 - bz)]);
+      });
+      benchSpecs.push([16.5, 20.5, Math.PI / 2]);         // Facing playground
+      benchSpecs.push([-14.5, 22.0, -Math.PI * 0.65]);    // Facing duck pond garden
+      benchSpecs.forEach(b => {
         const bench = createParkBench();
         bench.position.set(b[0], 0, b[1]);
         bench.rotation.y = b[2];
         worldGroup.add(bench);
+        addObbCol(b[0], b[1], b[2], 1.12, 0.36);
       });
 
-      // Vintage Cast-Iron Ghibli Street Lamps lining the Avenues & Courtyard!
+      // Vintage Cast-Iron Ghibli Street Lamps lining the Avenues & Courtyard (with solid circle colliders!)
       [
         [-5.2, 16.0], [5.2, 16.0],
         [-5.2, 25.2], [5.2, 29.0],
@@ -1465,21 +1476,21 @@ window.LailaSalma = window.LailaSalma || {};
         const lamp = createStreetLamp();
         lamp.position.set(lp[0], 0, lp[1]);
         worldGroup.add(lamp);
-        addCollider(lp[0], lp[1], 0.35, 0.35);
+        addCircleCol(lp[0], lp[1], 0.38);
       });
     });
 
-    // Organic Studio Ghibli Leaf-Cluster Trees + Golden Butterflies & Songbirds!
+    // Multi-Species Hand-Painted Studio Ghibli Botanical Trees (with solid circular trunk colliders!) + Wildlife!
     safeRun('trees_and_wildlife', () => {
       const treeCoords = [
-        [-11.5, -10.5, 'sakura', 1.18], [11.5, -10.5, 'sakura', 1.18],
-        [-13.5, 9.5, 'green', 1.24], [13.5, 9.5, 'olive', 1.20],
-        [-12.5, 29.5, 'gold', 1.14], [12.5, 30.0, 'green', 1.18],
-        [-20.5, -0.5, 'green', 1.08], [20.5, -0.5, 'olive', 1.10],
+        [-11.8, -10.8, 'sakura', 1.18], [11.8, -10.8, 'sakura', 1.18],
+        [-13.8, 9.5, 'camphor', 1.24], [13.8, 9.5, 'olive', 1.20],
+        [-12.5, 29.5, 'gold', 1.14], [12.5, 30.0, 'camphor', 1.18],
+        [-20.5, -0.5, 'camphor', 1.08], [20.5, -0.5, 'olive', 1.10],
         [-38, 4, 'sakura', 1.28], [38, 6, 'gold', 1.25],
-        [-36, -26, 'green', 1.32], [36, -24, 'green', 1.30],
-        [-15, -30, 'olive', 1.18], [15, -30, 'sakura', 1.22],
-        [-39, 28, 'green', 1.25], [39, 28, 'sakura', 1.24],
+        [-36, -26, 'camphor', 1.32], [36, -24, 'camphor', 1.30],
+        [-15, -30, 'cypress', 1.16], [15, -30, 'cypress', 1.18],
+        [-39, 28, 'camphor', 1.25], [39, 28, 'sakura', 1.24],
         [-29, 31, 'sakura', 1.15], [34, 14, 'olive', 1.12]
       ];
       treeCoords.forEach(tc => {
@@ -1488,7 +1499,7 @@ window.LailaSalma = window.LailaSalma || {};
           : new THREE.Group();
         tree.position.set(tc[0], 0, tc[1]);
         worldGroup.add(tree);
-        addCollider(tc[0], tc[1], 0.55, 0.55);
+        addCircleCol(tc[0], tc[1], (tc[2] === 'cypress' ? 0.56 : 0.72) * tc[3]);
       });
 
       // Fluttering Ghibli Butterflies over the Courtyard & Pond Flowers!
@@ -1977,12 +1988,29 @@ window.LailaSalma = window.LailaSalma || {};
 
     W.getGroundHeight = function () { return 0; };
 
-    // Warm Honey-Oak Floor & Cream Ghibli Walls + Wainscoting, Baseboards & Crown Molding!
-    const floorMat = LS.makeSurfaceMat(LS.createCedarPlankTexture(), { color: 0xe6c89c });
+    // Warm Hand-Painted Honey-Oak Floor, Woven Living Rug & Cream Ghibli Plaster Walls!
+    const woodFloorTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex('woodFloor', 5.5, 4.4)
+      : LS.createCedarPlankTexture();
+    const floorMat = LS.makeSurfaceMat(woodFloorTex, { color: 0xfff4e0 });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 16), floorMat);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; worldGroup.add(floor);
 
-    const wallMat = LS.makeToonMat(0xffffff, { map: LS.createPlasterTexture('#fbf2e3') });
+    if (LS.ghibli && LS.ghibli.getPaintedTex) {
+      const rug = new THREE.Mesh(
+        new THREE.PlaneGeometry(6.4, 4.6),
+        LS.makeSurfaceMat(LS.ghibli.getPaintedTex('wovenRug', 1, 1), { color: 0xffffff })
+      );
+      rug.rotation.x = -Math.PI / 2;
+      rug.position.set(3.8, 0.014, -4.4);
+      rug.receiveShadow = true;
+      worldGroup.add(rug);
+    }
+
+    const wallTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex('plaster', 3.5, 1.5)
+      : LS.createPlasterTexture('#fbf2e3');
+    const wallMat = LS.makeToonMat(0xfff6e8, { map: wallTex });
     const wainscotMat = LS.makeToonMat(0xf0dfc6);
     const trimMat = LS.makeToonMat(0x8c5e3c);
     const whiteTrim = LS.makeToonMat(0xfff9ee);
@@ -2072,12 +2100,12 @@ window.LailaSalma = window.LailaSalma || {};
         const curt = new THREE.Mesh(new THREE.BoxGeometry(0.58, 2.45, 0.16), LS.makeToonMat(wp[1]));
         curt.position.set(wp[0] + cx, 2.50, -7.64); worldGroup.add(curt);
       });
-      // Cute herb pots sitting right on the sunny windowsill!
-      [-0.75, 0.75].forEach(hx => {
-        const hPot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.16, 8), LS.makeToonMat(0xc66b47));
-        hPot.position.set(wp[0] + hx, 1.66, -7.62); worldGroup.add(hPot);
-        const hLeaf = new THREE.Mesh(new THREE.DodecahedronGeometry(0.14, 0), LS.makeToonMat(0x4b9349));
-        hLeaf.position.set(wp[0] + hx, 1.80, -7.62); worldGroup.add(hLeaf);
+      // Hand-painted terracotta blooming flower pots sitting right on the sunny windowsill!
+      [-0.78, 0.78].forEach(hx => {
+        if (LS.ghibli && LS.ghibli.buildPaintedPottedPlant) {
+          const sillPot = LS.ghibli.buildPaintedPottedPlant('flowers', 0.44);
+          sillPot.position.set(wp[0] + hx, 1.55, -7.62); worldGroup.add(sillPot);
+        }
       });
       // Slanted golden afternoon sunbeam!
       const sunbeam = new THREE.Mesh(new THREE.PlaneGeometry(3.0, 4.6), beamMat);
@@ -2265,8 +2293,9 @@ window.LailaSalma = window.LailaSalma || {};
     worldGroup.add(pianoG);
     addCol(8.6, -4.2, 0.9, 1.35);
 
-    const nePlant = createPottedTree(0xd9a773, 0x3b8a4e, null);
+    const nePlant = createPottedTree(0xc9623f, 0x3b8a4e, 0xffc83d);
     nePlant.position.set(8.8, 0, -6.9); worldGroup.add(nePlant);
+    W.colliders.push({ type: 'circle', x: 8.8, z: -6.9, r: 0.52 });
 
     W.zones.push({
       id: 'home_piano',
@@ -2475,13 +2504,16 @@ window.LailaSalma = window.LailaSalma || {};
     soundBar.position.set(-8.95, 0.71, 4.1); worldGroup.add(soundBar);
     const consoleBox = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.14, 0.58), LS.makeToonMat(0x3a4654));
     consoleBox.position.set(-9.25, 0.72, 5.2); worldGroup.add(consoleBox);
-    // Floating wall shelf above TV with trailing plant!
+    // Floating wall shelf above TV with hand-painted potted flower!
     const tvShelf = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.09, 2.4), trimMat);
     tvShelf.position.set(-9.68, 2.95, 4.1); worldGroup.add(tvShelf);
-    const sVine = new THREE.Mesh(new THREE.SphereGeometry(0.20, 7, 6), LS.makeToonMat(0x3f8f47));
-    sVine.scale.set(0.8, 1.8, 0.8); sVine.position.set(-9.55, 2.82, 3.15); worldGroup.add(sVine);
-    const swPlant = createPottedTree(0xe07a5f, 0x3f8f47, null);
+    if (LS.ghibli && LS.ghibli.buildPaintedPottedPlant) {
+      const sPot = LS.ghibli.buildPaintedPottedPlant('flowers', 0.42);
+      sPot.position.set(-9.62, 3.0, 3.25); worldGroup.add(sPot);
+    }
+    const swPlant = createPottedTree(0xc9623f, 0x3f8f47, 0xffc83d);
     swPlant.position.set(-9.1, 0, 6.6); worldGroup.add(swPlant);
+    W.colliders.push({ type: 'circle', x: -9.1, z: 6.6, r: 0.52 });
 
     const tvFrame = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.68, 2.82), LS.makeToonMat(0x222730));
     tvFrame.position.set(-9.45, 1.72, 4.1); worldGroup.add(tvFrame);

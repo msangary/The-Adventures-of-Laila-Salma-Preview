@@ -118,11 +118,17 @@ window.LailaSalma = window.LailaSalma || {};
 
   // Shared helper: High-Detail 4-walled Studio Ghibli room shell (wainscoting, crown trim & wood beams, 0 extra lights!)
   function buildRoomShell(worldGroup, w, d, h, floorHex, wallHex, trimHex, floorTex) {
-    const floorMat = LS.makeSurfaceMat(floorTex || LS.createCedarPlankTexture(), { color: floorTex ? 0xffffff : (floorHex || 0xe3c396) });
+    const defaultFloorTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex('woodFloor', Math.max(3, Math.round(w / 3.6)), Math.max(3, Math.round(d / 3.6)))
+      : LS.createCedarPlankTexture();
+    const floorMat = LS.makeSurfaceMat(floorTex || defaultFloorTex, { color: floorTex ? 0xffffff : (floorHex || 0xfff0d8) });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), floorMat);
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; worldGroup.add(floor);
 
-    const wallMat = LS.makeToonMat(0xffffff, { map: LS.createPlasterTexture(wallHex || '#fbf2e3') });
+    const plasterTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex('plaster', 3.2, 1.4)
+      : LS.createPlasterTexture(wallHex || '#fbf2e3');
+    const wallMat = LS.makeToonMat(wallHex || 0xfff5e6, { map: plasterTex });
     const wainMat = LS.makeToonMat(0xecdac0);
     const trimMat = LS.makeToonMat(trimHex || 0x8c5e3c);
     const whiteTrim = LS.makeToonMat(0xfff9ee);
@@ -308,20 +314,18 @@ window.LailaSalma = window.LailaSalma || {};
   }
 
   function addIndoorPlant(worldGroup, x, z, potHex, tall) {
+    if (LS.ghibli && LS.ghibli.buildPaintedPottedPlant) {
+      const plant = LS.ghibli.buildPaintedPottedPlant(tall ? 'lemon' : 'flowers', tall ? 1.04 : 0.90, {
+        potHex: potHex || 0xc9623f,
+        bandHex: 0xe39c72
+      });
+      plant.position.set(x, 0, z);
+      worldGroup.add(plant);
+      return plant;
+    }
     const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.21, 0.46, 10), LS.makeToonMat(potHex || 0xc66b47));
     pot.position.set(x, 0.23, z); pot.castShadow = true; worldGroup.add(pot);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.04, 7, 12), LS.makeToonMat(potHex || 0xc66b47));
-    rim.rotation.x = Math.PI / 2; rim.position.set(x, 0.45, z); worldGroup.add(rim);
-    if (tall) {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 0.72, 7), LS.makeToonMat(0x6e472b));
-      stem.position.set(x, 0.76, z); worldGroup.add(stem);
-    }
-    const baseY = tall ? 1.18 : 0.72;
-    const leafMat = LS.makeToonMat(0x3f8f47);
-    [[0, 0, 0, 0.38], [0.20, 0.24, 0.12, 0.27], [-0.20, 0.20, -0.1, 0.27], [0.04, 0.42, -0.06, 0.24]].forEach(b => {
-      const m = new THREE.Mesh(new THREE.DodecahedronGeometry(b[3], 1), leafMat);
-      m.position.set(x + b[0], baseY + b[1], z + b[2]); worldGroup.add(m);
-    });
+    return pot;
   }
 
   // =========================================================================
@@ -1386,11 +1390,16 @@ window.LailaSalma = window.LailaSalma || {};
     const W_AP = 22, D_AP = 15, H_AP = 4.6;
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(W_AP, D_AP),
-      LS.makeSurfaceMat(LS.createCedarPlankTexture(), { color: 0xe6c89c })
+      LS.makeSurfaceMat(
+        (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex('woodFloor', 6, 4.5) : LS.createCedarPlankTexture(),
+        { color: 0xfff2dc }
+      )
     );
     floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; worldGroup.add(floor);
 
-    const wallMat = LS.makeToonMat(0xffffff, { map: LS.createPlasterTexture('#fdf6e8') });
+    const wallMat = LS.makeToonMat(0xfff6e8, {
+      map: (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex('plaster', 3.5, 1.5) : LS.createPlasterTexture('#fdf6e8')
+    });
     const wainMat = LS.makeToonMat(0xf3e4cd);
     const trimMat = LS.makeToonMat(0x7c4e2e);
     const bronzeMat = LS.makeToonMat(0x2f353d);
@@ -2049,13 +2058,21 @@ window.LailaSalma = window.LailaSalma || {};
     worldGroup.add(poolG);
     addCol(7.4, -2.0, 4.4, 5.2);
 
-    // Tropical Palms & Parked Gray Nissan Qashqai by the Club Gate!
-    [[-14, -9, 'green', 1.25], [14.5, -9, 'green', 1.25], [-14, 9, 'sakura', 1.15], [14.5, 9, 'olive', 1.2]].forEach(tc => {
+    // Hand-Painted Botanical Trees (with solid trunk colliders!) & Parked Gray Nissan Qashqai by the Club Gate!
+    [[-14, -9, 'camphor', 1.25], [14.5, -9, 'camphor', 1.25], [-14, 9, 'sakura', 1.15], [14.5, 9, 'olive', 1.2]].forEach(tc => {
       if (LS.ghibli && LS.ghibli.buildGhibliTree) {
         const t = LS.ghibli.buildGhibliTree(tc[2], tc[3]);
         t.position.set(tc[0], 0, tc[1]); worldGroup.add(t);
+        W.colliders.push({ type: 'circle', x: tc[0], z: tc[1], r: 0.72 * tc[3] });
       }
     });
+    if (LS.ghibli && LS.ghibli.buildPaintedPottedPlant) {
+      [[-2.2, 6.2], [2.2, 6.2]].forEach(pp => {
+        const pt = LS.ghibli.buildPaintedPottedPlant('lemon', 1.05);
+        pt.position.set(pp[0], 0, pp[1]); worldGroup.add(pt);
+        W.colliders.push({ type: 'circle', x: pp[0], z: pp[1], r: 0.56 });
+      });
+    }
     if (LS.createNissanQashqai) {
       const suv = LS.createNissanQashqai();
       suv.position.set(-5.6, 0, 10.2);

@@ -431,211 +431,535 @@ window.LailaSalma = window.LailaSalma || {};
     });
   }
 
-  // Painterly Ghibli tree builder (flared roots + curved textured bark trunk + 4 boughs + 11-cluster core + crisp alpha-cutout Miyazaki leaf cards!)
+  // =========================================================================
+  // NEXT-GEN STUDIO GHIBLI SHARED ASSET LOADER, UNIFORMS, SKIN SHADER & OUTLINES
+  // =========================================================================
+  const PAINTED_PATHS = {
+    sky: 'assets/ghibli_showcase/sky_panorama.jpg',
+    cobble: 'assets/ghibli_showcase/stone_cobble.jpg',
+    plaster: 'assets/ghibli_showcase/plaster_wall.jpg',
+    roof: 'assets/ghibli_showcase/terracotta_roof.jpg',
+    meadow: 'assets/ghibli_showcase/meadow_ground.jpg',
+    bark: 'assets/ghibli_showcase/bark_ghibli.jpg',
+    sakuraBough: 'assets/ghibli_showcase/sakura_bough.png',
+    leafBough: 'assets/ghibli_showcase/leaf_bough.png',
+    woodFloor: 'assets/ghibli_showcase/wood_floor_ghibli.jpg',
+    wovenRug: 'assets/ghibli_showcase/woven_rug_ghibli.jpg',
+    pottedLemon: 'assets/ghibli_showcase/potted_lemon.png',
+    pottedFlowers: 'assets/ghibli_showcase/potted_flowers.png',
+    lailaFace: 'assets/ghibli_showcase/laila_face.jpg',
+    lailaFaceBlink: 'assets/ghibli_showcase/laila_face_blink.jpg',
+    salmaFace: 'assets/ghibli_showcase/salma_face.jpg',
+    salmaFaceBlink: 'assets/ghibli_showcase/salma_face_blink.jpg'
+  };
+  const CLAMP_KEYS = {
+    sakuraBough: true, leafBough: true, wovenRug: true,
+    pottedLemon: true, pottedFlowers: true,
+    lailaFace: true, lailaFaceBlink: true, salmaFace: true, salmaFaceBlink: true
+  };
+  const paintedTexCache = {};
+  let sharedTexLoader = null;
+
+  function getPaintedTex(key, rx, ry) {
+    const path = PAINTED_PATHS[key];
+    if (!path) return null;
+    const ck = key + '_' + (rx || 1) + '_' + (ry || 1);
+    if (paintedTexCache[ck]) return paintedTexCache[ck];
+    if (!sharedTexLoader) sharedTexLoader = new THREE.TextureLoader();
+    const baseKey = key + '_1_1';
+    let t;
+    if ((rx && rx !== 1 || ry && ry !== 1) && paintedTexCache[baseKey]) {
+      t = paintedTexCache[baseKey].clone();
+      t.needsUpdate = true;
+    } else {
+      t = sharedTexLoader.load(path);
+    }
+    if (CLAMP_KEYS[key]) {
+      t.wrapS = THREE.ClampToEdgeWrapping;
+      t.wrapT = THREE.ClampToEdgeWrapping;
+    } else {
+      t.wrapS = THREE.RepeatWrapping;
+      t.wrapT = (key === 'sky') ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
+    }
+    if (rx || ry) t.repeat.set(rx || 1, ry || 1);
+    t.anisotropy = LS.maxAnisotropy || 8;
+    paintedTexCache[ck] = t;
+    return t;
+  }
+
+  const GLOBAL = {
+    uTime: { value: 0.0 },
+    uSunDir: { value: new THREE.Vector3(22, 38, 18).normalize() },
+    uSunCol: { value: new THREE.Color(0xfff5dc) },
+    uShadowTint: { value: new THREE.Color(0x6e84c2) },
+    uRimCol: { value: new THREE.Color(0xffe7a8) },
+    uRimStrength: { value: 0.42 },
+    uFogCol: { value: new THREE.Color(0xc8ecfb) },
+    uFogDensity: { value: 0.0045 },
+    uTimeMode: { value: 0.0 }
+  };
+
+  const outlineMatCache = {};
+  function addInkOutline(mesh, scaleBoost, hex) {
+    if (!mesh || !mesh.geometry) return null;
+    const k = hex || 0x3b241c;
+    if (!outlineMatCache[k]) {
+      outlineMatCache[k] = new THREE.MeshBasicMaterial({ color: k, side: THREE.BackSide });
+    }
+    const om = new THREE.Mesh(mesh.geometry, outlineMatCache[k]);
+    const s = 1 + (scaleBoost || 0.024);
+    om.scale.set(s, s, s);
+    om.castShadow = false;
+    om.receiveShadow = false;
+    om.userData.isOutline = true;
+    om.userData.noCamClip = true;
+    mesh.add(om);
+    return om;
+  }
+
+  // Luminous Miyazaki Cel-Anime Skin Shader (warm cel-fill eliminates dark chin shadows & matches photo faces seamlessly!)
+  function createGhibliSkinMat(colorHex, mapTex) {
+    const col = new THREE.Color(colorHex !== undefined ? colorHex : 0xffffff);
+    const mat = new THREE.MeshStandardMaterial({
+      color: col.clone().multiplyScalar(0.84),
+      map: mapTex || null,
+      emissive: mapTex ? new THREE.Color(0xffffff) : col.clone(),
+      emissiveMap: mapTex || null,
+      emissiveIntensity: 0.17,
+      roughness: 0.86,
+      metalness: 0.0
+    });
+    mat.onBeforeCompile = function (shader) {
+      shader.uniforms.uSunDir = GLOBAL.uSunDir;
+      shader.uniforms.uRimCol = GLOBAL.uRimCol;
+      shader.uniforms.uRimStr = GLOBAL.uRimStrength;
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vSkinWPos;\nvarying vec3 vSkinWNorm;')
+        .replace('#include <worldpos_vertex>', [
+          '#include <worldpos_vertex>',
+          'vSkinWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+          'vSkinWNorm = normalize(mat3(modelMatrix) * objectNormal);'
+        ].join('\n'));
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', [
+          '#include <common>',
+          'uniform vec3 uSunDir; uniform vec3 uRimCol; uniform float uRimStr;',
+          'varying vec3 vSkinWPos; varying vec3 vSkinWNorm;'
+        ].join('\n'))
+        .replace('#include <dithering_fragment>', [
+          'vec3 nW = normalize(vSkinWNorm);',
+          'vec3 vDir = normalize(cameraPosition - vSkinWPos);',
+          'float ndl = dot(nW, normalize(uSunDir));',
+          'float cel = smoothstep(-0.35, 0.25, ndl);',
+          'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.95, 0.86, 0.82), gl_FragColor.rgb * vec3(1.00, 0.98, 0.96), cel);',
+          'float fres = pow(1.0 - max(0.0, dot(nW, vDir)), 3.6);',
+          'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.18;',
+          '#include <dithering_fragment>'
+        ].join('\n'));
+    };
+    return mat;
+  }
+
+  // Hand-Painted Botanical Bough Wind Shader (Miyazaki sakura & leafy boughs with cavity AO!)
+  const boughMatCache = {};
+  function getPaintedBoughMat(kind) {
+    const k = kind || 'green';
+    if (boughMatCache[k]) return boughMatCache[k];
+    const specs = {
+      sakura:  { tex: 'sakuraBough', sun: 0xfff0f5, shade: 0x8d638e, warm: 0xffd5e4 },
+      camphor: { tex: 'leafBough',   sun: 0xd8f594, shade: 0x3b6e68, warm: 0xa8d87a },
+      green:   { tex: 'leafBough',   sun: 0xd8f594, shade: 0x3b6e68, warm: 0xa8d87a },
+      olive:   { tex: 'leafBough',   sun: 0xdbe6b8, shade: 0x5c746e, warm: 0xaab890 },
+      cypress: { tex: 'leafBough',   sun: 0x79b87a, shade: 0x26484e, warm: 0x4b8760 },
+      gold:    { tex: 'leafBough',   sun: 0xfff099, shade: 0x9c6230, warm: 0xf4c452 },
+      maple:   { tex: 'leafBough',   sun: 0xffb870, shade: 0x7d2926, warm: 0xe66242 }
+    };
+    const sp = specs[k] || specs.green;
+    const mat = new THREE.ShaderMaterial({
+      side: THREE.DoubleSide,
+      uniforms: {
+        uMap: { value: getPaintedTex(sp.tex, 1, 1) },
+        uSunTint: { value: new THREE.Color(sp.sun) },
+        uShadeTint: { value: new THREE.Color(sp.shade) },
+        uWarmTint: { value: new THREE.Color(sp.warm) },
+        uSunDir: GLOBAL.uSunDir,
+        uTime: GLOBAL.uTime,
+        uTimeMode: GLOBAL.uTimeMode,
+        uRimCol: GLOBAL.uRimCol,
+        uRimStr: GLOBAL.uRimStrength,
+        uFogCol: GLOBAL.uFogCol,
+        uFogDensity: GLOBAL.uFogDensity
+      },
+      vertexShader: [
+        'attribute float aAO;',
+        'uniform float uTime;',
+        'varying vec2 vUv;',
+        'varying vec3 vSmoothNorm;',
+        'varying vec3 vWPos;',
+        'varying float vAO;',
+        'void main() {',
+        '  vUv = uv;',
+        '  vAO = aAO;',
+        '  vec4 wp = modelMatrix * vec4(position, 1.0);',
+        '  float flex = clamp(vAO, 0.25, 1.0);',
+        '  float gust = sin(uTime * 1.65 + wp.x * 0.45 + wp.z * 0.40) * 0.075 * flex;',
+        '  float flut = sin(uTime * 3.6 + wp.y * 2.0 + wp.x * 1.4) * 0.022 * flex;',
+        '  wp.x += gust + flut;',
+        '  wp.y += cos(uTime * 1.35 + wp.z * 0.8) * 0.026 * flex;',
+        '  vWPos = wp.xyz;',
+        '  vSmoothNorm = normalize(mat3(modelMatrix) * normal);',
+        '  gl_Position = projectionMatrix * viewMatrix * wp;',
+        '}'
+      ].join('\n'),
+      fragmentShader: [
+        'uniform sampler2D uMap;',
+        'uniform vec3 uSunTint;',
+        'uniform vec3 uShadeTint;',
+        'uniform vec3 uWarmTint;',
+        'uniform vec3 uSunDir;',
+        'uniform float uTimeMode;',
+        'uniform vec3 uRimCol;',
+        'uniform float uRimStr;',
+        'uniform vec3 uFogCol;',
+        'uniform float uFogDensity;',
+        'varying vec2 vUv;',
+        'varying vec3 vSmoothNorm;',
+        'varying vec3 vWPos;',
+        'varying float vAO;',
+        'void main() {',
+        '  vec4 tex = texture2D(uMap, vUv);',
+        '  if (tex.a < 0.45) discard;',
+        '  vec3 nW = normalize(vSmoothNorm);',
+        '  float ndl = dot(nW, normalize(uSunDir));',
+        '  float sunBand = smoothstep(-0.32, 0.42, ndl);',
+        '  float topSun = smoothstep(0.28, 0.78, ndl);',
+        '  vec3 lightCol = mix(uShadeTint, uWarmTint, sunBand);',
+        '  lightCol = mix(lightCol, uSunTint, topSun * 0.65);',
+        '  float ao = mix(0.56, 1.08, clamp(vAO, 0.0, 1.0));',
+        '  vec3 col = tex.rgb * lightCol * ao;',
+        '  vec3 vDir = normalize(cameraPosition - vWPos);',
+        '  float rim = pow(1.0 - max(0.0, dot(nW, vDir)), 3.2) * smoothstep(-0.15, 0.65, ndl) * clamp(vAO, 0.0, 1.0);',
+        '  col += uRimCol * rim * uRimStr * 0.28;',
+        '  if (uTimeMode > 1.5) col *= vec3(0.42, 0.54, 0.84);',
+        '  else if (uTimeMode > 0.5) col *= vec3(1.16, 0.84, 0.66);',
+        '  col = col / (1.0 + col * 0.14);',
+        '  float dist = length(cameraPosition - vWPos);',
+        '  float fogF = 1.0 - exp(-pow(dist * uFogDensity, 2.0));',
+        '  col = mix(col, uFogCol, clamp(fogF, 0.0, 0.72));',
+        '  gl_FragColor = vec4(col, 1.0);',
+        '}'
+      ].join('\n')
+    });
+    boughMatCache[k] = mat;
+    return mat;
+  }
+
+  function makeTaperedBranch(curve, segs, rBase, rTip, radialSegs) {
+    const rS = radialSegs || 7;
+    const geo = new THREE.TubeGeometry(curve, segs, 1.0, rS, false);
+    const pos = geo.attributes.position;
+    const ringSize = rS + 1;
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      const center = curve.getPointAt(t);
+      const rad = rBase + (rTip - rBase) * Math.pow(t, 0.85);
+      for (let j = 0; j < ringSize; j++) {
+        const idx = i * ringSize + j;
+        pos.setXYZ(
+          idx,
+          center.x + (pos.getX(idx) - center.x) * rad,
+          center.y + (pos.getY(idx) - center.y) * rad,
+          center.z + (pos.getZ(idx) - center.z) * rad
+        );
+      }
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  let sharedBarkMat = null;
+  let treeSeedCounter = 1;
+  // Next-Gen Studio Ghibli Multi-Species Botanical Tree (curving mossy bark + forked limbs + painted bough cards!)
   function buildGhibliTree(kind, scale) {
     const s = scale || 1.0;
     const g = new THREE.Group();
-    const palettes = {
-      sakura: { trunk: 0x5c4237, sun: 0xffcce0, mid: 0xf58db8, shade: 0xc95588, style: 'sakura' },
-      maple:  { trunk: 0x593a2b, sun: 0xffb856, mid: 0xe85d38, shade: 0xa82e22, style: 'leaf' },
-      gold:   { trunk: 0x5d412d, sun: 0xffea82, mid: 0xf2b138, shade: 0xc2761e, style: 'leaf' },
-      olive:  { trunk: 0x6b533b, sun: 0xb4e07c, mid: 0x6f9e4d, shade: 0x42682f, style: 'leaf' },
-      green:  { trunk: 0x614431, sun: 0xa2ea74, mid: 0x54ab4c, shade: 0x2e7038, style: 'leaf' }
-    };
-    const pal = palettes[kind] || palettes.green;
-    const trunkMat = createGhibliMat(pal.trunk, { map: getBarkTexture() });
+    if (!sharedBarkMat) {
+      sharedBarkMat = createGhibliMat(0xd4b69e, { map: getPaintedTex('bark', 1.5, 2.6) });
+    }
+    const barkMat = sharedBarkMat;
+    let seed = (treeSeedCounter++ * 7919 + (kind ? kind.charCodeAt(0) * 31 : 17)) % 99991 + 17;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 
-    // Flared organic root buttresses gripping the earth
-    for (let r = 0; r < 5; r++) {
-      const a = (r / 5) * Math.PI * 2 + 0.35;
-      const root = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.24, 0.78, 7), trunkMat);
-      root.position.set(Math.cos(a) * 0.26, 0.24, Math.sin(a) * 0.26);
-      root.rotation.z = -Math.cos(a) * 0.52;
-      root.rotation.x = Math.sin(a) * 0.52;
-      root.castShadow = true;
-      g.add(root);
+    const posArr = [], normArr = [], uvArr = [], aoArr = [], idxArr = [];
+    let vOff = 0;
+    const basePlane = new THREE.PlaneGeometry(1.0, 1.0);
+    const bp = basePlane.attributes.position.array;
+    const bu = basePlane.attributes.uv.array;
+    const bi = basePlane.index.array;
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
+    const vTmp = new THREE.Vector3(), nLoc = new THREE.Vector3(), nCrown = new THREE.Vector3();
+
+    const qCfg = LS.ghibli ? LS.ghibli.getQualityConfig() : QUALITY_PRESETS.high;
+    const densityScale = qCfg.id === 'lite' ? 0.55 : (qCfg.id === 'balanced' ? 0.78 : 1.0);
+
+    function addBoughPad(cx, cy, cz, rx, ry, rz, cardCount, cardScale, crownRef, droop) {
+      const cnt = Math.max(5, Math.round(cardCount * densityScale));
+      const padCenter = new THREE.Vector3(cx, cy, cz);
+      for (let k = 0; k < cnt; k++) {
+        const u = (k + 0.5) / cnt;
+        const phi = Math.acos(1 - 2 * u);
+        const theta = Math.PI * (1 + Math.sqrt(5)) * (k + cx * 3.1 + cz * 2.7);
+        const shellR = 0.34 + 0.66 * Math.pow(rnd(), 0.55);
+        const px = cx + Math.sin(phi) * Math.cos(theta) * rx * shellR;
+        const py = cy + Math.cos(phi) * ry * shellR - (droop ? Math.sin(phi) * droop * shellR : 0);
+        const pz = cz + Math.sin(phi) * Math.sin(theta) * rz * shellR;
+        const sz = cardScale * (0.78 + rnd() * 0.42);
+        const outDir = new THREE.Vector3(px - cx, (py - cy) * 1.1 + 0.2, pz - cz).normalize();
+        const yaw = Math.atan2(outDir.x, outDir.z) + (rnd() - 0.5) * 1.1;
+        const pitch = -0.35 + (rnd() - 0.5) * 0.72;
+        const roll = (rnd() - 0.5) * Math.PI * 1.2;
+        eu.set(pitch, yaw, roll);
+        q.setFromEuler(eu);
+        m4.compose(new THREE.Vector3(px, py, pz), q, new THREE.Vector3(sz, sz, sz));
+
+        nCrown.set(px - crownRef.x, (py - crownRef.y) * 1.35 + 0.32, pz - crownRef.z).normalize();
+        nLoc.set(px - padCenter.x, (py - padCenter.y) * 1.2 + 0.15, pz - padCenter.z).normalize();
+        nCrown.lerp(nLoc, 0.35).normalize();
+        const ao = Math.min(1.0, Math.max(0.18, 0.24 + shellR * 0.58 + Math.max(0, nCrown.y) * 0.28));
+
+        for (let v = 0; v < 4; v++) {
+          vTmp.set(bp[v * 3], bp[v * 3 + 1], bp[v * 3 + 2]).applyMatrix4(m4);
+          posArr.push(vTmp.x, vTmp.y, vTmp.z);
+          normArr.push(nCrown.x, nCrown.y, nCrown.z);
+          uvArr.push(bu[v * 2], bu[v * 2 + 1]);
+          aoArr.push(ao);
+        }
+        for (let t = 0; t < bi.length; t++) idxArr.push(vOff + bi[t]);
+        vOff += 4;
+      }
     }
 
-    // Gently curving 2-segment bark trunk
-    const trunkLow = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.37, 1.65, 10), trunkMat);
-    trunkLow.position.set(0.02, 0.82, 0);
-    trunkLow.rotation.z = -0.05;
-    trunkLow.castShadow = true;
-    trunkLow.receiveShadow = true;
-    g.add(trunkLow);
+    if (kind === 'cypress') {
+      const tCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0.06, 2.2, -0.05),
+        new THREE.Vector3(-0.04, 4.8, 0.04),
+        new THREE.Vector3(0.02, 6.8, 0)
+      ]);
+      const trMesh = new THREE.Mesh(makeTaperedBranch(tCurve, 10, 0.30, 0.06, 7), barkMat);
+      trMesh.castShadow = true; trMesh.receiveShadow = true; g.add(trMesh);
+      const crownRef = new THREE.Vector3(0, 4.2, 0);
+      for (let l = 0; l < 6; l++) {
+        const y = 1.65 + l * 0.96;
+        const rad = Math.sin(((l + 0.65) / 6.8) * Math.PI) * 0.95 + 0.22;
+        addBoughPad((rnd() - 0.5) * 0.12, y, (rnd() - 0.5) * 0.12, rad, 0.72, rad, 11, 1.28 - l * 0.07, crownRef, 0.06);
+      }
+    } else {
+      const isSak = (kind === 'sakura');
+      const leanX = (rnd() - 0.5) * 0.52;
+      const leanZ = (rnd() - 0.5) * 0.48;
+      const trunkH = isSak ? 2.55 : 2.95;
+      const trunkCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(leanX * 0.35, trunkH * 0.38, leanZ * 0.35),
+        new THREE.Vector3(leanX * 0.85, trunkH * 0.74, leanZ * 0.85),
+        new THREE.Vector3(leanX, trunkH, leanZ)
+      ]);
+      const trMesh = new THREE.Mesh(makeTaperedBranch(trunkCurve, 10, 0.44, 0.22, 8), barkMat);
+      trMesh.castShadow = true; trMesh.receiveShadow = true; g.add(trMesh);
 
-    const trunkTop = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 1.45, 10), trunkMat);
-    trunkTop.position.set(0.09, 2.22, -0.02);
-    trunkTop.rotation.z = 0.06;
-    trunkTop.castShadow = true;
-    trunkTop.receiveShadow = true;
-    g.add(trunkTop);
+      // Flared organic surface roots gripping the soil!
+      for (let r = 0; r < 5; r++) {
+        const ra = (r / 5) * Math.PI * 2 + rnd() * 0.4;
+        const rCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(Math.cos(ra) * 0.16, 0.72, Math.sin(ra) * 0.16),
+          new THREE.Vector3(Math.cos(ra) * 0.48, 0.24, Math.sin(ra) * 0.48),
+          new THREE.Vector3(Math.cos(ra) * 0.82, -0.04, Math.sin(ra) * 0.82)
+        ]);
+        const rm = new THREE.Mesh(makeTaperedBranch(rCurve, 6, 0.18, 0.06, 6), barkMat);
+        rm.castShadow = true; g.add(rm);
+      }
 
-    // 4 Organically forked boughs reaching outward into the foliage
-    [
-      [-0.45, 2.48, 0.16, 0.54, 0.14],
-      [0.48, 2.55, -0.18, -0.50, -0.18],
-      [0.12, 2.42, 0.46, 0.12, 0.54],
-      [-0.14, 2.46, -0.44, -0.14, -0.52]
-    ].forEach(b => {
-      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.135, 1.25, 7), trunkMat);
-      br.position.set(b[0], b[1], b[2]);
-      br.rotation.z = b[3];
-      br.rotation.x = b[4];
-      br.castShadow = true;
-      g.add(br);
-    });
+      const crownRef = new THREE.Vector3(leanX * 0.7, trunkH + 1.4, leanZ * 0.7);
+      const limbCount = 5;
+      for (let b = 0; b < limbCount; b++) {
+        const ba = (b / limbCount) * Math.PI * 2 + rnd() * 0.45;
+        const reach = (isSak ? 2.55 : 2.25) + rnd() * 0.65;
+        const lift = (isSak ? 1.48 : 1.85) + rnd() * 0.62;
+        const startPt = trunkCurve.getPointAt(0.72 + (b % 3) * 0.12);
+        const midPt = new THREE.Vector3(
+          startPt.x + Math.cos(ba) * reach * 0.56,
+          startPt.y + lift * 0.64,
+          startPt.z + Math.sin(ba) * reach * 0.56
+        );
+        const endPt = new THREE.Vector3(
+          startPt.x + Math.cos(ba) * reach,
+          startPt.y + lift,
+          startPt.z + Math.sin(ba) * reach
+        );
+        const limbCurve = new THREE.CatmullRomCurve3([startPt, midPt, endPt]);
+        const lm = new THREE.Mesh(makeTaperedBranch(limbCurve, 7, 0.16, 0.055, 6), barkMat);
+        lm.castShadow = true; g.add(lm);
 
-    // Top-down Studio Ghibli sunlit canopy layering: sunlit crown on top, lush mid-tone ring around, deep cool shade underneath!
-    const canopyCenters = [
-      [0.0, 4.22, 0.0, 1.18, 1.20, 0.82, 1.14, 'sun'],
-      [0.58, 3.94, 0.36, 0.88, 1.14, 0.78, 1.06, 'sun'],
-      [-0.54, 3.88, -0.32, 0.90, 1.14, 0.80, 1.06, 'sun'],
-      [-1.18, 3.24, 0.45, 1.02, 1.16, 0.78, 1.06, 'mid'],
-      [1.22, 3.30, -0.32, 1.04, 1.16, 0.80, 1.06, 'mid'],
-      [0.24, 3.18, 1.08, 0.94, 1.12, 0.78, 1.04, 'mid'],
-      [-0.32, 3.16, -1.06, 0.98, 1.14, 0.80, 1.04, 'mid'],
-      [-0.92, 2.84, -0.58, 0.82, 1.10, 0.72, 1.02, 'shade'],
-      [0.92, 2.86, 0.64, 0.84, 1.10, 0.74, 1.02, 'shade'],
-      [0.05, 2.74, -0.45, 0.80, 1.12, 0.68, 1.04, 'shade'],
-      [-0.42, 3.44, 0.72, 0.78, 1.08, 0.76, 1.02, 'mid']
-    ];
+        addBoughPad(
+          endPt.x, endPt.y + (isSak ? 0.12 : 0.25), endPt.z,
+          isSak ? 1.55 : 1.38, isSak ? 0.85 : 0.96, isSak ? 1.50 : 1.34,
+          15, isSak ? 1.82 : 1.72, crownRef, isSak ? 0.22 : 0.06
+        );
+      }
 
-    // Inner dappled foliage volume + outer crisp hand-painted leaf-cluster silhouette cards!
-    addLeafClusters(g, canopyCenters, { sunHex: pal.sun, midHex: pal.mid, shadeHex: pal.shade });
-    addLeafCardShell(g, canopyCenters, {
-      sunHex: pal.sun, midHex: pal.mid, shadeHex: pal.shade,
-      style: pal.style, cardsPerCluster: 4, cardScale: 1.50,
-      cacheKey: 'ghibli_tree_v2'
-    });
+      // Upper sunlit crown cap
+      const topPt = trunkCurve.getPointAt(1.0);
+      addBoughPad(
+        topPt.x + (rnd() - 0.5) * 0.4, topPt.y + (isSak ? 1.65 : 1.85), topPt.z + (rnd() - 0.5) * 0.4,
+        isSak ? 1.72 : 1.60, isSak ? 0.82 : 1.0, isSak ? 1.68 : 1.55,
+        15, isSak ? 1.85 : 1.75, crownRef, isSak ? 0.14 : 0.05
+      );
+    }
+
+    const canopyGeo = new THREE.BufferGeometry();
+    canopyGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+    canopyGeo.setAttribute('normal', new THREE.Float32BufferAttribute(normArr, 3));
+    canopyGeo.setAttribute('uv', new THREE.Float32BufferAttribute(uvArr, 2));
+    canopyGeo.setAttribute('aAO', new THREE.Float32BufferAttribute(aoArr, 1));
+    canopyGeo.setIndex(idxArr);
+    const canopyMesh = new THREE.Mesh(canopyGeo, getPaintedBoughMat(kind));
+    canopyMesh.userData.noCamClip = true;
+    g.add(canopyMesh);
 
     g.scale.setScalar(s);
     return g;
   }
 
-  // Lush Studio Ghibli Potted Seville Orange / Citrus Tree (Glazed Pot + Forked Bark + Dappled Core + Crisp Leaf Cards + Oranges & Blossoms!)
-  function buildOrangeTree(scale, opts) {
+  // Hand-Painted 3D Studio Ghibli Potted Plants (Sculpted Terracotta Pot + Botanical Sprite Cards!)
+  const pottedPlantSway = [];
+  let sharedPotGeo = null;
+  let sharedSoilMat = null;
+  let sharedPotLemonMat = null;
+  let sharedPotFlowerMat = null;
+  let sharedPotTimberMat = null;
+
+  function ensurePotAssets() {
+    if (!sharedPotGeo) {
+      const potPts = [
+        new THREE.Vector2(0.001, 0.0),
+        new THREE.Vector2(0.24, 0.0),
+        new THREE.Vector2(0.27, 0.14),
+        new THREE.Vector2(0.34, 0.38),
+        new THREE.Vector2(0.36, 0.48),
+        new THREE.Vector2(0.41, 0.51),
+        new THREE.Vector2(0.41, 0.58),
+        new THREE.Vector2(0.35, 0.59),
+        new THREE.Vector2(0.32, 0.52)
+      ];
+      sharedPotGeo = new THREE.LatheGeometry(potPts, 20);
+      sharedSoilMat = createGhibliMat(0x4b3322);
+      sharedPotTimberMat = createGhibliMat(0x6e472d, { map: getPaintedTex('bark', 1, 1.5) });
+      sharedPotLemonMat = new THREE.MeshStandardMaterial({
+        map: getPaintedTex('pottedLemon', 1, 1),
+        alphaTest: 0.44, side: THREE.DoubleSide, roughness: 0.74, metalness: 0.0
+      });
+      sharedPotFlowerMat = new THREE.MeshStandardMaterial({
+        map: getPaintedTex('pottedFlowers', 1, 1),
+        alphaTest: 0.44, side: THREE.DoubleSide, roughness: 0.76, metalness: 0.0
+      });
+    }
+  }
+
+  function buildPaintedPottedPlant(kind, scale, opts) {
+    ensurePotAssets();
     const s = scale || 1.0;
-    const cfg = Object.assign({
-      potHex: 0x1f5692,
-      rimHex: 0xf4be44,
-      bandHex: 0x1ea3a3,
-      sunHex: 0x82d460,
-      midHex: 0x3f9646,
-      shadeHex: 0x225e32,
-      fruitHex: 0xff8c1a,
-      withBlossoms: true
-    }, opts || {});
+    const cfg = opts || {};
+    const pg = new THREE.Group();
+    const potMat = createGhibliMat(cfg.potHex !== undefined ? cfg.potHex : 0xc9623f, { map: getPaintedTex('plaster', 1, 1) });
+    const pot = new THREE.Mesh(sharedPotGeo, potMat);
+    pot.castShadow = true; pot.receiveShadow = true;
+    addInkOutline(pot, 0.022);
+    pg.add(pot);
 
-    const g = new THREE.Group();
-    const potMat = createGhibliMat(cfg.potHex);
-    const rimMat = createGhibliMat(cfg.rimHex);
-    const bandMat = createGhibliMat(cfg.bandHex);
-    const soilMat = createGhibliMat(0x523926);
-    const trunkMat = createGhibliMat(0x6d4a2d, { map: getBarkTexture() });
+    const band = new THREE.Mesh(
+      new THREE.TorusGeometry(0.345, 0.018, 8, 20),
+      createGhibliMat(cfg.bandHex !== undefined ? cfg.bandHex : 0xd97d56)
+    );
+    band.rotation.x = Math.PI / 2; band.position.y = 0.42; pg.add(band);
 
-    // Sculpted Moroccan glazed terracotta pot with ornamental gold & turquoise bands
-    const potFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.12, 14), rimMat);
-    potFoot.position.y = 0.06; g.add(potFoot);
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.42, 0.68, 16), potMat);
-    pot.position.y = 0.40; pot.castShadow = true; pot.receiveShadow = true; g.add(pot);
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.50, 0.14, 16), bandMat);
-    band.position.y = 0.46; g.add(band);
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.57, 0.065, 8, 20), rimMat);
-    rim.rotation.x = Math.PI / 2; rim.position.y = 0.74; g.add(rim);
-    const soil = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.06, 14), soilMat);
-    soil.position.y = 0.72; g.add(soil);
+    const soil = new THREE.Mesh(new THREE.CircleGeometry(0.33, 16), sharedSoilMat);
+    soil.rotation.x = -Math.PI / 2; soil.position.y = 0.525; pg.add(soil);
 
-    // Gently curving textured citrus trunk + 3 visible forked branches!
-    const trunkLow = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.15, 0.95, 9), trunkMat);
-    trunkLow.position.set(0.02, 1.15, 0);
-    trunkLow.rotation.z = -0.06;
-    trunkLow.castShadow = true;
-    g.add(trunkLow);
-
-    const trunkUp = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 0.78, 9), trunkMat);
-    trunkUp.position.set(0.06, 1.92, -0.02);
-    trunkUp.rotation.z = 0.08;
-    trunkUp.castShadow = true;
-    g.add(trunkUp);
-
-    [[-0.26, 2.08, 0.12, 0.58, 0.16], [0.28, 2.12, -0.10, -0.55, -0.14], [0.02, 2.05, 0.25, 0.06, 0.52]].forEach(b => {
-      const br = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.075, 0.72, 7), trunkMat);
-      br.position.set(b[0], b[1], b[2]);
-      br.rotation.z = b[3]; br.rotation.x = b[4];
-      br.castShadow = true;
-      g.add(br);
-    });
-
-    const crownCenters = [
-      [0.0, 3.02, 0.0, 0.64, 1.16, 0.85, 1.12, 'sun'],
-      [0.44, 2.86, 0.28, 0.50, 1.10, 0.82, 1.04, 'sun'],
-      [-0.46, 2.84, -0.22, 0.52, 1.12, 0.84, 1.06, 'sun'],
-      [-0.68, 2.48, 0.24, 0.55, 1.14, 0.80, 1.06, 'mid'],
-      [0.70, 2.52, -0.20, 0.55, 1.14, 0.82, 1.06, 'mid'],
-      [0.14, 2.52, 0.66, 0.52, 1.10, 0.80, 1.04, 'mid'],
-      [-0.18, 2.46, -0.66, 0.54, 1.12, 0.82, 1.04, 'mid'],
-      [-0.48, 2.18, -0.34, 0.44, 1.08, 0.74, 1.02, 'shade'],
-      [0.48, 2.20, 0.38, 0.46, 1.08, 0.76, 1.02, 'shade'],
-      [0.02, 2.24, -0.14, 0.48, 1.10, 0.72, 1.06, 'shade'],
-      [-0.24, 2.74, 0.48, 0.42, 1.06, 0.78, 1.04, 'mid']
-    ];
-
-    // Inner dappled foliage volume + 44 crisp alpha-cutout citrus leaf-sprig cards!
-    addLeafClusters(g, crownCenters, { sunHex: cfg.sunHex, midHex: cfg.midHex, shadeHex: cfg.shadeHex });
-    addLeafCardShell(g, crownCenters, {
-      sunHex: cfg.sunHex, midHex: cfg.midHex, shadeHex: cfg.shadeHex,
-      style: 'leaf', cardsPerCluster: 4, cardScale: 1.54,
-      cacheKey: 'orange_tree_v2'
-    });
-
-    // Glistening ripe Seville oranges with tiny green leaf calyxes!
-    if (cfg.fruitHex) {
-      const orangeMat = createGhibliMat(cfg.fruitHex);
-      const stemMat = createGhibliMat(0x276b33);
-      [
-        [0.68, 2.54, 0.56], [-0.72, 2.60, 0.44], [0.24, 3.04, 0.68],
-        [-0.28, 2.28, 0.76], [0.82, 2.34, -0.34], [-0.54, 2.90, -0.60],
-        [0.12, 2.46, -0.82], [0.56, 3.00, -0.14], [-0.78, 2.26, -0.24],
-        [0.34, 2.72, 0.74], [-0.46, 2.48, 0.64]
-      ].forEach(op => {
-        const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.115, 10, 8), orangeMat);
-        fruit.position.set(op[0], op[1], op[2]);
-        g.add(fruit);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.02, 0.03, 6), stemMat);
-        cap.position.set(op[0], op[1] + 0.11, op[2]);
-        g.add(cap);
+    const foliageG = new THREE.Group();
+    foliageG.position.y = 0.52;
+    if (kind === 'lemon' || kind === 'citrus') {
+      const trunkCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0.03, 0.34, 0.02),
+        new THREE.Vector3(-0.02, 0.68, -0.01)
+      ]);
+      const trunk = new THREE.Mesh(new THREE.TubeGeometry(trunkCurve, 8, 0.048, 7, false), sharedPotTimberMat);
+      trunk.castShadow = true; foliageG.add(trunk);
+      const cards = [
+        { x: 0.0, y: 0.92, z: 0.0, ry: 0.0, rx: 0.05, sz: 1.24 },
+        { x: 0.0, y: 0.94, z: 0.0, ry: Math.PI / 3, rx: -0.06, sz: 1.22 },
+        { x: 0.0, y: 0.90, z: 0.0, ry: (2 * Math.PI) / 3, rx: 0.06, sz: 1.18 },
+        { x: 0.14, y: 1.08, z: 0.08, ry: 0.55, rx: -0.18, sz: 0.88 },
+        { x: -0.14, y: 1.05, z: -0.08, ry: -0.68, rx: 0.16, sz: 0.86 }
+      ];
+      cards.forEach(c => {
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(c.sz, c.sz), sharedPotLemonMat);
+        pl.position.set(c.x, c.y, c.z);
+        pl.rotation.set(c.rx, c.ry, 0);
+        pl.userData.noCamClip = true;
+        foliageG.add(pl);
+      });
+    } else {
+      const cards = [
+        { x: 0.0, y: 0.44, z: 0.0, ry: 0.0, rx: 0.08, sz: 1.08 },
+        { x: 0.0, y: 0.46, z: 0.0, ry: Math.PI / 3, rx: -0.08, sz: 1.05 },
+        { x: 0.0, y: 0.43, z: 0.0, ry: (2 * Math.PI) / 3, rx: 0.06, sz: 1.02 },
+        { x: 0.0, y: 0.56, z: 0.04, ry: Math.PI / 6, rx: -0.22, sz: 0.78 }
+      ];
+      cards.forEach(c => {
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(c.sz, c.sz), sharedPotFlowerMat);
+        pl.position.set(c.x, c.y, c.z);
+        pl.rotation.set(c.rx, c.ry, 0);
+        pl.userData.noCamClip = true;
+        foliageG.add(pl);
       });
     }
+    pg.add(foliageG);
+    pottedPlantSway.push({ g: foliageG, phase: Math.random() * Math.PI * 2 });
+    pg.scale.setScalar(s);
+    return pg;
+  }
 
-    // Dainty fragrant white-and-gold orange blossoms nestled in the foliage & fallen on the soil!
-    if (cfg.withBlossoms) {
-      const petalMat = createGhibliMat(0xfffdf6);
-      const centerMat = createGhibliMat(0xffd166);
-      [
-        [0.38, 3.22, 0.36], [-0.44, 3.10, 0.26], [0.82, 2.72, 0.14],
-        [-0.84, 2.60, -0.08], [0.08, 2.78, 0.84], [-0.16, 2.94, -0.78],
-        [0.48, 2.40, -0.66], [-0.20, 3.36, -0.12], [0.22, 2.26, 0.68]
-      ].forEach(bp => {
-        const bl = new THREE.Mesh(new THREE.SphereGeometry(0.072, 7, 6), petalMat);
-        bl.scale.set(1.25, 0.65, 1.25);
-        bl.position.set(bp[0], bp[1], bp[2]);
-        g.add(bl);
-        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 5), centerMat);
-        dot.position.set(bp[0], bp[1] + 0.038, bp[2]);
-        g.add(dot);
-      });
-      // Tiny fallen white blossom petals resting on the rich soil!
-      [[0.22, 0.76, 0.16], [-0.26, 0.76, 0.20], [0.10, 0.76, -0.28]].forEach(fp => {
-        const p = new THREE.Mesh(new THREE.CircleGeometry(0.05, 6), petalMat);
-        p.rotation.x = -Math.PI / 2;
-        p.position.set(fp[0], fp[1], fp[2]);
-        g.add(p);
-      });
+  // Fill a rectangular terracotta flowerbox or stone planter with overlapping hand-painted flower/fern cards!
+  function populateFlowerbox(parent, width, yBase, zOff, count) {
+    ensurePotAssets();
+    const n = count || Math.max(3, Math.round(width * 2.8));
+    for (let i = 0; i < n; i++) {
+      const t = n > 1 ? (i / (n - 1) - 0.5) : 0;
+      const fx = t * (width * 0.80);
+      const sz = Math.min(0.88, Math.max(0.52, (width / n) * 1.65));
+      const card = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), sharedPotFlowerMat);
+      card.position.set(fx, yBase + sz * 0.34 + (i % 2) * 0.04, (zOff || 0) + (i % 2 === 0 ? 0.05 : -0.05));
+      card.rotation.set(-0.12, t * 0.55 + (i % 2 === 0 ? 0.22 : -0.22), (i % 2 === 0 ? 0.06 : -0.06));
+      card.userData.noCamClip = true;
+      parent.add(card);
+      const cross = new THREE.Mesh(new THREE.PlaneGeometry(sz * 0.92, sz * 0.92), sharedPotFlowerMat);
+      cross.position.set(fx, yBase + sz * 0.32, zOff || 0);
+      cross.rotation.set(0.08, Math.PI * 0.5 + (i % 2 === 0 ? 0.18 : -0.18), 0);
+      cross.userData.noCamClip = true;
+      parent.add(cross);
     }
+  }
 
-    g.scale.setScalar(s);
-    return g;
+  // Backward-compatible buildOrangeTree upgraded to hand-painted botanical citrus pot!
+  function buildOrangeTree(scale, opts) {
+    const cfg = opts || {};
+    const s = (scale || 1.0) * 1.82;
+    return buildPaintedPottedPlant(cfg.fruitHex === null ? 'flowers' : 'lemon', s, {
+      potHex: cfg.potHex !== undefined ? cfg.potHex : 0xc9623f,
+      bandHex: cfg.bandHex !== undefined ? cfg.bandHex : (cfg.rimHex !== undefined ? cfg.rimHex : 0xd97d56)
+    });
   }
 
   // Luminous Studio Ghibli continuous curving parabolic fountain water jet (TubeGeometry!)
@@ -653,18 +977,15 @@ window.LailaSalma = window.LailaSalma || {};
     return mesh;
   }
 
-  // Stylized Studio Ghibli cel-shimmer turquoise water (Ponyo / Spirited Away palette)
+  // Next-Gen Studio Ghibli Reflective Voronoi Caustic Water Shader (Ponyo / Spirited Away palette!)
   function createGhibliWaterMat(opacity, side) {
-    const op = opacity !== undefined ? opacity : 0.90;
+    const op = opacity !== undefined ? opacity : 0.92;
     const uniforms = {
-      uTime: { value: 0.0 },
-      uTimeMode: { value: LS.state ? LS.state.timeMode : 0.0 },
+      uTime: GLOBAL.uTime,
+      uTimeMode: GLOBAL.uTimeMode,
+      uSunDir: GLOBAL.uSunDir,
       uOpacity: { value: op }
     };
-    if (LS.hdPost && LS.hdPost.registerAnimatedUniform) {
-      LS.hdPost.registerAnimatedUniform(uniforms);
-    }
-
     return new THREE.ShaderMaterial({
       uniforms: uniforms,
       transparent: true,
@@ -682,38 +1003,83 @@ window.LailaSalma = window.LailaSalma || {};
       fragmentShader: [
         'uniform float uTime;',
         'uniform float uTimeMode;',
+        'uniform vec3 uSunDir;',
         'uniform float uOpacity;',
         'varying vec2 vUv;',
         'varying vec3 vWorldPos;',
-        'float gWave(vec2 p) {',
-        '  return sin(p.x * 1.4 + uTime * 1.15) * cos(p.y * 1.25 - uTime * 0.95)',
-        '       + 0.45 * sin(p.x * 2.8 - p.y * 2.1 + uTime * 1.65);',
+        'vec2 hash22(vec2 p) {',
+        '  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));',
+        '  return fract(sin(p) * 43758.5453);',
+        '}',
+        'float voronoiCaustic(vec2 x, float t) {',
+        '  vec2 n = floor(x); vec2 f = fract(x);',
+        '  float md = 8.0;',
+        '  for (int j = -1; j <= 1; j++) {',
+        '    for (int i = -1; i <= 1; i++) {',
+        '      vec2 g = vec2(float(i), float(j));',
+        '      vec2 o = hash22(n + g);',
+        '      o = 0.5 + 0.42 * sin(t * 1.45 + 6.2831 * o);',
+        '      vec2 r = g + o - f;',
+        '      md = min(md, dot(r, r));',
+        '    }',
+        '  }',
+        '  return sqrt(md);',
         '}',
         'void main() {',
-        '  vec2 p = vWorldPos.xz * 0.52;',
-        '  float w1 = gWave(p + vec2(0.0, uTime * 0.36));',
-        '  float w2 = gWave(p * 1.55 - vec2(uTime * 0.25, -uTime * 0.48));',
-        '  // Cel-quantized painterly Ghibli water bands!',
-        '  float band = smoothstep(-0.35, 0.35, w1 * 0.65 + w2 * 0.45);',
-        '  float celBand = floor(band * 3.0 + 0.35) / 3.0;',
-        '  vec3 deepCol = uTimeMode > 1.5 ? vec3(0.08, 0.20, 0.34) : (uTimeMode > 0.5 ? vec3(0.16, 0.36, 0.46) : vec3(0.12, 0.48, 0.58));',
-        '  vec3 midCol  = uTimeMode > 1.5 ? vec3(0.15, 0.32, 0.48) : (uTimeMode > 0.5 ? vec3(0.32, 0.56, 0.60) : vec3(0.22, 0.68, 0.74));',
-        '  vec3 litCol  = uTimeMode > 1.5 ? vec3(0.26, 0.44, 0.64) : (uTimeMode > 0.5 ? vec3(0.95, 0.74, 0.50) : vec3(0.52, 0.87, 0.90));',
-        '  vec3 col = mix(deepCol, midCol, clamp(celBand * 1.1, 0.0, 1.0));',
-        '  float sparkle = step(0.88, w1 * 0.58 + w2 * 0.55);',
-        '  col = mix(col, litCol, sparkle * (uTimeMode > 1.5 ? 0.35 : 0.65));',
-        '  // Crisp painterly white shoreline foam ribbons',
-        '  float edge = smoothstep(0.10, 0.0, min(vUv.x, 1.0 - vUv.x));',
-        '  float foam = edge * step(0.25, 0.55 + 0.45 * sin(vWorldPos.z * 2.2 + uTime * 1.8));',
-        '  col = mix(col, vec3(0.96, 0.98, 0.97), foam * 0.62);',
-        '  gl_FragColor = vec4(clamp(col, 0.0, 0.95), uOpacity);',
+        '  vec2 p = vWorldPos.xz * 0.72;',
+        '  float c1 = voronoiCaustic(p + vec2(uTime * 0.14, -uTime * 0.10), uTime);',
+        '  float c2 = voronoiCaustic(p * 1.45 - vec2(uTime * 0.18, uTime * 0.12), uTime * 1.15);',
+        '  float caustic = smoothstep(0.42, 0.84, c1 * 0.55 + c2 * 0.55);',
+        '  vec3 deepCol = uTimeMode > 1.5 ? vec3(0.08, 0.22, 0.38) : (uTimeMode > 0.5 ? vec3(0.16, 0.36, 0.48) : vec3(0.11, 0.48, 0.62));',
+        '  vec3 midCol  = uTimeMode > 1.5 ? vec3(0.16, 0.36, 0.56) : (uTimeMode > 0.5 ? vec3(0.36, 0.60, 0.66) : vec3(0.22, 0.72, 0.82));',
+        '  vec3 litCol  = uTimeMode > 1.5 ? vec3(0.45, 0.68, 0.92) : (uTimeMode > 0.5 ? vec3(1.0, 0.80, 0.55) : vec3(0.70, 0.96, 1.0));',
+        '  vec3 V = normalize(cameraPosition - vWorldPos);',
+        '  vec3 N = normalize(vec3((c1 - c2) * 0.18, 1.0, (c2 - 0.5) * 0.16));',
+        '  float fres = pow(1.0 - max(dot(N, V), 0.0), 2.8);',
+        '  vec3 col = mix(deepCol, midCol, clamp(0.45 + c1 * 0.45, 0.0, 1.0));',
+        '  col = mix(col, litCol, caustic * (uTimeMode > 1.5 ? 0.35 : 0.62));',
+        '  col = mix(col, litCol, fres * 0.36);',
+        '  float edge = smoothstep(0.12, 0.0, min(vUv.x, 1.0 - vUv.x));',
+        '  col = mix(col, vec3(0.96, 0.99, 1.0), edge * 0.52);',
+        '  gl_FragColor = vec4(clamp(col, 0.0, 0.96), uOpacity);',
         '}'
       ].join('\n')
     });
   }
 
+  function updateGhibliFrame(dt, elapsed) {
+    GLOBAL.uTime.value = elapsed;
+    for (let i = 0; i < pottedPlantSway.length; i++) {
+      const pp = pottedPlantSway[i];
+      if (!pp || !pp.g) continue;
+      pp.g.rotation.z = Math.sin(elapsed * 1.85 + pp.phase) * 0.032;
+      pp.g.rotation.x = Math.cos(elapsed * 1.45 + pp.phase) * 0.022;
+    }
+  }
+
+  function clearWorldSway() {
+    pottedPlantSway.length = 0;
+  }
+
+  function setTimeLighting(mode, sunPos, fogColor) {
+    GLOBAL.uTimeMode.value = mode || 0.0;
+    if (sunPos) GLOBAL.uSunDir.value.copy(sunPos).normalize();
+    if (fogColor) GLOBAL.uFogCol.value.copy(fogColor);
+    if (mode === 1) {
+      GLOBAL.uShadowTint.value.setHex(0x7c5899);
+      GLOBAL.uRimCol.value.setHex(0xffba6b);
+    } else if (mode === 2) {
+      GLOBAL.uShadowTint.value.setHex(0x32467c);
+      GLOBAL.uRimCol.value.setHex(0x8cc2ff);
+    } else {
+      GLOBAL.uShadowTint.value.setHex(0x6e84c2);
+      GLOBAL.uRimCol.value.setHex(0xffe7a8);
+    }
+  }
+
   LS.ghibli = {
     QUALITY_PRESETS: QUALITY_PRESETS,
+    GLOBAL: GLOBAL,
     isTouchOrPhone: isTouchOrPhone,
     detectDefaultQuality: function () {
       return isTouchOrPhone() ? 'balanced' : 'high';
@@ -723,15 +1089,23 @@ window.LailaSalma = window.LailaSalma || {};
       return QUALITY_PRESETS[key] || QUALITY_PRESETS.balanced;
     },
     getToonRamp: getToonRamp,
+    getPaintedTex: getPaintedTex,
     getLeafBrushTexture: getLeafBrushTexture,
     getLeafCutoutTexture: getLeafCutoutTexture,
     getBarkTexture: getBarkTexture,
     createGhibliMat: createGhibliMat,
+    createGhibliSkinMat: createGhibliSkinMat,
+    addInkOutline: addInkOutline,
     addLeafClusters: addLeafClusters,
     addLeafCardShell: addLeafCardShell,
     buildGhibliTree: buildGhibliTree,
+    buildPaintedPottedPlant: buildPaintedPottedPlant,
+    populateFlowerbox: populateFlowerbox,
     buildOrangeTree: buildOrangeTree,
     createWaterJetArc: createWaterJetArc,
-    createGhibliWaterMat: createGhibliWaterMat
+    createGhibliWaterMat: createGhibliWaterMat,
+    update: updateGhibliFrame,
+    clearWorldSway: clearWorldSway,
+    setTimeLighting: setTimeLighting
   };
 })(window.LailaSalma);

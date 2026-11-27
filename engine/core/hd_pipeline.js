@@ -533,19 +533,43 @@ window.LailaSalma = window.LailaSalma || {};
       const flowerSpots = [];
       const maxFlowers = Math.round((countOverride ? countOverride * 0.16 : 1800) * qCfg.grassScale);
       const minX = bounds.minX, maxX = bounds.maxX, minZ = bounds.minZ, maxZ = bounds.maxZ;
-      for (let attempt = 0; attempt < count * 3 && placed < count; attempt++) {
+      // Organic 2D patch-clump noise so meadow grass forms lush wild tufts & sunny low clover clearings (never uniform turf!)
+      function meadowClump(x, z) {
+        return 0.5 + 0.28 * Math.sin(x * 0.24 + Math.cos(z * 0.19) * 1.6)
+                   + 0.22 * Math.cos(z * 0.29 - Math.sin(x * 0.21) * 1.4);
+      }
+      for (let attempt = 0; attempt < count * 5 && placed < count; attempt++) {
         const x = minX + hash01(attempt * 3.17 + 1.1) * (maxX - minX);
         const z = minZ + hash01(attempt * 5.73 + 2.9) * (maxZ - minZ);
         if (isClearFn && !isClearFn(x, z)) continue;
+        const clump = meadowClump(x, z);
+        // Reject sparse clearings so natural non-uniform tuft rhythm emerges!
+        if (clump < 0.26 && hash01(attempt * 17.3) > 0.22) continue;
+        const tallTuft = clump > 0.72 ? (1.0 + (clump - 0.72) * 2.1) : (0.62 + clump * 0.55);
         dummy.position.set(x, 0.0, z);
-        dummy.rotation.set(0, hash01(attempt * 7.1) * Math.PI * 2, 0);
-        const scXZ = (isSafari ? 1.15 : (isEgypt ? 1.10 : 1.12)) + hash01(attempt * 9.3) * 0.72;
-        const scY = (isSafari ? 0.90 : (isEgypt ? 0.92 : 0.72)) + hash01(attempt * 2.3) * 0.58;
+        dummy.rotation.set(0, hash01(attempt * 7.1) * Math.PI * 2, (hash01(attempt * 11.7) - 0.5) * 0.14);
+        const scXZ = (isSafari ? 1.15 : (isEgypt ? 1.10 : 0.92)) + hash01(attempt * 9.3) * 0.88;
+        const scY = ((isSafari ? 0.92 : (isEgypt ? 0.92 : 0.58)) + hash01(attempt * 2.3) * 0.68) * tallTuft;
         dummy.scale.set(scXZ, scY, scXZ);
         dummy.updateMatrix();
         mesh.setMatrixAt(placed++, dummy.matrix);
-        if (flowerSpots.length < maxFlowers && (attempt % 7 === 0)) {
-          flowerSpots.push([x, z, scXZ, hash01(attempt * 13.7)]);
+      }
+      // Group wildflowers into cohesive painterly bouquet drifts instead of uniform scattered confetti!
+      const driftCount = Math.max(18, Math.round(maxFlowers / 28));
+      for (let d = 0; d < driftCount && flowerSpots.length < maxFlowers; d++) {
+        const dx = minX + hash01(d * 19.7 + 4.3) * (maxX - minX);
+        const dz = minZ + hash01(d * 29.3 + 8.1) * (maxZ - minZ);
+        if (isClearFn && !isClearFn(dx, dz)) continue;
+        const speciesTone = hash01(d * 13.1 + 2.7);
+        const perDrift = 14 + Math.floor(hash01(d * 7.9) * 22);
+        for (let k = 0; k < perDrift && flowerSpots.length < maxFlowers; k++) {
+          const ang = hash01(d * 97 + k * 5.3) * Math.PI * 2;
+          const rad = Math.pow(hash01(d * 53 + k * 11.1), 0.7) * 2.4;
+          const fx = dx + Math.cos(ang) * rad;
+          const fz = dz + Math.sin(ang) * rad;
+          if (isClearFn && !isClearFn(fx, fz)) continue;
+          const fScale = 0.85 + hash01(d * 31 + k * 3.7) * 0.65;
+          flowerSpots.push([fx, fz, fScale, (speciesTone + (hash01(k * 4.1) - 0.5) * 0.14 + 1) % 1]);
         }
       }
       mesh.count = placed;
