@@ -320,13 +320,25 @@
       sakuraBough: loadPaintedTex('assets/ghibli_showcase/sakura_bough.png', 1, 1),
       leafBough: loadPaintedTex('assets/ghibli_showcase/leaf_bough.png', 1, 1),
       woodFloor: loadPaintedTex('assets/ghibli_showcase/wood_floor_ghibli.jpg', 4.5, 3.6),
-      wovenRug: loadPaintedTex('assets/ghibli_showcase/woven_rug_ghibli.jpg', 1, 1)
+      wovenRug: loadPaintedTex('assets/ghibli_showcase/woven_rug_ghibli.jpg', 1, 1),
+      pottedLemon: loadPaintedTex('assets/ghibli_showcase/potted_lemon.png', 1, 1),
+      pottedFlowers: loadPaintedTex('assets/ghibli_showcase/potted_flowers.png', 1, 1),
+      lailaFace: loadPaintedTex('assets/ghibli_showcase/laila_face.jpg', 1, 1),
+      lailaFaceBlink: loadPaintedTex('assets/ghibli_showcase/laila_face_blink.jpg', 1, 1),
+      salmaFace: loadPaintedTex('assets/ghibli_showcase/salma_face.jpg', 1, 1),
+      salmaFaceBlink: loadPaintedTex('assets/ghibli_showcase/salma_face_blink.jpg', 1, 1)
     };
     TEX.sky.wrapS = THREE.RepeatWrapping;
     TEX.sky.wrapT = THREE.ClampToEdgeWrapping;
-    TEX.sakuraBough.wrapS = TEX.sakuraBough.wrapT = THREE.ClampToEdgeWrapping;
-    TEX.leafBough.wrapS = TEX.leafBough.wrapT = THREE.ClampToEdgeWrapping;
-    TEX.wovenRug.wrapS = TEX.wovenRug.wrapT = THREE.ClampToEdgeWrapping;
+    ['sakuraBough', 'leafBough', 'wovenRug', 'pottedLemon', 'pottedFlowers',
+     'lailaFace', 'lailaFaceBlink', 'salmaFace', 'salmaFaceBlink'].forEach(k => {
+      TEX[k].wrapS = TEX[k].wrapT = THREE.ClampToEdgeWrapping;
+    });
+
+    // Solid obstacle collider registries for courtyard (trees, benches, lampposts, boulders, potted plants, villas)
+    const COURTYARD_CIRCLES = [];
+    const COURTYARD_BOXES = [];
+    const pottedPlantSway = [];
 
     // Shared global uniforms for time-of-day, rim light, ink outlines, wind
     const GLOBAL = {
@@ -787,6 +799,91 @@
       return m;
     }
 
+    // =========================================================================
+    // 7A. HAND-PAINTED 3D STUDIO GHIBLI POTTED PLANTS (SCULPTED TERRACOTTA + BOTANICAL SPRITE CLUSTERS!)
+    // =========================================================================
+    const terraPotMatShared = makeGhibliMat(0xc9623f, { map: TEX.plaster, roughness: 0.78, rimBoost: 1.0, aoGround: 0.34 });
+    const potSoilMatShared = makeGhibliMat(0x4b3322, { roughness: 0.96, aoGround: 0.20 });
+    const potLemonCardMat = new THREE.MeshStandardMaterial({
+      map: TEX.pottedLemon, alphaTest: 0.44, side: THREE.DoubleSide, roughness: 0.72, metalness: 0.0
+    });
+    const potFlowerCardMat = new THREE.MeshStandardMaterial({
+      map: TEX.pottedFlowers, alphaTest: 0.44, side: THREE.DoubleSide, roughness: 0.76, metalness: 0.0
+    });
+
+    function buildPaintedPottedPlant(kind, scale) {
+      const s = scale || 1.0;
+      const pg = new THREE.Group();
+      // Sculpted Mediterranean terracotta pot with rolled rim & subtle hand-thrown belly!
+      const potPts = [
+        new THREE.Vector2(0.001, 0.0),
+        new THREE.Vector2(0.24, 0.0),
+        new THREE.Vector2(0.27, 0.14),
+        new THREE.Vector2(0.34, 0.38),
+        new THREE.Vector2(0.36, 0.48),
+        new THREE.Vector2(0.41, 0.51),
+        new THREE.Vector2(0.41, 0.58),
+        new THREE.Vector2(0.35, 0.59),
+        new THREE.Vector2(0.32, 0.52)
+      ];
+      const potGeo = new THREE.LatheGeometry(potPts, 24);
+      const pot = new THREE.Mesh(potGeo, terraPotMatShared);
+      pot.castShadow = true; pot.receiveShadow = true;
+      addInkOutline(pot, 0.024);
+      pg.add(pot);
+
+      // Decorative terracotta ring band & dark potting soil
+      const band = new THREE.Mesh(new THREE.TorusGeometry(0.345, 0.018, 8, 24), makeGhibliMat(0xd97d56));
+      band.rotation.x = Math.PI / 2; band.position.y = 0.42; pg.add(band);
+      const soil = new THREE.Mesh(new THREE.CircleGeometry(0.33, 20), potSoilMatShared);
+      soil.rotation.x = -Math.PI / 2; soil.position.y = 0.525; pg.add(soil);
+
+      const foliageG = new THREE.Group();
+      foliageG.position.y = 0.52;
+      if (kind === 'lemon') {
+        // Organic slightly curving wooden lemon trunk + forked twigs
+        const trunkCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0.03, 0.34, 0.02),
+          new THREE.Vector3(-0.02, 0.68, -0.01)
+        ]);
+        const trunk = new THREE.Mesh(new THREE.TubeGeometry(trunkCurve, 10, 0.048, 8, false), timberMat);
+        trunk.castShadow = true; foliageG.add(trunk);
+        // 5 crossed & angled hand-painted lemon foliage/blossom/fruit botanical sprite planes!
+        const cards = [
+          { x: 0.0, y: 0.92, z: 0.0, ry: 0.0, rx: 0.05, sz: 1.24 },
+          { x: 0.0, y: 0.94, z: 0.0, ry: Math.PI / 3, rx: -0.06, sz: 1.22 },
+          { x: 0.0, y: 0.90, z: 0.0, ry: (2 * Math.PI) / 3, rx: 0.06, sz: 1.18 },
+          { x: 0.14, y: 1.08, z: 0.08, ry: 0.55, rx: -0.18, sz: 0.88 },
+          { x: -0.14, y: 1.05, z: -0.08, ry: -0.68, rx: 0.16, sz: 0.86 }
+        ];
+        cards.forEach(c => {
+          const pl = new THREE.Mesh(new THREE.PlaneGeometry(c.sz, c.sz), potLemonCardMat);
+          pl.position.set(c.x, c.y, c.z);
+          pl.rotation.set(c.rx, c.ry, 0);
+          foliageG.add(pl);
+        });
+      } else {
+        // Lush Mediterranean flowering geraniums & trailing green ferns (4 crossed angled hand-painted cards!)
+        const cards = [
+          { x: 0.0, y: 0.44, z: 0.0, ry: 0.0, rx: 0.08, sz: 1.08 },
+          { x: 0.0, y: 0.46, z: 0.0, ry: Math.PI / 3, rx: -0.08, sz: 1.05 },
+          { x: 0.0, y: 0.43, z: 0.0, ry: (2 * Math.PI) / 3, rx: 0.06, sz: 1.02 },
+          { x: 0.0, y: 0.56, z: 0.04, ry: Math.PI / 6, rx: -0.22, sz: 0.78 }
+        ];
+        cards.forEach(c => {
+          const pl = new THREE.Mesh(new THREE.PlaneGeometry(c.sz, c.sz), potFlowerCardMat);
+          pl.position.set(c.x, c.y, c.z);
+          pl.rotation.set(c.rx, c.ry, 0);
+          foliageG.add(pl);
+        });
+      }
+      pg.add(foliageG);
+      pottedPlantSway.push({ g: foliageG, phase: Math.random() * Math.PI * 2 });
+      pg.scale.setScalar(s);
+      return pg;
+    }
+
     function addStorybookWindow(parent, x, y, z, hasBalcony) {
       const wg = new THREE.Group();
       wg.position.set(x, y, z);
@@ -810,16 +907,17 @@
         sh.castShadow = true;
         wg.add(sh);
       });
-      // Terracotta flowerbox overflowing with lush geraniums & trailing ivy!
-      const fBox = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.28, 0.32), makeGhibliMat(0xc86442));
-      fBox.position.set(0, -0.86, 0.24); wg.add(fBox);
-      const flCols = [0xff6b8b, 0xff9bb3, 0xffd166, 0xff5d73, 0xfff0f5];
-      for (let i = 0; i < 9; i++) {
-        const fx = -0.56 + i * 0.14;
-        const leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(0.13, 0), makeGhibliMat(0x3f8f46));
-        leaf.position.set(fx, -0.68, 0.26 + (i % 2) * 0.06); wg.add(leaf);
-        const fl = new THREE.Mesh(new THREE.SphereGeometry(0.085, 7, 6), makeGhibliMat(flCols[i % flCols.length]));
-        fl.position.set(fx, -0.58 + (i % 2) * 0.05, 0.28 + (i % 2) * 0.05); wg.add(fl);
+      // Sculpted Terracotta flowerbox overflowing with hand-painted geraniums & trailing ferns!
+      const fBox = new THREE.Mesh(new THREE.BoxGeometry(1.44, 0.28, 0.34), terraPotMatShared);
+      fBox.position.set(0, -0.86, 0.24); fBox.castShadow = true; wg.add(fBox);
+      const fRim = new THREE.Mesh(new THREE.BoxGeometry(1.52, 0.06, 0.39), makeGhibliMat(0xd97d56));
+      fRim.position.set(0, -0.71, 0.24); wg.add(fRim);
+      for (let i = 0; i < 5; i++) {
+        const fx = -0.48 + i * 0.24;
+        const flCard = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.56), potFlowerCardMat);
+        flCard.position.set(fx, -0.54 + (i % 2) * 0.04, 0.28 + (i % 2) * 0.05);
+        flCard.rotation.set(-0.14, (i - 2) * 0.28, (i % 2 === 0 ? 0.08 : -0.08));
+        wg.add(flCard);
       }
       if (hasBalcony) {
         const slab = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.16, 0.92), marbleTrimMat);
@@ -934,25 +1032,18 @@
         const cap = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.12, 10), ironMat);
         cap.position.set(lx, 3.29, 4.66); vg.add(cap);
       });
-      // Lush terracotta potted lemon trees welcoming guests on both sides of the porch!
-      const terraPotMat = makeGhibliMat(0xc9623f, { roughness: 0.78, aoGround: 0.32 });
-      const potLeafMat = makeGhibliMat(0x3f8f45, { rimBoost: 1.1 });
-      const lemonMat = makeGhibliMat(0xfcd34d, { roughness: 0.55 });
-      [-2.45, 2.45].forEach(px => {
-        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.25, 0.56, 16), terraPotMat);
-        pot.position.set(px, 0.28, 5.25); pot.castShadow = true; vg.add(pot);
-        const rim = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.045, 8, 18), terraPotMat);
-        rim.rotation.x = Math.PI / 2; rim.position.set(px, 0.55, 5.25); vg.add(rim);
-        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 0.85, 8), timberMat);
-        stem.position.set(px, 0.88, 5.25); vg.add(stem);
-        [[0, 1.42, 0, 0.42], [-0.22, 1.25, 0.16, 0.28], [0.22, 1.28, -0.14, 0.28], [0.06, 1.66, 0.08, 0.26]].forEach(b => {
-          const lf = new THREE.Mesh(new THREE.SphereGeometry(b[3], 12, 10), potLeafMat);
-          lf.position.set(px + b[0], b[1], 5.25 + b[2]); lf.castShadow = true; vg.add(lf);
-        });
-        [[0.22, 1.46, 0.32], [-0.24, 1.32, 0.28], [0.04, 1.62, 0.30]].forEach(lm => {
-          const fruit = new THREE.Mesh(new THREE.SphereGeometry(0.062, 8, 6), lemonMat);
-          fruit.position.set(px + lm[0], lm[1], 5.25 + lm[2]); vg.add(fruit);
-        });
+      // Hand-painted Studio Ghibli terracotta potted lemon trees & blooming geraniums welcoming guests!
+      [-2.48, 2.48].forEach(px => {
+        const lemonPot = buildPaintedPottedPlant('lemon', 1.18);
+        lemonPot.position.set(px, 0.0, 5.35);
+        vg.add(lemonPot);
+        COURTYARD_CIRCLES.push({ x: px, z: -16.2 + 5.35, r: 0.78 });
+      });
+      [-4.15, 4.15].forEach(px => {
+        const flPot = buildPaintedPottedPlant('flowers', 0.92);
+        flPot.position.set(px, 0.0, 5.05);
+        vg.add(flPot);
+        COURTYARD_CIRCLES.push({ x: px, z: -16.2 + 5.05, r: 0.68 });
       });
 
       // Recessed Storybook Windows & Juliette Balconies!
@@ -1023,30 +1114,49 @@
       addStorybookWindow(g, 2.4, 3.7, 3.85, true);
       g.scale.setScalar(scale || 1.0);
       scene.add(g);
+      COURTYARD_CIRCLES.push({ x, z, r: 6.2 * (scale || 1.0) });
     }
     buildNeighborVilla(-19.5, -9.5, 0.52, plasterSageMat, 0.96);
     buildNeighborVilla(20.5, -8.8, -0.48, plasterPeachMat, 0.94);
 
-    // Sculpted Curved Garden Benches & Classic Teal-Iron Lampposts around the Fountain!
+    // Sculpted Garden Benches positioned evenly along the cobblestone ring facing squarely INWARD toward the fountain!
+    const benchWoodMat = makeGhibliMat(0xb67b4d, { map: TEX.woodFloor, roughness: 0.72, aoGround: 0.25 });
     function addCourtyardBench(x, z, rotY) {
       const bg = new THREE.Group();
-      bg.position.set(x, 0, z); bg.rotation.y = rotY;
-      [-0.78, 0.78].forEach(lx => {
-        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.48, 0.52), ironMat);
-        leg.position.set(lx, 0.24, 0); leg.castShadow = true; bg.add(leg);
+      bg.position.set(x, getTerrainHeight(x, z), z);
+      bg.rotation.y = rotY;
+      [-0.82, 0.82].forEach(lx => {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.50, 0.56), ironMat);
+        leg.position.set(lx, 0.25, 0); leg.castShadow = true; bg.add(leg);
+        // Cast-iron curved armrest + backrest upright!
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.06, 0.52), ironMat);
+        arm.position.set(lx, 0.68, -0.02); arm.castShadow = true; bg.add(arm);
+        const frontPost = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.22, 0.07), ironMat);
+        frontPost.position.set(lx, 0.58, 0.20); bg.add(frontPost);
+        const backPost = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.62, 0.07), ironMat);
+        backPost.position.set(lx, 0.78, -0.28); backPost.rotation.x = -0.18; bg.add(backPost);
       });
       for (let s = 0; s < 3; s++) {
-        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.06, 0.16), makeGhibliMat(0xb67b4d));
-        seat.position.set(0, 0.49, -0.18 + s * 0.18); seat.castShadow = true; bg.add(seat);
-        const back = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.14, 0.055), makeGhibliMat(0xb67b4d));
-        back.position.set(0, 0.68 + s * 0.17, -0.28 - s * 0.03); back.rotation.x = -0.18; back.castShadow = true; bg.add(back);
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.065, 0.16), benchWoodMat);
+        seat.position.set(0, 0.50, -0.18 + s * 0.18); seat.castShadow = true; seat.receiveShadow = true;
+        addInkOutline(seat, 0.015); bg.add(seat);
+        const back = new THREE.Mesh(new THREE.BoxGeometry(1.94, 0.14, 0.055), benchWoodMat);
+        back.position.set(0, 0.68 + s * 0.17, -0.28 - s * 0.03); back.rotation.x = -0.18; back.castShadow = true;
+        addInkOutline(back, 0.015); bg.add(back);
       }
       scene.add(bg);
+      // Solid oriented bounding box collider (includes player body padding so characters never walk through!)
+      COURTYARD_BOXES.push({ x, z, rotY, hx: 1.28, hz: 0.64 });
     }
-    addCourtyardBench(-6.4, 4.2, 0.95);
-    addCourtyardBench(6.4, 4.2, -0.95);
-    addCourtyardBench(-6.8, -3.5, 2.15);
-    addCourtyardBench(6.8, -3.5, -2.15);
+    // Place 4 benches symmetrically on the circular cobblestone courtyard ring (r = 7.65 from fountain center (0, 0.5))
+    // facing squarely INWARD toward the fountain, cleanly clear of all N/S & E/W walkways!
+    [40, -40, 140, -140].forEach(deg => {
+      const a = deg * Math.PI / 180;
+      const bx = Math.sin(a) * 7.65;
+      const bz = 0.5 + Math.cos(a) * 7.65;
+      const faceFountain = Math.atan2(0 - bx, 0.5 - bz);
+      addCourtyardBench(bx, bz, faceFountain);
+    });
 
     const lampBulbs = [];
     function addGhibliLamppost(x, z) {
@@ -1065,6 +1175,7 @@
       const hat = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.22, 12), ironMat);
       hat.position.y = 4.82; lg.add(hat);
       scene.add(lg);
+      COURTYARD_CIRCLES.push({ x, z, r: 0.58 });
     }
     [[-8.2, 6.2], [8.2, 6.2], [-8.8, -6.2], [8.8, -6.2]].forEach(p => addGhibliLamppost(p[0], p[1]));
 
@@ -1186,6 +1297,7 @@
 
     function buildMasterpieceTree(kind, x, z, scale) {
       const s = scale || 1.0;
+      COURTYARD_CIRCLES.push({ x, z, r: (kind === 'cypress' ? 0.85 : 1.04) * s });
       const g = new THREE.Group();
       g.position.set(x, getTerrainHeight(x, z) - 0.08, z);
 
@@ -1412,12 +1524,17 @@
     // =========================================================================
     const blinkingChars = [];
 
-    // Luminous Miyazaki Skin Shader: warm peach-coral shadow ramp (never muddy gray/purple!) + soft backlit glow
+    // Luminous Miyazaki Skin Shader: warm peach-coral shadow ramp + cel-anime portrait fill (zero dark chin shadows!)
     function makeGhibliSkinMat(colorHex, mapTex) {
+      const col = new THREE.Color(colorHex);
+      if (!mapTex) col.convertSRGBToLinear();
       const mat = new THREE.MeshStandardMaterial({
-        color: colorHex,
+        color: col,
         map: mapTex || null,
-        roughness: 0.76,
+        emissive: mapTex ? new THREE.Color(0xffffff) : col.clone(),
+        emissiveMap: mapTex || null,
+        emissiveIntensity: 0.32,
+        roughness: 0.80,
         metalness: 0.0
       });
       mat.onBeforeCompile = function (shader) {
@@ -1442,11 +1559,11 @@
             'vec3 vDir = normalize(cameraPosition - vSkinWPos);',
             'float ndl = dot(nW, normalize(uSunDir));',
             '// Warm Miyazaki apricot-peach shadow ramp so faces stay bright & luminous!',
-            'float cel = smoothstep(-0.28, 0.25, ndl);',
-            'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.95, 0.80, 0.76), gl_FragColor.rgb * vec3(1.05, 1.02, 0.98), cel);',
+            'float cel = smoothstep(-0.35, 0.25, ndl);',
+            'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.98, 0.88, 0.84), gl_FragColor.rgb * vec3(1.04, 1.01, 0.98), cel);',
             '// Subtle backlit peach-gold anime cheek rim',
             'float fres = pow(1.0 - max(0.0, dot(nW, vDir)), 3.4);',
-            'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.42;',
+            'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.36;',
             '#include <dithering_fragment>'
           ].join('\n'));
       };
@@ -1521,20 +1638,39 @@
     }
     const STRAW_TEX = createStrawHatTex();
 
+    function createGlitterHeadbandTex() {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, 256, 0);
+      g.addColorStop(0, '#e39cb4'); g.addColorStop(0.5, '#f4bdd0'); g.addColorStop(1, '#e39cb4');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 256, 64);
+      for (let i = 0; i < 420; i++) {
+        const x = (Math.sin(i * 19.7) * 0.5 + 0.5) * 256;
+        const y = (Math.cos(i * 31.3) * 0.5 + 0.5) * 64;
+        ctx.fillStyle = i % 3 === 0 ? 'rgba(255,255,255,0.92)' : (i % 3 === 1 ? 'rgba(255,232,210,0.82)' : 'rgba(225,130,165,0.65)');
+        ctx.fillRect(x, y, i % 5 === 0 ? 3 : 2, i % 5 === 0 ? 3 : 2);
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+    const GLITTER_PINK_TEX = createGlitterHeadbandTex();
+
     // Sculpted Organic Studio Ghibli Anime Head Geometry (heart-tapered chin, soft cheeks, gentle eye plane!)
     // Note: local +X becomes forward +Z after rotation.y = -Math.PI / 2!
-    function createSculptedHeadGeo(radius) {
-      const geo = new THREE.SphereGeometry(radius, 36, 28);
+    function createSculptedHeadGeo(radius, planarFront) {
+      const geo = new THREE.SphereGeometry(radius, 40, 32);
       const pos = geo.attributes.position;
+      const uv = geo.attributes.uv;
       for (let i = 0; i < pos.count; i++) {
         let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
         const nx = x / radius, ny = y / radius, nz = z / radius;
         // Gentle heart-shaped anime chin taper below cheekbones
         if (ny < 0) {
           const t = Math.min(1, -ny);
-          z *= (1.0 - 0.20 * Math.pow(t, 1.55));
-          x *= (1.0 - 0.08 * Math.pow(t, 1.6));
-          if (nx > 0.15) x += 0.022 * radius * Math.exp(-Math.pow((ny + 0.72) / 0.26, 2)) * nx;
+          z *= (1.0 - 0.19 * Math.pow(t, 1.55));
+          x *= (1.0 - 0.07 * Math.pow(t, 1.6));
+          if (nx > 0.15) x += 0.020 * radius * Math.exp(-Math.pow((ny + 0.72) / 0.26, 2)) * nx;
         }
         // Subtle flattened anime brow/eye face plane so eyes never bulge outward
         if (nx > 0.30 && ny > -0.35 && ny < 0.45) {
@@ -1545,6 +1681,37 @@
         const cheek = Math.exp(-Math.pow((ny + 0.24) / 0.26, 2)) * Math.exp(-Math.pow((Math.abs(nz) - 0.62) / 0.30, 2));
         z *= (1.0 + 0.048 * cheek);
         pos.setXYZ(i, x, y, z);
+
+        if (planarFront) {
+          // Zero-distortion orthographic front-face UV projection matching exact portrait proportions!
+          // With rotation.y = -PI/2: local +Z is viewer's LEFT (u < 0.5), local -Z is viewer's RIGHT (u > 0.5).
+          const spanX = radius * 1.82;
+          const spanY = radius * 1.88;
+          const u = Math.max(0.01, Math.min(0.99, 0.5 - z / spanX));
+          const v = Math.max(0.01, Math.min(0.99, 0.5 + (y + radius * 0.085) / spanY));
+          uv.setXY(i, u, v);
+        }
+      }
+      if (planarFront && geo.index) {
+        // Split triangles into front hemisphere (group 0 -> photo faceMat) and back/sides (group 1 -> solid skinMat)
+        // so face features NEVER mirror or stretch onto the back or sides of the head!
+        const oldIdx = geo.index.array;
+        const frontIdx = [], backIdx = [];
+        for (let k = 0; k < oldIdx.length; k += 3) {
+          const a = oldIdx[k], b = oldIdx[k + 1], c = oldIdx[k + 2];
+          if (pos.getX(a) > radius * 0.14 && pos.getX(b) > radius * 0.14 && pos.getX(c) > radius * 0.14) {
+            frontIdx.push(a, b, c);
+          } else {
+            backIdx.push(a, b, c);
+          }
+        }
+        const merged = new Uint16Array(frontIdx.length + backIdx.length);
+        merged.set(frontIdx, 0);
+        merged.set(backIdx, frontIdx.length);
+        geo.setIndex(new THREE.BufferAttribute(merged, 1));
+        geo.clearGroups();
+        geo.addGroup(0, frontIdx.length, 0);
+        geo.addGroup(frontIdx.length, backIdx.length, 1);
       }
       geo.computeVertexNormals();
       return geo;
@@ -1754,11 +1921,12 @@
       const bodyPivot = new THREE.Group();
       root.add(bodyPivot);
 
-      const skinMat = makeGhibliSkinMat(0xfcd7c0, null);
+      // Exact photo-matched skin tones & glossy rich dark-brown hair!
+      const skinMat = makeGhibliSkinMat(isSalma ? 0xf6c8ae : 0xeead8a, null);
       const hairTex = isSalma
-        ? createPaintedHairTex('#3e2418', '#68402a', '#966142')
-        : createPaintedHairTex('#1f120e', '#3c241c', '#633f30');
-      const hairMat = makeGhibliMat(0xffffff, { map: hairTex, roughness: 0.44, rimBoost: 1.45, aoGround: 0.04 });
+        ? createPaintedHairTex('#2a1a14', '#493026', '#724d3e')
+        : createPaintedHairTex('#1e120e', '#38231c', '#5c3c31');
+      const hairMat = makeGhibliMat(0xffffff, { map: hairTex, roughness: 0.42, rimBoost: 1.42, aoGround: 0.04 });
       const blouseTex = isSalma
         ? createPaintedFabricTex('#fff4bc', 'rgba(225,185,95,0.22)', false)
         : createPaintedFabricTex('#fffbf2', 'rgba(195,185,175,0.22)', false);
@@ -1908,165 +2076,208 @@
         arms.push(armG);
       });
 
-      // 6. SCULPTED HEART-CHIN ANIME HEAD + 3D EARS + 3D NOSE + LIVE BLINKING EYES!
+      // 6. PHOTO-EXACT SCULPTED ANIME HEAD + 3D EARS + LIVE BLINKING EYES (ZERO DISTORTION!)
       const headG = new THREE.Group();
       headG.position.set(0, 1.56, 0.01);
-      const texOpen = createAnimeFaceTex(isSalma, false);
-      const texBlink = createAnimeFaceTex(isSalma, true);
+      const texOpen = isSalma ? TEX.salmaFace : TEX.lailaFace;
+      const texBlink = isSalma ? TEX.salmaFaceBlink : TEX.lailaFaceBlink;
       const faceMat = makeGhibliSkinMat(0xffffff, texOpen);
-      const headMesh = new THREE.Mesh(createSculptedHeadGeo(0.282), faceMat);
+      const headGeo = createSculptedHeadGeo(0.284, true);
+      const headMesh = new THREE.Mesh(headGeo, [faceMat, skinMat]);
       headMesh.rotation.y = -Math.PI / 2;
       headMesh.castShadow = true;
-      addInkOutline(headMesh, 0.022);
+      // Add outline using a clean single-group clone so ink silhouette wraps seamlessly!
+      const headOutGeo = createSculptedHeadGeo(0.284, false);
+      const headOutline = new THREE.Mesh(headOutGeo, getOutlineMat(0x3b241c));
+      headOutline.scale.setScalar(1.022);
+      headMesh.add(headOutline);
+      outlineMeshes.push(headOutline);
       headG.add(headMesh);
       blinkingChars.push({ mat: faceMat, texOpen, texBlink, nextBlink: isSalma ? 5.2 : 3.7, blinkEnd: 0 });
 
-      // Delicate 3D sculpted anime nose catching warm rim light!
-      const nose3D = new THREE.Mesh(new THREE.SphereGeometry(0.020, 10, 8), skinMat);
-      nose3D.scale.set(0.85, 0.78, 1.25);
-      nose3D.position.set(0, -0.048, 0.268);
-      headG.add(nose3D);
-
-      // Sculpted 3D anime ears!
+      // Sculpted 3D anime ears (with tiny gold stud earrings on Laila matching her photo!)
       [-0.268, 0.268].forEach(ex => {
         const ear = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), skinMat);
         ear.scale.set(0.45, 1.15, 0.72);
-        ear.position.set(ex, -0.03, -0.015);
+        ear.position.set(ex, -0.032, -0.012);
         ear.rotation.y = ex < 0 ? -0.25 : 0.25;
         headG.add(ear);
+        if (!isSalma) {
+          const stud = new THREE.Mesh(new THREE.SphereGeometry(0.010, 6, 6), brassMat);
+          stud.position.set(ex * 1.03, -0.072, 0.008);
+          headG.add(stud);
+        }
       });
 
-      // 7. FEATHERY TAPERED LAYERED STUDIO GHIBLI HAIR (ZERO STIFF PIPES!)
-      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.300, 28, 22, 0, Math.PI * 2, 0, Math.PI * 0.49), hairMat);
-      hairCap.position.set(0, 0.045, -0.024); hairCap.rotation.x = -0.34; hairCap.castShadow = true;
+      // 7. EXACT CENTER-PARTED HAIRSTYLES & HEADBANDS MATCHING REFERENCE PHOTO!
+      // Smooth sculpted hair crown cap sitting cleanly BEHIND the open center-parted forehead!
+      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.302, 28, 22, 0, Math.PI * 2, 0, Math.PI * 0.48), hairMat);
+      hairCap.position.set(0, 0.045, -0.062); hairCap.rotation.x = -0.68; hairCap.castShadow = true;
       addInkOutline(hairCap, 0.020);
       headG.add(hairCap);
 
-      // 7 Feathery tapered wispy bangs parting gently above eyebrows!
-      const bangsSpec = [
-        { x0: -0.14, x1: -0.20, yEnd: 0.075, r: 0.042 },
-        { x0: -0.09, x1: -0.13, yEnd: 0.115, r: 0.038 },
-        { x0: -0.04, x1: -0.06, yEnd: 0.132, r: 0.034 },
-        { x0:  0.01, x1:  0.02, yEnd: 0.142, r: 0.030 },
-        { x0:  0.06, x1:  0.08, yEnd: 0.128, r: 0.034 },
-        { x0:  0.11, x1:  0.14, yEnd: 0.108, r: 0.038 },
-        { x0:  0.15, x1:  0.20, yEnd: 0.072, r: 0.042 }
-      ];
-      bangsSpec.forEach(bs => {
-        const bc = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(bs.x0 * 0.62, 0.268, 0.10),
-          new THREE.Vector3(bs.x0 * 0.96, 0.205, 0.250),
-          new THREE.Vector3(bs.x1, bs.yEnd, 0.256)
-        ]);
-        const bMesh = new THREE.Mesh(createTaperedHairLock(bc, 10, bs.r * 0.72, bs.r, 0.005, 0.56), hairMat);
-        headG.add(bMesh);
-      });
-
-      // Layered cheek-framing hime/anime side locks tapering gracefully past the chin!
+      // Center-parted inverted-V forehead sweeps framing the open forehead & temples cleanly (NO flat bangs!)
       [-1, 1].forEach(side => {
-        const c1 = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(side * 0.20, 0.18, 0.09),
-          new THREE.Vector3(side * 0.285, 0.02, 0.125),
-          new THREE.Vector3(side * 0.265, -0.14, 0.115),
-          new THREE.Vector3(side * 0.215, -0.27, 0.085)
+        const partCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.008, 0.278, 0.125),
+          new THREE.Vector3(side * 0.118, 0.242, 0.205),
+          new THREE.Vector3(side * 0.225, 0.145, 0.175),
+          new THREE.Vector3(side * 0.276, 0.032, 0.058),
+          new THREE.Vector3(side * 0.268, -0.065, -0.072)
         ]);
-        const l1 = new THREE.Mesh(createTaperedHairLock(c1, 12, 0.044, 0.056, 0.006, 0.58), hairMat);
-        addInkOutline(l1, 0.025); headG.add(l1);
-        const c2 = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(side * 0.23, 0.14, 0.01),
-          new THREE.Vector3(side * 0.305, -0.04, 0.02),
-          new THREE.Vector3(side * 0.28, -0.25, -0.02)
+        const sweep = new THREE.Mesh(createTaperedHairLock(partCurve, 14, 0.042, 0.062, 0.034, 0.56), hairMat);
+        addInkOutline(sweep, 0.022);
+        headG.add(sweep);
+
+        // Soft upper volume layer tucking smoothly behind the center part & under headband
+        const topVol = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.020, 0.300, 0.055),
+          new THREE.Vector3(side * 0.165, 0.252, 0.112),
+          new THREE.Vector3(side * 0.285, 0.105, 0.052),
+          new THREE.Vector3(side * 0.285, -0.085, -0.058)
         ]);
-        headG.add(new THREE.Mesh(createTaperedHairLock(c2, 10, 0.040, 0.050, 0.006, 0.62), hairMat));
+        headG.add(new THREE.Mesh(createTaperedHairLock(topVol, 12, 0.054, 0.074, 0.038, 0.62), hairMat));
       });
 
-      // Sculpted layered flowing back hair with feathery tapered bottom tips!
-      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.292, 22, 18), hairMat);
-      hairBack.scale.set(1.04, 1.15, 0.74); hairBack.position.set(0, -0.06, -0.145);
+      // Sculpted back hair volume
+      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.294, 22, 18), hairMat);
+      hairBack.scale.set(1.04, 1.12, 0.76); hairBack.position.set(0, -0.04, -0.148);
       addInkOutline(hairBack, 0.022); headG.add(hairBack);
-      for (let bl = -2; bl <= 2; bl++) {
-        const bx = bl * 0.105;
-        const bc = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(bx * 0.85, 0.05, -0.24),
-          new THREE.Vector3(bx * 1.05, -0.16, -0.265),
-          new THREE.Vector3(bx * 1.12, -0.34 - (2 - Math.abs(bl)) * 0.035, -0.235)
-        ]);
-        headG.add(new THREE.Mesh(createTaperedHairLock(bc, 9, 0.055, 0.065, 0.008, 0.55), hairMat));
-      }
 
       let swayHair = [];
       if (!isSalma) {
-        // Laila's pearl-studded ivory headband + sculpted crisscross woven braid & fluttering ribbon!
-        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.298, 0.020, 10, 28, Math.PI), makeGhibliMat(0xfff9f0));
-        headband.position.set(0, 0.085, 0.01); headband.rotation.x = -0.18; headG.add(headband);
-        for (let p = 1; p <= 7; p++) {
-          const pa = (p / 8) * Math.PI;
-          const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), makeGhibliMat(0xfffef8, { roughness: 0.25 }));
-          pearl.position.set(Math.cos(pa) * 0.308, 0.085 + Math.sin(pa) * 0.302, 0.01 - Math.sin(pa) * 0.05);
-          headG.add(pearl);
-        }
+        // LAILA (Left Photo): Cream knotted-bow fabric headband + thick glossy woven side braid over right shoulder!
+        const creamBandMat = makeGhibliMat(0xf8ebd0, { roughness: 0.78, rimBoost: 1.05 });
+        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.304, 0.030, 12, 32, Math.PI * 1.04), creamBandMat);
+        headband.scale.set(1.02, 1.02, 0.72);
+        headband.position.set(0, 0.062, 0.022);
+        headband.rotation.x = -0.24;
+        addInkOutline(headband, 0.020);
+        headG.add(headband);
+
+        // Sculpted tied fabric knot & two soft pointed cream bow ears right on top of Laila's headband!
+        const bowTopG = new THREE.Group();
+        bowTopG.position.set(0, 0.365, -0.045);
+        bowTopG.rotation.x = -0.20;
+        const knot = new THREE.Mesh(new THREE.SphereGeometry(0.036, 12, 10), creamBandMat);
+        knot.scale.set(1.15, 0.88, 0.92); addInkOutline(knot, 0.025); bowTopG.add(knot);
+        [-1, 1].forEach(side => {
+          const earCurve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.02, 0.0, 0),
+            new THREE.Vector3(side * 0.095, 0.028, 0.008),
+            new THREE.Vector3(side * 0.165, 0.002, -0.005)
+          ]);
+          const earMesh = new THREE.Mesh(createTaperedHairLock(earCurve, 8, 0.032, 0.042, 0.010, 0.45), creamBandMat);
+          addInkOutline(earMesh, 0.025);
+          bowTopG.add(earMesh);
+        });
+        headG.add(bowTopG);
+
+        // Soft wispy baby-hair curve tucked gracefully behind both ears
+        [-1, 1].forEach(side => {
+          const wisp = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.25, 0.02, 0.06),
+            new THREE.Vector3(side * 0.27, -0.09, -0.02),
+            new THREE.Vector3(side * 0.22, -0.20, -0.09)
+          ]);
+          headG.add(new THREE.Mesh(createTaperedHairLock(wisp, 8, 0.028, 0.032, 0.008, 0.65), hairMat));
+        });
+
+        // Thick lush glossy woven side braid draping forward over Laila's RIGHT shoulder (-X = viewer's LEFT!)
         const braidG = new THREE.Group();
-        braidG.position.set(-0.22, -0.08, -0.06);
-        for (let i = 0; i < 7; i++) {
-          const plait = new THREE.Mesh(new THREE.SphereGeometry(0.054 - i * 0.0035, 10, 8), hairMat);
-          plait.scale.set(1.15, 0.88, 0.82);
-          plait.rotation.z = (i % 2 === 0) ? 0.38 : -0.38;
-          plait.position.set(Math.sin(i * 1.6) * 0.014, -i * 0.072, 0.03 + i * 0.012);
-          braidG.add(plait);
+        braidG.position.set(-0.215, -0.08, -0.03);
+        for (let i = 0; i < 9; i++) {
+          const t = i / 8;
+          const rPlait = 0.064 - t * 0.020;
+          const bx = -0.015 + Math.sin(t * 2.2) * 0.022;
+          const by = -i * 0.066;
+          const bz = 0.025 + Math.sin(t * Math.PI * 0.68) * 0.145;
+          [-1, 1].forEach(ps => {
+            const plait = new THREE.Mesh(new THREE.SphereGeometry(rPlait, 10, 8), hairMat);
+            plait.scale.set(1.05, 0.82, 0.78);
+            plait.rotation.z = ps * 0.48;
+            plait.position.set(bx + ps * (rPlait * 0.46), by - (ps > 0 ? 0.016 : 0), bz);
+            addInkOutline(plait, 0.024);
+            braidG.add(plait);
+          });
         }
+        // Dark elastic tie + tapered silky braid tassel tip matching photo!
+        const tie = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.010, 8, 16), makeGhibliMat(0x2a1c17));
+        tie.rotation.x = Math.PI / 2; tie.position.set(-0.005, -0.57, 0.155); braidG.add(tie);
         const tipCurve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(0, -0.49, 0.11),
-          new THREE.Vector3(-0.01, -0.58, 0.12),
-          new THREE.Vector3(0.01, -0.66, 0.13)
+          new THREE.Vector3(-0.005, -0.57, 0.155),
+          new THREE.Vector3(-0.012, -0.66, 0.165),
+          new THREE.Vector3(0.008, -0.76, 0.155)
         ]);
-        braidG.add(new THREE.Mesh(createTaperedHairLock(tipCurve, 6, 0.032, 0.036, 0.005, 0.7), hairMat));
-        const bBow = buildRibbonBow(accentMat, 0.85);
-        bBow.position.set(0, -0.49, 0.12); braidG.add(bBow);
+        const tipMesh = new THREE.Mesh(createTaperedHairLock(tipCurve, 8, 0.036, 0.046, 0.006, 0.72), hairMat);
+        addInkOutline(tipMesh, 0.024);
+        braidG.add(tipMesh);
         headG.add(braidG);
         swayHair.push(braidG);
       } else {
-        // Salma's hand-painted woven straw sunhat with gently waved brim, red ribbon bow & multi-strand twin-tails!
-        const hatMat = makeGhibliMat(0xffffff, { map: STRAW_TEX, roughness: 0.84, rimBoost: 0.95 });
-        const brimGeo = new THREE.CylinderGeometry(0.41, 0.47, 0.036, 36, 1);
-        const bp = brimGeo.attributes.position;
-        for (let i = 0; i < bp.count; i++) {
-          const x = bp.getX(i), y = bp.getY(i), z = bp.getZ(i);
-          bp.setY(i, y + Math.sin(Math.atan2(z, x) * 3.0) * 0.018); // Soft organic Studio Ghibli sunhat wave!
-        }
-        brimGeo.computeVertexNormals();
-        const brim = new THREE.Mesh(brimGeo, hatMat);
-        brim.position.set(0, 0.275, -0.045); brim.rotation.x = -0.18; brim.castShadow = true; addInkOutline(brim, 0.018);
-        headG.add(brim);
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.258, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), hatMat);
-        crown.position.set(0, 0.265, -0.045); crown.rotation.x = -0.18; headG.add(crown);
-        const hRib = new THREE.Mesh(new THREE.TorusGeometry(0.262, 0.024, 8, 28), makeGhibliMat(0xe04f64));
-        hRib.rotation.x = Math.PI / 2 - 0.18; hRib.position.set(0, 0.295, -0.045); headG.add(hRib);
-        const hatBow = buildRibbonBow(makeGhibliMat(0xe04f64), 1.05);
-        hatBow.position.set(0, 0.27, -0.31); hatBow.rotation.y = Math.PI; headG.add(hatBow);
-
-        // Multi-strand tapered bouncy anime twin-tails with ribbon ties!
-        [-1, 1].forEach(side => {
-          const tailG = new THREE.Group();
-          tailG.position.set(side * 0.27, 0.03, -0.06);
-          const tBow = buildRibbonBow(accentMat, 0.80);
-          tBow.rotation.y = side * Math.PI / 2; tBow.position.set(side * 0.03, 0.02, 0.02); tailG.add(tBow);
-          const tc1 = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(side * 0.14, -0.16, -0.02),
-            new THREE.Vector3(side * 0.17, -0.38, 0.04),
-            new THREE.Vector3(side * 0.12, -0.49, 0.07)
-          ]);
-          const mainT = new THREE.Mesh(createTaperedHairLock(tc1, 12, 0.052, 0.074, 0.008, 0.72), hairMat);
-          addInkOutline(mainT, 0.025); tailG.add(mainT);
-          const tc2 = new THREE.CatmullRomCurve3([
-            new THREE.Vector3(0, -0.02, -0.02),
-            new THREE.Vector3(side * 0.10, -0.19, -0.09),
-            new THREE.Vector3(side * 0.11, -0.42, -0.05)
-          ]);
-          tailG.add(new THREE.Mesh(createTaperedHairLock(tc2, 10, 0.038, 0.050, 0.006, 0.68), hairMat));
-          headG.add(tailG);
-          swayHair.push(tailG);
+        // SALMA (Right Photo): Sparkly soft-pink glitter headband + lush long wavy dark-chocolate hair over BOTH shoulders!
+        const pinkBandMat = makeGhibliMat(0xffffff, {
+          map: GLITTER_PINK_TEX, roughness: 0.34, metalness: 0.18, rimBoost: 1.35
         });
+        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.305, 0.026, 12, 32, Math.PI * 1.02), pinkBandMat);
+        headband.scale.set(1.02, 1.02, 0.70);
+        headband.position.set(0, 0.068, 0.022);
+        headband.rotation.x = -0.24;
+        addInkOutline(headband, 0.018);
+        headG.add(headband);
+
+        // Long cascading S-wavy dark-chocolate hair flowing gracefully over BOTH shoulders & past her chest!
+        [-1, 1].forEach(side => {
+          const waveG = new THREE.Group();
+          // Primary lush front-shoulder S-wave lock
+          const w1 = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.25, 0.08, 0.03),
+            new THREE.Vector3(side * 0.30, -0.10, 0.07),
+            new THREE.Vector3(side * 0.24, -0.28, 0.14),
+            new THREE.Vector3(side * 0.28, -0.46, 0.17),
+            new THREE.Vector3(side * 0.21, -0.64, 0.16),
+            new THREE.Vector3(side * 0.24, -0.78, 0.13)
+          ]);
+          const m1 = new THREE.Mesh(createTaperedHairLock(w1, 16, 0.062, 0.082, 0.012, 0.56), hairMat);
+          addInkOutline(m1, 0.022); waveG.add(m1);
+
+          // Secondary outer wavy shoulder curl adding airy anime volume
+          const w2 = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.26, 0.04, -0.06),
+            new THREE.Vector3(side * 0.35, -0.18, -0.02),
+            new THREE.Vector3(side * 0.31, -0.40, 0.05),
+            new THREE.Vector3(side * 0.36, -0.60, 0.06),
+            new THREE.Vector3(side * 0.29, -0.74, 0.04)
+          ]);
+          const m2 = new THREE.Mesh(createTaperedHairLock(w2, 14, 0.055, 0.072, 0.010, 0.60), hairMat);
+          addInkOutline(m2, 0.022); waveG.add(m2);
+
+          // Inner cheek-skimming wispy wave
+          const w3 = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.22, 0.04, 0.10),
+            new THREE.Vector3(side * 0.25, -0.14, 0.11),
+            new THREE.Vector3(side * 0.18, -0.34, 0.15),
+            new THREE.Vector3(side * 0.16, -0.52, 0.16)
+          ]);
+          waveG.add(new THREE.Mesh(createTaperedHairLock(w3, 12, 0.036, 0.046, 0.008, 0.58), hairMat));
+
+          headG.add(waveG);
+          swayHair.push(waveG);
+        });
+
+        // Full flowing wavy back hair curtain cascading down her back!
+        for (let bl = -2; bl <= 2; bl++) {
+          const bx = bl * 0.115;
+          const bc = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(bx * 0.85, 0.04, -0.24),
+            new THREE.Vector3(bx * 1.12, -0.22, -0.28),
+            new THREE.Vector3(bx * 1.02, -0.48, -0.25),
+            new THREE.Vector3(bx * 1.15, -0.70 - (2 - Math.abs(bl)) * 0.04, -0.22)
+          ]);
+          const bm = new THREE.Mesh(createTaperedHairLock(bc, 12, 0.062, 0.076, 0.012, 0.54), hairMat);
+          addInkOutline(bm, 0.020);
+          headG.add(bm);
+        }
       }
       bodyPivot.add(headG);
 
@@ -2425,6 +2636,7 @@
       cap.scale.set(1.18, 0.45, 0.98);
       cap.position.set(st[0], sy + st[2] * 0.42, st[1]);
       scene.add(cap);
+      COURTYARD_CIRCLES.push({ x: st[0], z: st[1], r: st[2] * 1.15 + 0.25 });
     });
 
     // Clustered Bouquet Wildflower Drifts (Daisies, Buttercups, Pink Clover, Forget-Me-Nots & Lavender!)
@@ -2897,13 +3109,10 @@
           const curt = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.26, 3.35, 10), curtainMat);
           curt.scale.set(1.0, 1.0, 0.55); curt.position.set(wx + cx, 2.55, nZ + 0.28); interiorGroup.add(curt);
         });
-        // Potted fern/blossom right on the sunny sill!
-        const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.11, 0.24, 12), makeGhibliMat(0xc86240));
-        pot.position.set(wx - ww * 0.28, 1.24, nZ + 0.18); interiorGroup.add(pot);
-        const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.65), new THREE.MeshStandardMaterial({
-          map: TEX.leafBough, alphaTest: 0.45, side: THREE.DoubleSide
-        }));
-        leaf.position.set(wx - ww * 0.28, 1.56, nZ + 0.18); interiorGroup.add(leaf);
+        // Hand-painted terracotta blooming flower pot right on the sunny sill!
+        const sillPot = buildPaintedPottedPlant('flowers', 0.56);
+        sillPot.position.set(wx - ww * 0.28, 1.12, nZ + 0.16);
+        interiorGroup.add(sillPot);
 
         // REAL hand-painted Cherry Blossom branches swaying right outside the window glass!
         for (let b = 0; b < 4; b++) {
@@ -2923,6 +3132,13 @@
         beam.rotation.y = 0.08;
         interiorGroup.add(beam);
         aptSunbeams.push(beam);
+      });
+
+      // Lush hand-painted indoor potted lemon trees warming the apartment corners!
+      [[-1.35, -5.25, 1.02], [7.35, -4.65, 1.08]].forEach(ip => {
+        const indPot = buildPaintedPottedPlant('lemon', ip[2]);
+        indPot.position.set(ip[0], 0, ip[1]);
+        interiorGroup.add(indPot);
       });
 
       // 4. MOM & DAD IN TWO PLUSH ARMCHAIRS NEXT TO THE WINDOW + SMALL ROUND COFFEE TABLE BETWEEN THEM!
@@ -3307,7 +3523,7 @@
     function toggleLeader() {
       activeLeader = (activeLeader === 'laila') ? 'salma' : 'laila';
       const btn = document.getElementById('btn-leader');
-      btn.textContent = activeLeader === 'salma' ? '👒 Leading: Salma' : '👧 Leading: Laila';
+      btn.textContent = activeLeader === 'salma' ? '🎀 Leading: Salma' : '👧 Leading: Laila';
       btn.classList.toggle('is-salma', activeLeader === 'salma');
       showDialog('Leader Switched ✨', getLeaderName() + ' is now leading the adventure!');
     }
@@ -3572,11 +3788,29 @@
         const p = (AREA_PRESETS[currentArea] || AREA_PRESETS.courtyard)[name];
         if (p) { camMode = 'preset'; Object.assign(camState, p); Object.assign(camTarget, p); syncActiveBtn('data-cam', name); }
       },
+      setCustomCam: cfg => {
+        camMode = 'preset';
+        Object.assign(camState, cfg);
+        Object.assign(camTarget, cfg);
+      },
       setTime: mode => { applyTimeMode(mode); syncActiveBtn('data-time', mode); },
       triggerAction: id => {
         const z = getActiveZones().find(item => item.id === id);
         if (z) z.run();
-      }
+      },
+      setPlayerPos: (x, z, rotY) => {
+        const lead = getLeaderObj();
+        lead.root.position.set(x, currentArea === 'courtyard' ? getTerrainHeight(x, z) : 0, z);
+        if (typeof rotY === 'number') lead.root.rotation.y = rotY;
+        walkGoal = null; walkMarker.visible = false;
+      },
+      setWalkGoal: (x, z) => { walkGoal = { x, z }; },
+      getPlayerPos: () => {
+        const p = getLeaderObj().root.position;
+        return { x: p.x, y: p.y, z: p.z };
+      },
+      canStandAt: (x, z) => canStandAt(x, z),
+      getColliders: () => ({ circles: COURTYARD_CIRCLES.slice(), boxes: COURTYARD_BOXES.slice() })
     };
 
     // Start in playable Follow view facing Sunnyside Courtyard & Laila/Salma!
@@ -3588,6 +3822,7 @@
     // 14. MAIN ANIMATION & GAMEPLAY LOOP
     // =========================================================================
     const clock = new THREE.Clock();
+    let blinkSimTime = 0;
     let fpsFrames = 0, fpsLast = performance.now();
     const fpsEl = document.getElementById('fps-val');
 
@@ -3598,11 +3833,28 @@
 
     function canStandAt(x, z) {
       if (currentArea === 'courtyard') {
-        if (x < -16.5 || x > 16.5 || z < -10.8 || z > 18.5) return false;
-        if (Math.hypot(x, z - 0.5) < 4.05) return false; // Fountain collision
+        if (x < -16.5 || x > 16.5 || z < -10.5 || z > 18.5) return false;
+        // Fountain basin collision
+        if (Math.hypot(x, z - 0.5) < 4.18) return false;
+        // Sunnyside Villa steps & plinth footprint
+        if (z < -10.35 && Math.abs(x) < 8.4) return false;
+        // All solid circular obstacles (every tree trunk, lamppost, potted plant, mossy boulder, neighbor villa!)
+        for (let i = 0; i < COURTYARD_CIRCLES.length; i++) {
+          const c = COURTYARD_CIRCLES[i];
+          if (Math.hypot(x - c.x, z - c.z) < c.r) return false;
+        }
+        // All solid oriented-box obstacles (all 4 courtyard benches!)
+        for (let i = 0; i < COURTYARD_BOXES.length; i++) {
+          const b = COURTYARD_BOXES[i];
+          const dx = x - b.x, dz = z - b.z;
+          const cos = Math.cos(b.rotY), sin = Math.sin(b.rotY);
+          const lx = dx * cos - dz * sin;
+          const lz = dx * sin + dz * cos;
+          if (Math.abs(lx) < b.hx && Math.abs(lz) < b.hz) return false;
+        }
         return true;
       }
-      // Apartment bounds & furniture collision
+      // Apartment bounds & furniture collision (including indoor corner potted lemon trees!)
       if (x < -8.2 || x > 8.2 || z < -5.9 || z > 6.1) return false;
       if (x > 6.5 && z > -2.5 && z < 0.2) return false;    // Piano
       if (x > 6.7 && z > 2.2 && z < 4.7) return false;     // Bookshelf
@@ -3610,7 +3862,36 @@
       if (Math.hypot(x + 5.7, z + 2.55) < 1.35) return false; // Dining table
       if (x < -5.8 && z > 1.4 && z < 5.5) return false;    // Beds
       if (x > 1.1 && x < 5.2 && z < -3.5) return false;    // Mom & Dad armchairs + coffee table
+      if (Math.hypot(x + 1.35, z + 5.25) < 0.85) return false; // Window corner potted lemon tree
+      if (Math.hypot(x - 7.35, z + 4.65) < 0.88) return false; // Piano corner potted lemon tree
       return true;
+    }
+
+    function tryMoveWithSlide(objRoot, moveAng, stepDist, extraCheck) {
+      const ox = objRoot.position.x, oz = objRoot.position.z;
+      const tryOffsets = [0, 0.52, -0.52, 1.05, -1.05];
+      for (let k = 0; k < tryOffsets.length; k++) {
+        const ang = moveAng + tryOffsets[k];
+        const scale = k === 0 ? 1.0 : (k < 3 ? 0.82 : 0.58);
+        const nx = ox + Math.sin(ang) * stepDist * scale;
+        const nz = oz + Math.cos(ang) * stepDist * scale;
+        if (canStandAt(nx, nz) && (!extraCheck || extraCheck(nx, nz))) {
+          objRoot.position.set(nx, currentArea === 'courtyard' ? getTerrainHeight(nx, nz) : 0, nz);
+          return true;
+        }
+      }
+      // Axis-aligned slide fallback
+      const sx = ox + Math.sin(moveAng) * stepDist;
+      const sz = oz + Math.cos(moveAng) * stepDist;
+      if (canStandAt(sx, oz) && (!extraCheck || extraCheck(sx, oz))) {
+        objRoot.position.set(sx, currentArea === 'courtyard' ? getTerrainHeight(sx, oz) : 0, oz);
+        return true;
+      }
+      if (canStandAt(ox, sz) && (!extraCheck || extraCheck(ox, sz))) {
+        objRoot.position.set(ox, currentArea === 'courtyard' ? getTerrainHeight(ox, sz) : 0, sz);
+        return true;
+      }
+      return false;
     }
 
     function animate() {
@@ -3653,47 +3934,44 @@
       }
 
       if (walking) {
-        const stepX = Math.sin(moveAng) * moveSpd * dt;
-        const stepZ = Math.cos(moveAng) * moveSpd * dt;
-        let nx = lead.root.position.x + stepX;
-        let nz = lead.root.position.z + stepZ;
-        if (canStandAt(nx, nz)) {
-          lead.root.position.set(nx, currentArea === 'courtyard' ? getTerrainHeight(nx, nz) : 0, nz);
-        } else if (canStandAt(nx, lead.root.position.z)) {
-          lead.root.position.set(nx, currentArea === 'courtyard' ? getTerrainHeight(nx, lead.root.position.z) : 0, lead.root.position.z);
-        } else if (canStandAt(lead.root.position.x, nz)) {
-          lead.root.position.set(lead.root.position.x, currentArea === 'courtyard' ? getTerrainHeight(lead.root.position.x, nz) : 0, nz);
-        } else {
+        const moved = tryMoveWithSlide(lead.root, moveAng, moveSpd * dt);
+        if (!moved) {
           walkGoal = null; walkMarker.visible = false;
         }
         lead.root.rotation.y = moveAng;
       }
 
-      // Follower sister & Mochi cheerfully trot behind the active leader with clean personal space!
+      // Follower sister & Mochi cheerfully trot behind the active leader while respecting ALL bench & tree colliders!
       let folWalking = false;
       const fdx = lead.root.position.x - fol.root.position.x;
       const fdz = lead.root.position.z - fol.root.position.z;
       const fDist = Math.hypot(fdx, fdz);
       if (fDist > 1.38) {
-        folWalking = true;
-        const sx = fol.root.position.x + (fdx / fDist) * (moveSpd * 0.94) * dt;
-        const sz = fol.root.position.z + (fdz / fDist) * (moveSpd * 0.94) * dt;
-        fol.root.position.set(sx, currentArea === 'courtyard' ? getTerrainHeight(sx, sz) : 0, sz);
-        fol.root.rotation.y = Math.atan2(fdx, fdz);
+        const fAng = Math.atan2(fdx, fdz);
+        if (tryMoveWithSlide(fol.root, fAng, moveSpd * 0.94 * dt)) {
+          folWalking = true;
+          fol.root.rotation.y = fAng;
+        }
       }
 
       const mdx = lead.root.position.x - mochi.root.position.x;
       const mdz = lead.root.position.z - mochi.root.position.z;
       const mDist = Math.hypot(mdx, mdz);
       if (mDist > 1.55) {
-        const msx = mochi.root.position.x + (mdx / mDist) * (moveSpd * 0.92) * dt;
-        const msz = mochi.root.position.z + (mdz / mDist) * (moveSpd * 0.92) * dt;
-        // Keep clean separation from both sisters so Mochi never clips into skirts!
-        if (Math.hypot(msx - lead.root.position.x, msz - lead.root.position.z) > 1.05
-            && Math.hypot(msx - fol.root.position.x, msz - fol.root.position.z) > 0.95) {
-          mochi.root.position.set(msx, currentArea === 'courtyard' ? getTerrainHeight(msx, msz) : 0, msz);
-          mochi.root.rotation.y = Math.atan2(mdx, mdz);
+        const mAng = Math.atan2(mdx, mdz);
+        const keepSpace = (nx, nz) =>
+          Math.hypot(nx - lead.root.position.x, nz - lead.root.position.z) > 1.05 &&
+          Math.hypot(nx - fol.root.position.x, nz - fol.root.position.z) > 0.95;
+        if (tryMoveWithSlide(mochi.root, mAng, moveSpd * 0.92 * dt, keepSpace)) {
+          mochi.root.rotation.y = mAng;
         }
+      }
+
+      // Gentle breeze rustle on all hand-painted potted plants!
+      for (let pi = 0; pi < pottedPlantSway.length; pi++) {
+        const pp = pottedPlantSway[pi];
+        pp.g.rotation.z = Math.sin(t * 1.85 + pp.phase) * 0.032;
+        pp.g.rotation.x = Math.cos(t * 1.45 + pp.phase) * 0.022;
       }
 
       // Update context-sensitive glowing action pill (doorways & furniture always take priority over Pet Mochi!)
@@ -3717,16 +3995,21 @@
       }
 
       // Smooth breathing, walk swing, hair breeze & live natural blinking for Laila, Salma, Mom & Dad!
+      blinkSimTime += dt;
       for (let bi = 0; bi < blinkingChars.length; bi++) {
         const bc = blinkingChars[bi];
         if (bc.blinkEnd > 0) {
-          if (t >= bc.blinkEnd) {
-            bc.mat.map = bc.texOpen; bc.mat.needsUpdate = true;
-            bc.blinkEnd = 0; bc.nextBlink = t + 3.0 + ((bi * 1.37 + t) % 2.4);
+          if (blinkSimTime >= bc.blinkEnd) {
+            bc.mat.map = bc.texOpen;
+            if (bc.mat.emissiveMap) bc.mat.emissiveMap = bc.texOpen;
+            bc.mat.needsUpdate = true;
+            bc.blinkEnd = 0; bc.nextBlink = blinkSimTime + 3.4 + ((bi * 1.37 + blinkSimTime) % 2.4);
           }
-        } else if (t >= bc.nextBlink) {
-          bc.mat.map = bc.texBlink; bc.mat.needsUpdate = true;
-          bc.blinkEnd = t + 0.13;
+        } else if (blinkSimTime >= bc.nextBlink) {
+          bc.mat.map = bc.texBlink;
+          if (bc.mat.emissiveMap) bc.mat.emissiveMap = bc.texBlink;
+          bc.mat.needsUpdate = true;
+          bc.blinkEnd = blinkSimTime + 0.13;
         }
       }
       [[lead, walking, 0], [fol, folWalking, 1]].forEach(([s, isW, idx]) => {
