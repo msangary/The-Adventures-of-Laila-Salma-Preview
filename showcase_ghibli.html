@@ -1407,72 +1407,312 @@
     buildMasterpieceTree('cypress',  23.2, -4.5, 1.18);
 
     // =========================================================================
-    // 9. SCULPTED SMOOTH STUDIO GHIBLI LAILA, SALMA & MOCHI (ZERO BOXY PRIMITIVES!)
+    // 9. NEXT-GEN STUDIO GHIBLI CHARACTERS: LAILA, SALMA & MOCHI (SCULPTED ANIME HEADS,
+    //    FEATHERY TAPERED HAIR, 3D PLEATED SKIRTS, LIVE BLINKING & LUMINOUS SKIN SHADER!)
     // =========================================================================
-    function createAnimeFaceTex(isSalma) {
+    const blinkingChars = [];
+
+    // Luminous Miyazaki Skin Shader: warm peach-coral shadow ramp (never muddy gray/purple!) + soft backlit glow
+    function makeGhibliSkinMat(colorHex, mapTex) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: colorHex,
+        map: mapTex || null,
+        roughness: 0.76,
+        metalness: 0.0
+      });
+      mat.onBeforeCompile = function (shader) {
+        shader.uniforms.uSunDir = GLOBAL.uSunDir;
+        shader.uniforms.uRimCol = GLOBAL.uRimCol;
+        shader.uniforms.uRimStr = GLOBAL.uRimStrength;
+        shader.vertexShader = shader.vertexShader
+          .replace('#include <common>', '#include <common>\nvarying vec3 vSkinWPos;\nvarying vec3 vSkinWNorm;')
+          .replace('#include <worldpos_vertex>', [
+            '#include <worldpos_vertex>',
+            'vSkinWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;',
+            'vSkinWNorm = normalize(mat3(modelMatrix) * objectNormal);'
+          ].join('\n'));
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', [
+            '#include <common>',
+            'uniform vec3 uSunDir; uniform vec3 uRimCol; uniform float uRimStr;',
+            'varying vec3 vSkinWPos; varying vec3 vSkinWNorm;'
+          ].join('\n'))
+          .replace('#include <dithering_fragment>', [
+            'vec3 nW = normalize(vSkinWNorm);',
+            'vec3 vDir = normalize(cameraPosition - vSkinWPos);',
+            'float ndl = dot(nW, normalize(uSunDir));',
+            '// Warm Miyazaki apricot-peach shadow ramp so faces stay bright & luminous!',
+            'float cel = smoothstep(-0.28, 0.25, ndl);',
+            'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.95, 0.80, 0.76), gl_FragColor.rgb * vec3(1.05, 1.02, 0.98), cel);',
+            '// Subtle backlit peach-gold anime cheek rim',
+            'float fres = pow(1.0 - max(0.0, dot(nW, vDir)), 3.4);',
+            'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.42;',
+            '#include <dithering_fragment>'
+          ].join('\n'));
+      };
+      return mat;
+    }
+
+    // Hand-painted Gouache Hair Strand Texture (rich painterly brushstrokes + sunlit highlights!)
+    function createPaintedHairTex(baseHex, midHex, hiHex) {
       const c = document.createElement('canvas'); c.width = 512; c.height = 512;
       const ctx = c.getContext('2d');
-      // Warm soft peach skin base with subtle cheek/forehead watercolor glow
-      const g = ctx.createRadialGradient(256, 250, 40, 256, 256, 260);
-      g.addColorStop(0, '#ffe4d1'); g.addColorStop(0.76, '#f7ccb1'); g.addColorStop(1, '#e8b292');
+      const g = ctx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0.0, baseHex); g.addColorStop(0.32, midHex);
+      g.addColorStop(0.55, hiHex); g.addColorStop(0.82, midHex); g.addColorStop(1.0, baseHex);
       ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 160; i++) {
+        const x = (i / 160) * 512 + Math.sin(i * 1.9) * 4;
+        ctx.strokeStyle = i % 3 === 0 ? 'rgba(255,228,200,0.16)' : (i % 3 === 1 ? 'rgba(25,12,8,0.22)' : 'rgba(180,115,82,0.14)');
+        ctx.lineWidth = 1.5 + (i % 4) * 1.1;
+        ctx.beginPath(); ctx.moveTo(x, 0);
+        ctx.bezierCurveTo(x + Math.sin(i) * 8, 170, x - Math.cos(i) * 8, 340, x, 512);
+        ctx.stroke();
+      }
+      // Luminous Miyazaki anime hair sheen ribbon across the crown!
+      const hg = ctx.createLinearGradient(0, 140, 0, 210);
+      hg.addColorStop(0, 'rgba(255,235,215,0)');
+      hg.addColorStop(0.5, 'rgba(255,235,215,0.28)');
+      hg.addColorStop(1, 'rgba(255,235,215,0)');
+      ctx.fillStyle = hg; ctx.fillRect(0, 140, 512, 70);
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
 
-      // Compensate 2:1 equirectangular sphere UV stretching (360° lon vs 180° lat)
-      // so eyes, pupils, blush & smiles render with exact 1:1 Studio Ghibli proportions!
+    // Hand-painted Gouache Linen / Knit Fabric Texture
+    function createPaintedFabricTex(baseHex, shadeHex, isKnit) {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = baseHex; ctx.fillRect(0, 0, 256, 256);
+      for (let i = 0; i < 120; i++) {
+        ctx.fillStyle = i % 2 === 0 ? shadeHex : 'rgba(255,255,255,0.08)';
+        const x = (i * 47) % 256, y = (i * 83) % 256;
+        ctx.fillRect(x, y, isKnit ? 10 : 28, isKnit ? 4 : 3);
+      }
+      if (isKnit) {
+        ctx.strokeStyle = shadeHex; ctx.lineWidth = 2;
+        for (let x = 0; x < 256; x += 16) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke();
+        }
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      return tex;
+    }
+
+    // Hand-painted Woven Straw Hat Texture!
+    function createStrawHatTex() {
+      const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f3d274'; ctx.fillRect(0, 0, 256, 256);
+      for (let y = 0; y < 256; y += 8) {
+        ctx.fillStyle = (y % 16 === 0) ? '#e5be58' : '#fae08e';
+        ctx.fillRect(0, y, 256, 4);
+        for (let x = (y % 16 === 0 ? 0 : 8); x < 256; x += 16) {
+          ctx.fillStyle = 'rgba(155, 108, 42, 0.25)';
+          ctx.fillRect(x, y, 6, 4);
+        }
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 2);
+      return tex;
+    }
+    const STRAW_TEX = createStrawHatTex();
+
+    // Sculpted Organic Studio Ghibli Anime Head Geometry (heart-tapered chin, soft cheeks, gentle eye plane!)
+    // Note: local +X becomes forward +Z after rotation.y = -Math.PI / 2!
+    function createSculptedHeadGeo(radius) {
+      const geo = new THREE.SphereGeometry(radius, 36, 28);
+      const pos = geo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const nx = x / radius, ny = y / radius, nz = z / radius;
+        // Gentle heart-shaped anime chin taper below cheekbones
+        if (ny < 0) {
+          const t = Math.min(1, -ny);
+          z *= (1.0 - 0.20 * Math.pow(t, 1.55));
+          x *= (1.0 - 0.08 * Math.pow(t, 1.6));
+          if (nx > 0.15) x += 0.022 * radius * Math.exp(-Math.pow((ny + 0.72) / 0.26, 2)) * nx;
+        }
+        // Subtle flattened anime brow/eye face plane so eyes never bulge outward
+        if (nx > 0.30 && ny > -0.35 && ny < 0.45) {
+          const f = Math.max(0, (nx - 0.30) / 0.70) * (1.0 - Math.abs(ny - 0.05) / 0.55);
+          x -= radius * 0.032 * Math.max(0, f);
+        }
+        // Soft anime lower-cheek fullness
+        const cheek = Math.exp(-Math.pow((ny + 0.24) / 0.26, 2)) * Math.exp(-Math.pow((Math.abs(nz) - 0.62) / 0.30, 2));
+        z *= (1.0 + 0.048 * cheek);
+        pos.setXYZ(i, x, y, z);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Feathery Tapered Anime Hair Lock Geometry (swells in middle, tapers cleanly to pointed tip!)
+    function createTaperedHairLock(curve, segs, rBase, rMid, rTip, flatRatio) {
+      const rSegs = 8;
+      const geo = new THREE.TubeGeometry(curve, segs, 1.0, rSegs, false);
+      const pos = geo.attributes.position;
+      const frames = curve.computeFrenetFrames(segs, false);
+      const ring = rSegs + 1;
+      const flat = flatRatio || 0.62;
+      for (let i = 0; i <= segs; i++) {
+        const t = i / segs;
+        const c = curve.getPointAt(t);
+        const r = t < 0.32
+          ? rBase + (rMid - rBase) * (t / 0.32)
+          : rMid + (rTip - rMid) * Math.pow((t - 0.32) / 0.68, 1.15);
+        const N = frames.normals[i], B = frames.binormals[i];
+        for (let j = 0; j < ring; j++) {
+          const idx = i * ring + j;
+          const dx = pos.getX(idx) - c.x, dy = pos.getY(idx) - c.y, dz = pos.getZ(idx) - c.z;
+          const dN = dx * N.x + dy * N.y + dz * N.z;
+          const dB = dx * B.x + dy * B.y + dz * B.z;
+          const nx = N.x * dN * r * flat + B.x * dB * r;
+          const ny = N.y * dN * r * flat + B.y * dB * r;
+          const nz = N.z * dN * r * flat + B.z * dB * r;
+          pos.setXYZ(idx, c.x + nx, c.y + ny, c.z + nz);
+        }
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Actual 3D Sculpted Radial Pleated Skirt Geometry (bottom -> top for outward normals!)
+    function create3DPleatedSkirtGeo(pts, radialSegs, pleatCount, pleatAmp) {
+      const geo = new THREE.LatheGeometry(pts, radialSegs);
+      const pos = geo.attributes.position;
+      const yMin = pts[0].y, yMax = pts[pts.length - 1].y;
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const ang = Math.atan2(z, x);
+        const hemWeight = Math.max(0, Math.min(1, (yMax - y) / Math.max(0.01, yMax - yMin)));
+        const fold = 1.0 + pleatAmp * Math.sin(ang * pleatCount) * Math.pow(hemWeight, 0.72);
+        pos.setXYZ(i, x * fold, y, z * fold);
+      }
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    // Sculpted Double-Wing Storybook Ribbon Bow with Hanging Tails!
+    function buildRibbonBow(mat, scale) {
+      const bg = new THREE.Group();
+      const s = scale || 1.0;
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.026 * s, 10, 8), mat);
+      bg.add(knot);
+      [-1, 1].forEach(side => {
+        const wing = new THREE.Mesh(new THREE.ConeGeometry(0.038 * s, 0.088 * s, 8), mat);
+        wing.rotation.z = side * Math.PI / 2;
+        wing.scale.set(0.85, 1.0, 0.45);
+        wing.position.set(side * 0.044 * s, 0.005 * s, 0);
+        bg.add(wing);
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.024 * s, 0.11 * s, 0.009 * s), mat);
+        tail.position.set(side * 0.028 * s, -0.062 * s, -0.004 * s);
+        tail.rotation.z = side * 0.24;
+        bg.add(tail);
+      });
+      return bg;
+    }
+
+    // High-Resolution 1024x1024 Hand-Painted Studio Ghibli Anime Face (Open + Blink states!)
+    function createAnimeFaceTex(isSalma, isBlink) {
+      const S = 1024;
+      const c = document.createElement('canvas'); c.width = S; c.height = S;
+      const ctx = c.getContext('2d');
+      // Warm gouache anime peach skin with delicate forehead & under-chin tint
+      const g = ctx.createRadialGradient(512, 480, 70, 512, 512, 530);
+      g.addColorStop(0, '#ffead9'); g.addColorStop(0.68, '#fad3bc'); g.addColorStop(1, '#ecb99c');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+
+      // Compensate 2:1 equirectangular sphere UV stretching so eyes & smiles map 1:1!
       ctx.save();
-      ctx.translate(256, 0);
+      ctx.translate(512, 0);
       ctx.scale(0.52, 1.0);
-      ctx.translate(-256, 0);
+      ctx.translate(-512, 0);
 
-      // Soft Miyazaki coral blush ovals
-      [-86, 86].forEach(bx => {
-        const bg = ctx.createRadialGradient(256 + bx, 326, 5, 256 + bx, 326, 42);
-        bg.addColorStop(0, 'rgba(244, 118, 136, 0.52)');
-        bg.addColorStop(1, 'rgba(244, 118, 136, 0.0)');
+      // Soft multi-layered Miyazaki watercolor coral cheek blush + tiny anime blush highlight lines
+      [-172, 172].forEach(bx => {
+        const bg = ctx.createRadialGradient(512 + bx, 646, 12, 512 + bx, 646, 92);
+        bg.addColorStop(0, 'rgba(246, 122, 142, 0.50)');
+        bg.addColorStop(0.55, 'rgba(246, 140, 152, 0.22)');
+        bg.addColorStop(1, 'rgba(246, 140, 152, 0.0)');
         ctx.fillStyle = bg;
-        ctx.beginPath(); ctx.ellipse(256 + bx, 326, 44, 24, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(512 + bx, 646, 94, 52, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 240, 232, 0.45)'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(512 + bx - 14, 636); ctx.lineTo(512 + bx + 10, 628); ctx.stroke();
       });
 
-      // Expressive Studio Ghibli layered eyes positioned cleanly below parted bangs!
-      [-60, 60].forEach(ex => {
-        const cx = 256 + ex, cy = 274;
-        // Soft luminous sclera
-        ctx.fillStyle = '#fffdf9';
-        ctx.beginPath(); ctx.ellipse(cx, cy, 38, 42, 0, 0, Math.PI * 2); ctx.fill();
-        // Deep warm chestnut-amber gradient iris
-        const ig = ctx.createLinearGradient(cx, cy - 32, cx, cy + 34);
-        ig.addColorStop(0, '#28140c');
-        ig.addColorStop(0.50, isSalma ? '#6b3b24' : '#4a291a');
-        ig.addColorStop(1, isSalma ? '#cf8a52' : '#a86b42');
-        ctx.fillStyle = ig;
-        ctx.beginPath(); ctx.ellipse(cx, cy + 2, 28, 34, 0, 0, Math.PI * 2); ctx.fill();
-        // Pupil
-        ctx.fillStyle = '#170b06';
-        ctx.beginPath(); ctx.ellipse(cx, cy + 2, 14, 18, 0, 0, Math.PI * 2); ctx.fill();
-        // Dual bright anime starlight catchlights!
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.ellipse(cx - 10, cy - 11, 10, 12, -0.25, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + 10, cy + 11, 5.2, 0, Math.PI * 2); ctx.fill();
-        // Graceful sweeping upper eyelash line
-        ctx.strokeStyle = '#281610'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+      // Expressive Studio Ghibli Layered Eyes (or soft joyful smiling blink arcs!)
+      [-118, 118].forEach((ex, ei) => {
+        const cx = 512 + ex, cy = 548;
+        const flip = ei === 0 ? -1 : 1;
+        if (isBlink) {
+          ctx.strokeStyle = '#26140e'; ctx.lineWidth = 15; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(cx, cy + 28, 66, Math.PI * 1.18, Math.PI * 1.82);
+          ctx.stroke();
+        } else {
+          // Soft warm eyelid crease above upper lash
+          ctx.strokeStyle = 'rgba(155, 92, 68, 0.42)'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(cx, cy + 4, 88, Math.PI * 1.18, Math.PI * 1.82); ctx.stroke();
+          // Luminous sclera with gentle upper-lid shadow
+          ctx.fillStyle = '#fffdf9';
+          ctx.beginPath(); ctx.ellipse(cx, cy, 74, 80, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(170, 182, 210, 0.26)';
+          ctx.beginPath(); ctx.ellipse(cx, cy - 38, 72, 34, 0, 0, Math.PI * 2); ctx.fill();
+          // Deep multi-layered chestnut-amber Studio Ghibli iris
+          const ig = ctx.createLinearGradient(cx, cy - 64, cx, cy + 68);
+          ig.addColorStop(0.0, '#1e0e08');
+          ig.addColorStop(0.36, isSalma ? '#562d1a' : '#3a1f14');
+          ig.addColorStop(0.75, isSalma ? '#b8723d' : '#8f5634');
+          ig.addColorStop(1.0, isSalma ? '#f2bd74' : '#d99a62');
+          ctx.fillStyle = ig;
+          ctx.beginPath(); ctx.ellipse(cx, cy + 4, 56, 67, 0, 0, Math.PI * 2); ctx.fill();
+          // Luminous lower iris crescent glow (classic Makoto Shinkai / Ghibli sparkle!)
+          ctx.fillStyle = isSalma ? 'rgba(255, 224, 150, 0.55)' : 'rgba(255, 210, 150, 0.45)';
+          ctx.beginPath(); ctx.ellipse(cx, cy + 36, 36, 18, 0, 0, Math.PI * 2); ctx.fill();
+          // Deep velvety pupil
+          ctx.fillStyle = '#150a06';
+          ctx.beginPath(); ctx.ellipse(cx, cy + 2, 28, 34, 0, 0, Math.PI * 2); ctx.fill();
+          // Triple anime starlight catchlights!
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.ellipse(cx - 20, cy - 22, 20, 24, -0.24, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx + 22, cy + 22, 10, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = 'rgba(255,255,255,0.65)';
+          ctx.beginPath(); ctx.arc(cx + 16, cy - 28, 6.5, 0, Math.PI * 2); ctx.fill();
+          // Sweeping thick dark espresso upper eyelash with graceful outer wing!
+          ctx.strokeStyle = '#22110c'; ctx.lineWidth = 17; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.arc(cx, cy + 12, 78, Math.PI * 1.10, Math.PI * 1.90);
+          ctx.stroke();
+          ctx.lineWidth = 10;
+          ctx.beginPath();
+          ctx.moveTo(cx + flip * 70, cy - 12);
+          ctx.lineTo(cx + flip * 86, cy - 24);
+          ctx.stroke();
+          // Delicate soft lower lash line
+          ctx.strokeStyle = 'rgba(72, 40, 28, 0.45)'; ctx.lineWidth = 5;
+          ctx.beginPath(); ctx.arc(cx, cy + 4, 72, Math.PI * 0.26, Math.PI * 0.74); ctx.stroke();
+        }
+        // Expressive soft arched Studio Ghibli eyebrows
+        ctx.lineWidth = 9.5; ctx.strokeStyle = isSalma ? '#563422' : '#331d15'; ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.arc(cx, cy + 6, 40, Math.PI * 1.12, Math.PI * 1.88);
-        ctx.stroke();
-        // Gentle arched eyebrow
-        ctx.lineWidth = 5; ctx.strokeStyle = '#3d2419';
-        ctx.beginPath();
-        ctx.arc(cx, cy - 26, 34, Math.PI * 1.24, Math.PI * 1.76);
+        ctx.arc(cx, cy - 52, 66, Math.PI * 1.24, Math.PI * 1.76);
         ctx.stroke();
       });
 
-      // Tiny delicate anime nose shadow
-      ctx.fillStyle = 'rgba(182, 114, 86, 0.45)';
-      ctx.beginPath(); ctx.ellipse(256, 322, 4.5, 6.5, 0.2, 0, Math.PI * 2); ctx.fill();
+      // Soft watercolor under-nose shadow (paired with sculpted 3D nose!)
+      ctx.fillStyle = 'rgba(186, 118, 92, 0.30)';
+      ctx.beginPath(); ctx.ellipse(512, 646, 12, 8, 0, 0, Math.PI * 2); ctx.fill();
 
-      // Warm joyful Ghibli smile!
-      ctx.strokeStyle = '#8f3f36'; ctx.lineWidth = 6.5; ctx.lineCap = 'round';
+      // Sweet hand-painted Ghibli smile with soft peach lip glow!
+      ctx.fillStyle = 'rgba(235, 132, 132, 0.25)';
+      ctx.beginPath(); ctx.ellipse(512, 718, 38, 16, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#8c3d35'; ctx.lineWidth = 11; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.arc(256, 344, isSalma ? 25 : 22, 0.16 * Math.PI, 0.84 * Math.PI);
+      ctx.arc(512, 682, isSalma ? 48 : 42, 0.16 * Math.PI, 0.84 * Math.PI);
       ctx.stroke();
 
       ctx.restore();
@@ -1486,21 +1726,22 @@
       const c = document.createElement('canvas'); c.width = 512; c.height = 256;
       const ctx = c.getContext('2d');
       ctx.fillStyle = baseCol; ctx.fillRect(0, 0, 512, 256);
-      // Soft hand-painted vertical pleats
+      // Soft hand-painted vertical pleat shadows + fine woven gouache linen grain
       for (let i = 0; i < 16; i++) {
         const x = i * 32;
         const g = ctx.createLinearGradient(x, 0, x + 32, 0);
         g.addColorStop(0.0, shadeCol);
-        g.addColorStop(0.35, baseCol);
-        g.addColorStop(0.75, 'rgba(255,255,255,0.12)');
+        g.addColorStop(0.32, baseCol);
+        g.addColorStop(0.72, 'rgba(255,255,255,0.14)');
         g.addColorStop(1.0, shadeCol);
         ctx.fillStyle = g;
         ctx.fillRect(x, 0, 32, 256);
       }
-      // Crisp Ghibli storybook hem trim ribbon (v=0 is bottom of LatheGeometry!)
+      // Crisp Ghibli double hem ribbon trim!
       ctx.fillStyle = stripeCol;
-      ctx.fillRect(0, 224, 512, 14);
-      ctx.fillStyle = 'rgba(255, 252, 245, 0.88)';
+      ctx.fillRect(0, 212, 512, 12);
+      ctx.fillRect(0, 232, 512, 6);
+      ctx.fillStyle = 'rgba(255, 252, 245, 0.90)';
       ctx.fillRect(0, 244, 512, 12);
       const tex = new THREE.CanvasTexture(c);
       tex.encoding = THREE.sRGBEncoding;
@@ -1513,199 +1754,328 @@
       const bodyPivot = new THREE.Group();
       root.add(bodyPivot);
 
-      const skinMat = makeGhibliMat(0xf9d1b9, { roughness: 0.72, rimBoost: 0.95, aoGround: 0.10 });
-      const hairMat = makeGhibliMat(isSalma ? 0x4b2e20 : 0x2d1b15, { roughness: 0.48, rimBoost: 1.35, aoGround: 0.06 });
-      const topMat = makeGhibliMat(isSalma ? 0xfff1b0 : 0xfffaf0, { roughness: 0.78, rimBoost: 0.95, aoGround: 0.10 });
+      const skinMat = makeGhibliSkinMat(0xfcd7c0, null);
+      const hairTex = isSalma
+        ? createPaintedHairTex('#3e2418', '#68402a', '#966142')
+        : createPaintedHairTex('#1f120e', '#3c241c', '#633f30');
+      const hairMat = makeGhibliMat(0xffffff, { map: hairTex, roughness: 0.44, rimBoost: 1.45, aoGround: 0.04 });
+      const blouseTex = isSalma
+        ? createPaintedFabricTex('#fff4bc', 'rgba(225,185,95,0.22)', false)
+        : createPaintedFabricTex('#fffbf2', 'rgba(195,185,175,0.22)', false);
+      const topMat = makeGhibliMat(0xffffff, { map: blouseTex, roughness: 0.80, rimBoost: 0.95, aoGround: 0.08 });
       const skirtTex = isSalma
-        ? createPleatedSkirtTex('#df5b6d', '#b83c50', '#ffe79e')
-        : createPleatedSkirtTex('#3869b8', '#244b8f', '#fff6e4');
-      const skirtMat = makeGhibliMat(0xffffff, { map: skirtTex, roughness: 0.76, rimBoost: 1.05, aoGround: 0.14 });
-      const collarMat = makeGhibliMat(isSalma ? 0xdf5b6d : 0x3869b8, { roughness: 0.74, rimBoost: 1.0 });
-      const accentMat = makeGhibliMat(isSalma ? 0xf59e0b : 0xe05263, { roughness: 0.62, rimBoost: 1.1 });
-      const shoeMat = makeGhibliMat(isSalma ? 0xd97706 : 0xc93b50, { roughness: 0.52 });
-      const sockMat = makeGhibliMat(0xfffdf8, { roughness: 0.82 });
+        ? createPleatedSkirtTex('#df586b', '#b23449', '#ffe8a3')
+        : createPleatedSkirtTex('#3768b8', '#22478c', '#fff7e6');
+      const skirtMat = makeGhibliMat(0xffffff, { map: skirtTex, roughness: 0.78, rimBoost: 1.05, aoGround: 0.14 });
+      const collarMat = makeGhibliMat(isSalma ? 0xdf586b : 0x3768b8, { roughness: 0.76, rimBoost: 1.0 });
+      const accentMat = makeGhibliMat(isSalma ? 0xf29f1d : 0xe04f64, { roughness: 0.62, rimBoost: 1.15 });
+      const leatherMat = makeGhibliMat(isSalma ? 0xd97b38 : 0xc4485a, { map: createPaintedFabricTex(isSalma ? '#d97b38' : '#c4485a', 'rgba(70,25,15,0.18)', false), roughness: 0.68 });
+      const shoeMat = makeGhibliMat(isSalma ? 0xc86d24 : 0xb8354a, { roughness: 0.46 });
+      const sockMat = makeGhibliMat(0xfffdf8, { roughness: 0.84 });
+      const laceMat = makeGhibliMat(0xfffcf5, { roughness: 0.88, side: THREE.DoubleSide });
 
-      // Smooth sculpted flared pleated skirt via LatheGeometry (ORDERED BOTTOM -> TOP for outward normals!)
+      // 1. REAL 3D SCULPTED PLEATED SKIRT + SCALLOPED CREAM PETTICOAT RUFFLE!
       const skirtPts = [
-        new THREE.Vector2(0.35, 0.42),
-        new THREE.Vector2(0.39, 0.44),
-        new THREE.Vector2(0.33, 0.56),
+        new THREE.Vector2(0.36, 0.42),
+        new THREE.Vector2(0.40, 0.44),
+        new THREE.Vector2(0.34, 0.56),
         new THREE.Vector2(0.24, 0.74),
         new THREE.Vector2(0.18, 0.86)
       ];
-      const skirt = new THREE.Mesh(new THREE.LatheGeometry(skirtPts, 28), skirtMat);
-      skirt.castShadow = true; addInkOutline(skirt, 0.028);
+      const skirt = new THREE.Mesh(create3DPleatedSkirtGeo(skirtPts, 48, 16, 0.052), skirtMat);
+      skirt.castShadow = true; addInkOutline(skirt, 0.022);
       bodyPivot.add(skirt);
 
-      // Cute cream waist sash ribbon + subtle lace petticoat peeking under hem!
-      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.026, 8, 22), accentMat);
-      sash.rotation.x = Math.PI / 2; sash.position.y = 0.85; bodyPivot.add(sash);
+      // Delicate scalloped white lace petticoat peeking beneath the pleated hem!
+      const lacePts = [new THREE.Vector2(0.34, 0.395), new THREE.Vector2(0.365, 0.425), new THREE.Vector2(0.32, 0.48)];
+      const petticoat = new THREE.Mesh(create3DPleatedSkirtGeo(lacePts, 36, 18, 0.045), laceMat);
+      bodyPivot.add(petticoat);
 
-      // Smooth sculpted blouse torso via LatheGeometry (ordered bottom -> top)
+      // Sculpted waist ribbon sash + back bow!
+      const sash = new THREE.Mesh(new THREE.TorusGeometry(0.188, 0.025, 10, 28), accentMat);
+      sash.rotation.x = Math.PI / 2; sash.position.y = 0.855; bodyPivot.add(sash);
+      const backBow = buildRibbonBow(accentMat, 1.25);
+      backBow.position.set(0, 0.84, -0.19); backBow.rotation.y = Math.PI; bodyPivot.add(backBow);
+
+      // 2. SCULPTED ORGANIC BLOUSE TORSO + DELICATE NECK!
       const torsoPts = [
-        new THREE.Vector2(0.17, 0.84), new THREE.Vector2(0.21, 0.98),
-        new THREE.Vector2(0.22, 1.14), new THREE.Vector2(0.16, 1.26),
-        new THREE.Vector2(0.08, 1.32)
+        new THREE.Vector2(0.165, 0.84), new THREE.Vector2(0.205, 0.98),
+        new THREE.Vector2(0.215, 1.13), new THREE.Vector2(0.155, 1.25),
+        new THREE.Vector2(0.085, 1.30)
       ];
-      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 24), topMat);
-      torso.scale.set(1.08, 1.0, 0.82); torso.castShadow = true; addInkOutline(torso, 0.028);
+      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 28), topMat);
+      torso.scale.set(1.06, 1.0, 0.82); torso.castShadow = true; addInkOutline(torso, 0.022);
       bodyPivot.add(torso);
 
-      // Sailor collar + bow ribbon on Laila; sunny Peter Pan collar & golden ribbon on Salma!
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.072, 0.14, 14), skinMat);
+      neck.position.y = 1.32; bodyPivot.add(neck);
+
+      // Signature Ghibli Collars & Ribbon Bows!
       if (!isSalma) {
-        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.24, 0.18, 20), collarMat);
-        collar.scale.set(1.12, 1, 0.88); collar.position.y = 1.22; bodyPivot.add(collar);
-        const bow = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), accentMat);
-        bow.scale.set(1.5, 0.72, 0.7); bow.position.set(0, 1.12, 0.19); bodyPivot.add(bow);
+        // Laila's layered sailor collar with double cream stripe + sculpted front ribbon bow!
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.245, 0.19, 24), collarMat);
+        collar.scale.set(1.12, 1, 0.88); collar.position.y = 1.21; bodyPivot.add(collar);
+        const cTrim = new THREE.Mesh(new THREE.TorusGeometry(0.228, 0.011, 6, 26), laceMat);
+        cTrim.rotation.x = Math.PI / 2; cTrim.scale.set(1.08, 0.86, 1); cTrim.position.y = 1.135; bodyPivot.add(cTrim);
+        const fBow = buildRibbonBow(accentMat, 1.15);
+        fBow.position.set(0, 1.12, 0.195); bodyPivot.add(fBow);
       } else {
-        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.145, 0.036, 8, 20), makeGhibliMat(0xfffdf8));
-        collar.rotation.x = Math.PI / 2; collar.position.y = 1.24; bodyPivot.add(collar);
-        const bow = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), accentMat);
-        bow.scale.set(1.4, 0.7, 0.7); bow.position.set(0, 1.18, 0.18); bodyPivot.add(bow);
+        // Salma's scalloped Peter Pan collar + pinafore overall straps with brass buttons + sunny ribbon bow!
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.032, 10, 26), laceMat);
+        collar.rotation.x = Math.PI / 2; collar.scale.set(1.08, 0.88, 1); collar.position.y = 1.245; bodyPivot.add(collar);
+        [-0.10, 0.10].forEach(sx => {
+          const strap = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.36, 0.028), collarMat);
+          strap.position.set(sx, 1.04, 0.165); strap.rotation.x = -0.10; bodyPivot.add(strap);
+          const btn = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), brassMat);
+          btn.position.set(sx, 0.90, 0.185); bodyPivot.add(btn);
+        });
+        const fBow = buildRibbonBow(accentMat, 0.95);
+        fBow.position.set(0, 1.19, 0.175); bodyPivot.add(fBow);
       }
 
-      // Cute sculpted storybook backpack!
-      const pack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.36, 0.17), accentMat);
-      pack.position.set(0, 1.04, -0.22); pack.castShadow = true; addInkOutline(pack, 0.038);
-      bodyPivot.add(pack);
+      // 3. ROUNDED HAND-CRAFTED STORYBOOK SATCHEL BACKPACK (Zero boxy edges!)
+      const packG = new THREE.Group();
+      packG.position.set(0, 1.03, -0.21);
+      const pMain = new THREE.Mesh(new THREE.SphereGeometry(0.19, 18, 14), leatherMat);
+      pMain.scale.set(0.92, 1.08, 0.56); pMain.castShadow = true; addInkOutline(pMain, 0.032); packG.add(pMain);
+      const pFlap = new THREE.Mesh(new THREE.SphereGeometry(0.175, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), leatherMat);
+      pFlap.scale.set(0.95, 0.65, 0.62); pFlap.position.set(0, 0.08, -0.02); packG.add(pFlap);
+      [-0.06, 0.06].forEach(bx => {
+        const buck = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.038, 0.02), brassMat);
+        buck.position.set(bx, 0.02, -0.105); packG.add(buck);
+      });
+      bodyPivot.add(packG);
 
-      // Smooth tapered legs with ankle socks & rounded Mary-Jane shoes!
+      // 4. SCULPTED ANATOMICAL LEGS (soft calf taper), RIBBED ANKLE SOCKS & BUCKLED MARY-JANE SHOES!
       const legs = [];
+      const legPts = [
+        new THREE.Vector2(0.044, -0.44), new THREE.Vector2(0.048, -0.34),
+        new THREE.Vector2(0.060, -0.22), new THREE.Vector2(0.056, -0.12),
+        new THREE.Vector2(0.065, 0.0)
+      ];
+      const legGeo = new THREE.LatheGeometry(legPts, 16);
       [-0.105, 0.105].forEach(lx => {
         const legG = new THREE.Group();
         legG.position.set(lx, 0.56, 0);
-        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.30, 14), skinMat);
-        thigh.position.y = -0.15; thigh.castShadow = true; legG.add(thigh);
-        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.049, 0.18, 14), sockMat);
-        sock.position.y = -0.37; legG.add(sock);
-        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.072, 14, 10), shoeMat);
-        shoe.scale.set(0.95, 0.68, 1.48); shoe.position.set(0, -0.50, 0.035); shoe.castShadow = true;
-        addInkOutline(shoe, 0.042); legG.add(shoe);
+        const legMesh = new THREE.Mesh(legGeo, skinMat);
+        legMesh.castShadow = true; legG.add(legMesh);
+        const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.053, 0.046, 0.17, 16), sockMat);
+        sock.position.y = -0.38; legG.add(sock);
+        const sockCuff = new THREE.Mesh(new THREE.TorusGeometry(0.052, 0.012, 8, 18), sockMat);
+        sockCuff.rotation.x = Math.PI / 2; sockCuff.position.y = -0.295; legG.add(sockCuff);
+        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.070, 16, 12), shoeMat);
+        shoe.scale.set(0.94, 0.68, 1.50); shoe.position.set(0, -0.505, 0.036); shoe.castShadow = true;
+        addInkOutline(shoe, 0.038); legG.add(shoe);
+        const strap = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.009, 6, 16, Math.PI), shoeMat);
+        strap.position.set(0, -0.475, 0.035); strap.rotation.x = 0.25; legG.add(strap);
+        const sBuck = new THREE.Mesh(new THREE.SphereGeometry(0.011, 6, 6), brassMat);
+        sBuck.position.set(lx < 0 ? -0.052 : 0.052, -0.472, 0.04); legG.add(sBuck);
         bodyPivot.add(legG);
         legs.push(legG);
       });
 
-      // Soft puffy sleeves + naturally angled outward arms & rounded hands!
+      // 5. SCULPTED BELL/PUFF SLEEVES + ARTICULATED BENT-ELBOW ARMS + CUTE HANDS WITH THUMBS!
       const arms = [];
-      [-0.23, 0.23].forEach(ax => {
+      const sleevePts = [
+        new THREE.Vector2(0.056, -0.16), new THREE.Vector2(0.088, -0.10),
+        new THREE.Vector2(0.092, -0.03), new THREE.Vector2(0.068, 0.03),
+        new THREE.Vector2(0.032, 0.05)
+      ];
+      const sleeveGeo = new THREE.LatheGeometry(sleevePts, 18);
+      [-0.215, 0.215].forEach(ax => {
         const armG = new THREE.Group();
-        armG.position.set(ax, 1.21, 0.01);
-        const puff = new THREE.Mesh(new THREE.SphereGeometry(0.095, 14, 10), topMat);
-        puff.position.y = -0.04; puff.castShadow = true; addInkOutline(puff, 0.04); armG.add(puff);
-        const limb = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.040, 0.32, 12), skinMat);
-        limb.position.y = -0.23; limb.castShadow = true; armG.add(limb);
-        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.050, 12, 10), skinMat);
-        hand.position.y = -0.40; armG.add(hand);
-        // Angle gently OUTWARD from torso!
-        armG.rotation.z = ax < 0 ? -0.22 : 0.22;
+        armG.position.set(ax, 1.22, 0.01);
+        const puff = new THREE.Mesh(sleeveGeo, topMat);
+        puff.castShadow = true; addInkOutline(puff, 0.032); armG.add(puff);
+        const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.054, 0.011, 6, 16), isSalma ? accentMat : collarMat);
+        cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.155; armG.add(cuff);
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.041, 0.14, 12), skinMat);
+        upperArm.position.y = -0.18; armG.add(upperArm);
+        const elbowG = new THREE.Group();
+        elbowG.position.set(0, -0.25, 0);
+        elbowG.rotation.x = -0.18; // Graceful natural anime slight elbow bend!
+        const elbowBall = new THREE.Mesh(new THREE.SphereGeometry(0.041, 10, 8), skinMat);
+        elbowG.add(elbowBall);
+        const foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.033, 0.17, 12), skinMat);
+        foreArm.position.y = -0.085; foreArm.castShadow = true; elbowG.add(foreArm);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.044, 12, 10), skinMat);
+        hand.scale.set(0.88, 1.15, 0.72); hand.position.y = -0.19; elbowG.add(hand);
+        const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), skinMat);
+        thumb.position.set(ax < 0 ? 0.032 : -0.032, -0.18, 0.022); elbowG.add(thumb);
+        armG.add(elbowG);
+        armG.rotation.z = ax < 0 ? -0.18 : 0.18;
         bodyPivot.add(armG);
         arms.push(armG);
       });
 
-      // Sculpted anime head with smooth curved chin + high-res painted face!
+      // 6. SCULPTED HEART-CHIN ANIME HEAD + 3D EARS + 3D NOSE + LIVE BLINKING EYES!
       const headG = new THREE.Group();
-      headG.position.set(0, 1.56, 0);
-      const faceTex = createAnimeFaceTex(isSalma);
-      const headSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.285, 28, 22),
-        makeGhibliMat(0xffffff, { map: faceTex, roughness: 0.66, rimBoost: 0.9, aoGround: 0.03 })
-      );
-      headSphere.scale.set(0.98, 1.02, 0.96);
-      headSphere.rotation.y = -Math.PI / 2;
-      headSphere.castShadow = true;
-      addInkOutline(headSphere, 0.025);
-      headG.add(headSphere);
+      headG.position.set(0, 1.56, 0.01);
+      const texOpen = createAnimeFaceTex(isSalma, false);
+      const texBlink = createAnimeFaceTex(isSalma, true);
+      const faceMat = makeGhibliSkinMat(0xffffff, texOpen);
+      const headMesh = new THREE.Mesh(createSculptedHeadGeo(0.282), faceMat);
+      headMesh.rotation.y = -Math.PI / 2;
+      headMesh.castShadow = true;
+      addInkOutline(headMesh, 0.022);
+      headG.add(headMesh);
+      blinkingChars.push({ mat: faceMat, texOpen, texBlink, nextBlink: isSalma ? 5.2 : 3.7, blinkEnd: 0 });
 
-      // Raised hair crown tilted gently back so forehead & sparkling eyes stay 100% unobstructed!
-      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.304, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.48), hairMat);
-      hairCap.position.set(0, 0.045, -0.025); hairCap.rotation.x = -0.34; hairCap.castShadow = true;
-      addInkOutline(hairCap, 0.024);
+      // Delicate 3D sculpted anime nose catching warm rim light!
+      const nose3D = new THREE.Mesh(new THREE.SphereGeometry(0.020, 10, 8), skinMat);
+      nose3D.scale.set(0.85, 0.78, 1.25);
+      nose3D.position.set(0, -0.048, 0.268);
+      headG.add(nose3D);
+
+      // Sculpted 3D anime ears!
+      [-0.268, 0.268].forEach(ex => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), skinMat);
+        ear.scale.set(0.45, 1.15, 0.72);
+        ear.position.set(ex, -0.03, -0.015);
+        ear.rotation.y = ex < 0 ? -0.25 : 0.25;
+        headG.add(ear);
+      });
+
+      // 7. FEATHERY TAPERED LAYERED STUDIO GHIBLI HAIR (ZERO STIFF PIPES!)
+      const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.300, 28, 22, 0, Math.PI * 2, 0, Math.PI * 0.49), hairMat);
+      hairCap.position.set(0, 0.045, -0.024); hairCap.rotation.x = -0.34; hairCap.castShadow = true;
+      addInkOutline(hairCap, 0.020);
       headG.add(hairCap);
 
-      // Delicate parted wispy front bangs stopping gracefully ABOVE their eyebrows!
-      const bangOffsets = [-0.15, -0.08, 0.02, 0.10, 0.16];
-      bangOffsets.forEach((bx, bi) => {
-        const yTip = (bi === 2) ? 0.145 : (bi === 1 || bi === 3 ? 0.132 : 0.108);
-        const bangCurve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(bx * 0.65, 0.265, 0.12),
-          new THREE.Vector3(bx * 0.95, 0.205, 0.255),
-          new THREE.Vector3(bx * 1.06, yTip, 0.262)
+      // 7 Feathery tapered wispy bangs parting gently above eyebrows!
+      const bangsSpec = [
+        { x0: -0.14, x1: -0.20, yEnd: 0.075, r: 0.042 },
+        { x0: -0.09, x1: -0.13, yEnd: 0.115, r: 0.038 },
+        { x0: -0.04, x1: -0.06, yEnd: 0.132, r: 0.034 },
+        { x0:  0.01, x1:  0.02, yEnd: 0.142, r: 0.030 },
+        { x0:  0.06, x1:  0.08, yEnd: 0.128, r: 0.034 },
+        { x0:  0.11, x1:  0.14, yEnd: 0.108, r: 0.038 },
+        { x0:  0.15, x1:  0.20, yEnd: 0.072, r: 0.042 }
+      ];
+      bangsSpec.forEach(bs => {
+        const bc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bs.x0 * 0.62, 0.268, 0.10),
+          new THREE.Vector3(bs.x0 * 0.96, 0.205, 0.250),
+          new THREE.Vector3(bs.x1, bs.yEnd, 0.256)
         ]);
-        const bang = new THREE.Mesh(new THREE.TubeGeometry(bangCurve, 8, 0.034, 7, false), hairMat);
-        headG.add(bang);
+        const bMesh = new THREE.Mesh(createTaperedHairLock(bc, 10, bs.r * 0.72, bs.r, 0.005, 0.56), hairMat);
+        headG.add(bMesh);
       });
 
-      // Soft cheek-framing side locks hugging left & right of their faces!
+      // Layered cheek-framing hime/anime side locks tapering gracefully past the chin!
       [-1, 1].forEach(side => {
-        const lockCurve = new THREE.CatmullRomCurve3([
-          new THREE.Vector3(side * 0.22, 0.16, 0.12),
-          new THREE.Vector3(side * 0.285, 0.02, 0.14),
-          new THREE.Vector3(side * 0.25, -0.14, 0.11)
+        const c1 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.20, 0.18, 0.09),
+          new THREE.Vector3(side * 0.285, 0.02, 0.125),
+          new THREE.Vector3(side * 0.265, -0.14, 0.115),
+          new THREE.Vector3(side * 0.215, -0.27, 0.085)
         ]);
-        headG.add(new THREE.Mesh(new THREE.TubeGeometry(lockCurve, 8, 0.042, 7, false), hairMat));
+        const l1 = new THREE.Mesh(createTaperedHairLock(c1, 12, 0.044, 0.056, 0.006, 0.58), hairMat);
+        addInkOutline(l1, 0.025); headG.add(l1);
+        const c2 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.23, 0.14, 0.01),
+          new THREE.Vector3(side * 0.305, -0.04, 0.02),
+          new THREE.Vector3(side * 0.28, -0.25, -0.02)
+        ]);
+        headG.add(new THREE.Mesh(createTaperedHairLock(c2, 10, 0.040, 0.050, 0.006, 0.62), hairMat));
       });
 
-      // Glossy anime hair halo highlight ring!
-      const halo = new THREE.Mesh(
-        new THREE.TorusGeometry(0.24, 0.014, 6, 20, Math.PI * 0.65),
-        new THREE.MeshBasicMaterial({ color: 0xffe4cc, transparent: true, opacity: 0.34 })
-      );
-      halo.rotation.x = Math.PI / 2 - 0.3; halo.rotation.z = Math.PI * 0.18;
-      halo.position.set(0, 0.22, 0.04);
-      headG.add(halo);
-
-      // Flowing back hair & signature hairstyle (Laila's sculpted braid + pearl headband; Salma's twin-tails + straw sunhat!)
-      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.295, 20, 16), hairMat);
-      hairBack.scale.set(1.04, 1.24, 0.72); hairBack.position.set(0, -0.10, -0.15);
-      headG.add(hairBack);
+      // Sculpted layered flowing back hair with feathery tapered bottom tips!
+      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.292, 22, 18), hairMat);
+      hairBack.scale.set(1.04, 1.15, 0.74); hairBack.position.set(0, -0.06, -0.145);
+      addInkOutline(hairBack, 0.022); headG.add(hairBack);
+      for (let bl = -2; bl <= 2; bl++) {
+        const bx = bl * 0.105;
+        const bc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bx * 0.85, 0.05, -0.24),
+          new THREE.Vector3(bx * 1.05, -0.16, -0.265),
+          new THREE.Vector3(bx * 1.12, -0.34 - (2 - Math.abs(bl)) * 0.035, -0.235)
+        ]);
+        headG.add(new THREE.Mesh(createTaperedHairLock(bc, 9, 0.055, 0.065, 0.008, 0.55), hairMat));
+      }
 
       let swayHair = [];
       if (!isSalma) {
-        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.298, 0.024, 8, 24, Math.PI), makeGhibliMat(0xfff9f0));
-        headband.position.set(0, 0.08, 0.01); headband.rotation.x = -0.18; headG.add(headband);
-        // Sculpted flowing side braid along spline!
-        const braidG = new THREE.Group();
-        braidG.position.set(-0.22, -0.06, -0.05);
-        for (let i = 0; i < 6; i++) {
-          const bead = new THREE.Mesh(new THREE.SphereGeometry(0.058 - i * 0.004, 10, 8), hairMat);
-          bead.position.set(Math.sin(i * 0.8) * 0.018, -i * 0.085, 0.03 + i * 0.012);
-          braidG.add(bead);
+        // Laila's pearl-studded ivory headband + sculpted crisscross woven braid & fluttering ribbon!
+        const headband = new THREE.Mesh(new THREE.TorusGeometry(0.298, 0.020, 10, 28, Math.PI), makeGhibliMat(0xfff9f0));
+        headband.position.set(0, 0.085, 0.01); headband.rotation.x = -0.18; headG.add(headband);
+        for (let p = 1; p <= 7; p++) {
+          const pa = (p / 8) * Math.PI;
+          const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), makeGhibliMat(0xfffef8, { roughness: 0.25 }));
+          pearl.position.set(Math.cos(pa) * 0.308, 0.085 + Math.sin(pa) * 0.302, 0.01 - Math.sin(pa) * 0.05);
+          headG.add(pearl);
         }
-        const tie = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), accentMat);
-        tie.position.set(0, -0.52, 0.10); braidG.add(tie);
+        const braidG = new THREE.Group();
+        braidG.position.set(-0.22, -0.08, -0.06);
+        for (let i = 0; i < 7; i++) {
+          const plait = new THREE.Mesh(new THREE.SphereGeometry(0.054 - i * 0.0035, 10, 8), hairMat);
+          plait.scale.set(1.15, 0.88, 0.82);
+          plait.rotation.z = (i % 2 === 0) ? 0.38 : -0.38;
+          plait.position.set(Math.sin(i * 1.6) * 0.014, -i * 0.072, 0.03 + i * 0.012);
+          braidG.add(plait);
+        }
+        const tipCurve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, -0.49, 0.11),
+          new THREE.Vector3(-0.01, -0.58, 0.12),
+          new THREE.Vector3(0.01, -0.66, 0.13)
+        ]);
+        braidG.add(new THREE.Mesh(createTaperedHairLock(tipCurve, 6, 0.032, 0.036, 0.005, 0.7), hairMat));
+        const bBow = buildRibbonBow(accentMat, 0.85);
+        bBow.position.set(0, -0.49, 0.12); braidG.add(bBow);
         headG.add(braidG);
         swayHair.push(braidG);
       } else {
-        // Salma's cute straw sunhat perched jauntily back so her sparkling eyes shine!
-        const hatMat = makeGhibliMat(0xf7d872, { roughness: 0.82, rimBoost: 1.05 });
-        const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.41, 0.45, 0.042, 28), hatMat);
-        brim.position.set(0, 0.275, -0.045); brim.rotation.x = -0.18; brim.castShadow = true; addInkOutline(brim, 0.022);
+        // Salma's hand-painted woven straw sunhat with gently waved brim, red ribbon bow & multi-strand twin-tails!
+        const hatMat = makeGhibliMat(0xffffff, { map: STRAW_TEX, roughness: 0.84, rimBoost: 0.95 });
+        const brimGeo = new THREE.CylinderGeometry(0.41, 0.47, 0.036, 36, 1);
+        const bp = brimGeo.attributes.position;
+        for (let i = 0; i < bp.count; i++) {
+          const x = bp.getX(i), y = bp.getY(i), z = bp.getZ(i);
+          bp.setY(i, y + Math.sin(Math.atan2(z, x) * 3.0) * 0.018); // Soft organic Studio Ghibli sunhat wave!
+        }
+        brimGeo.computeVertexNormals();
+        const brim = new THREE.Mesh(brimGeo, hatMat);
+        brim.position.set(0, 0.275, -0.045); brim.rotation.x = -0.18; brim.castShadow = true; addInkOutline(brim, 0.018);
         headG.add(brim);
-        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hatMat);
+        const crown = new THREE.Mesh(new THREE.SphereGeometry(0.258, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52), hatMat);
         crown.position.set(0, 0.265, -0.045); crown.rotation.x = -0.18; headG.add(crown);
-        const hRib = new THREE.Mesh(new THREE.TorusGeometry(0.262, 0.026, 8, 24), makeGhibliMat(0xe05263));
+        const hRib = new THREE.Mesh(new THREE.TorusGeometry(0.262, 0.024, 8, 28), makeGhibliMat(0xe04f64));
         hRib.rotation.x = Math.PI / 2 - 0.18; hRib.position.set(0, 0.295, -0.045); headG.add(hRib);
-        [-0.27, 0.27].forEach(tx => {
+        const hatBow = buildRibbonBow(makeGhibliMat(0xe04f64), 1.05);
+        hatBow.position.set(0, 0.27, -0.31); hatBow.rotation.y = Math.PI; headG.add(hatBow);
+
+        // Multi-strand tapered bouncy anime twin-tails with ribbon ties!
+        [-1, 1].forEach(side => {
           const tailG = new THREE.Group();
-          tailG.position.set(tx, 0.02, -0.06);
-          const tc = new THREE.CatmullRomCurve3([
+          tailG.position.set(side * 0.27, 0.03, -0.06);
+          const tBow = buildRibbonBow(accentMat, 0.80);
+          tBow.rotation.y = side * Math.PI / 2; tBow.position.set(side * 0.03, 0.02, 0.02); tailG.add(tBow);
+          const tc1 = new THREE.CatmullRomCurve3([
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(tx * 0.35, -0.18, -0.02),
-            new THREE.Vector3(tx * 0.45, -0.38, 0.04)
+            new THREE.Vector3(side * 0.14, -0.16, -0.02),
+            new THREE.Vector3(side * 0.17, -0.38, 0.04),
+            new THREE.Vector3(side * 0.12, -0.49, 0.07)
           ]);
-          const tail = new THREE.Mesh(new THREE.TubeGeometry(tc, 10, 0.066, 8, false), hairMat);
-          tailG.add(tail); headG.add(tailG);
+          const mainT = new THREE.Mesh(createTaperedHairLock(tc1, 12, 0.052, 0.074, 0.008, 0.72), hairMat);
+          addInkOutline(mainT, 0.025); tailG.add(mainT);
+          const tc2 = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, -0.02, -0.02),
+            new THREE.Vector3(side * 0.10, -0.19, -0.09),
+            new THREE.Vector3(side * 0.11, -0.42, -0.05)
+          ]);
+          tailG.add(new THREE.Mesh(createTaperedHairLock(tc2, 10, 0.038, 0.050, 0.006, 0.68), hairMat));
+          headG.add(tailG);
           swayHair.push(tailG);
         });
       }
       bodyPivot.add(headG);
 
-      // Soft contact shadow decal right under feet!
+      // Soft ambient contact shadow decal right under feet!
       const shadowDisk = new THREE.Mesh(
-        new THREE.CircleGeometry(0.42, 20),
-        new THREE.MeshBasicMaterial({ color: 0x3b4466, transparent: true, opacity: 0.24, depthWrite: false })
+        new THREE.CircleGeometry(0.42, 24),
+        new THREE.MeshBasicMaterial({ color: 0x3b4466, transparent: true, opacity: 0.22, depthWrite: false })
       );
-      shadowDisk.rotation.x = -Math.PI / 2; shadowDisk.position.y = 0.02;
+      shadowDisk.rotation.x = -Math.PI / 2; shadowDisk.position.y = 0.018;
       root.add(shadowDisk);
 
       if (isSalma) root.scale.setScalar(0.84);
@@ -1714,50 +2084,100 @@
     }
 
     const laila = buildSculptedSister(false);
-    laila.root.position.set(-0.75, 0, 5.4);
-    laila.root.rotation.y = 0.22;
+    laila.root.position.set(-0.62, 0, 5.45);
+    laila.root.rotation.y = 0.16;
 
     const salma = buildSculptedSister(true);
-    salma.root.position.set(0.65, 0, 5.75);
-    salma.root.rotation.y = -0.25;
+    salma.root.position.set(0.58, 0, 5.65);
+    salma.root.rotation.y = -0.18;
 
-    // Sculpted Smooth Mochi the Shiba Inu!
+    // Hand-Painted Studio Ghibli Mochi the Shiba Inu (urajiro cream eyebrows/cheeks, glossy catchlights & golden bell!)
+    function createShibaFurTex() {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+      const ctx = c.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, 0, 512);
+      g.addColorStop(0.0, '#d88236'); g.addColorStop(0.52, '#e89d4e');
+      g.addColorStop(0.70, '#fae7c8'); g.addColorStop(1.0, '#fff7e8');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 240; i++) {
+        ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,245,220,0.22)' : 'rgba(150,76,24,0.16)';
+        ctx.lineWidth = 2;
+        const x = (i * 53) % 512, y = (i * 97) % 512;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 8, y + 14); ctx.stroke();
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.encoding = THREE.sRGBEncoding;
+      return tex;
+    }
+
     function buildSculptedMochi() {
       const mg = new THREE.Group();
-      const furMat = makeGhibliMat(0xe59245, { roughness: 0.80, rimBoost: 1.35 });
-      const creamFur = makeGhibliMat(0xfff5e4, { roughness: 0.82 });
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 14), furMat);
-      body.scale.set(0.92, 0.86, 1.48); body.position.set(0, 0.36, 0); body.castShadow = true; addInkOutline(body, 0.04);
+      const furMat = makeGhibliMat(0xffffff, { map: createShibaFurTex(), roughness: 0.82, rimBoost: 1.25 });
+      const creamFur = makeGhibliMat(0xfff6e6, { roughness: 0.84, rimBoost: 0.9 });
+      const pinkEar = makeGhibliMat(0xf4a4ad, { roughness: 0.82 });
+
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.275, 22, 16), furMat);
+      body.scale.set(0.92, 0.86, 1.46); body.position.set(0, 0.36, 0); body.castShadow = true; addInkOutline(body, 0.032);
       mg.add(body);
-      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 12), creamFur);
-      chest.position.set(0, 0.34, 0.24); mg.add(chest);
-      const bandana = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.042, 8, 16), makeGhibliMat(0xe04f5f));
-      bandana.rotation.x = Math.PI / 2 + 0.35; bandana.position.set(0, 0.47, 0.26); mg.add(bandana);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.23, 18, 14), furMat);
-      head.position.set(0, 0.62, 0.34); head.castShadow = true; addInkOutline(head, 0.04); mg.add(head);
-      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.125, 14, 10), creamFur);
-      snout.scale.set(1.0, 0.82, 1.25); snout.position.set(0, 0.56, 0.50); mg.add(snout);
-      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 6), makeGhibliMat(0x231712));
-      nose.position.set(0, 0.60, 0.63); mg.add(nose);
-      [-0.085, 0.085].forEach(ex => {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 6), makeGhibliMat(0x1f1410));
-        eye.position.set(ex, 0.66, 0.52); mg.add(eye);
-        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.17, 10), furMat);
-        ear.position.set(ex * 1.65, 0.82, 0.30); ear.rotation.z = ex < 0 ? 0.24 : -0.24; mg.add(ear);
+      const chest = new THREE.Mesh(new THREE.SphereGeometry(0.225, 16, 14), creamFur);
+      chest.scale.set(0.98, 0.96, 0.92); chest.position.set(0, 0.33, 0.25); mg.add(chest);
+
+      // Cute knotted red Studio Ghibli neckerchief + gleaming golden Shiba bell!
+      const bandana = new THREE.Mesh(new THREE.TorusGeometry(0.185, 0.040, 10, 22), makeGhibliMat(0xe04f5f));
+      bandana.rotation.x = Math.PI / 2 + 0.36; bandana.position.set(0, 0.47, 0.26); mg.add(bandana);
+      const bBib = new THREE.Mesh(new THREE.ConeGeometry(0.10, 0.16, 6), makeGhibliMat(0xe04f5f));
+      bBib.rotation.x = Math.PI + 0.35; bBib.position.set(0, 0.37, 0.40); mg.add(bBib);
+      const bell = new THREE.Mesh(new THREE.SphereGeometry(0.044, 12, 10), brassMat);
+      bell.position.set(0, 0.40, 0.43); mg.add(bell);
+
+      // Sculpted Shiba head with plush cream cheeks, iconic cream eyebrow dots & sparkling anime eyes!
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.235, 22, 18), furMat);
+      head.scale.set(1.06, 0.96, 1.0); head.position.set(0, 0.62, 0.34); head.castShadow = true; addInkOutline(head, 0.032);
+      mg.add(head);
+      [-0.12, 0.12].forEach(cx => {
+        const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), creamFur);
+        cheek.scale.set(1.12, 0.78, 0.85); cheek.position.set(cx, 0.555, 0.44); mg.add(cheek);
+        const browDot = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), creamFur);
+        browDot.position.set(cx * 0.62, 0.725, 0.52); mg.add(browDot);
       });
+      const snout = new THREE.Mesh(new THREE.SphereGeometry(0.118, 16, 12), creamFur);
+      snout.scale.set(1.0, 0.78, 1.24); snout.position.set(0, 0.555, 0.51); mg.add(snout);
+      const nose = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), makeGhibliMat(0x231712, { roughness: 0.25 }));
+      nose.scale.set(1.18, 0.82, 0.9); nose.position.set(0, 0.595, 0.635); mg.add(nose);
+      // Expressive glossy black eyes with white star catchlights + pink-lined perked Shiba ears!
+      [-0.088, 0.088].forEach(ex => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.033, 10, 8), makeGhibliMat(0x1b100c, { roughness: 0.18 }));
+        eye.position.set(ex, 0.655, 0.525); mg.add(eye);
+        const gl = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 6), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+        gl.position.set(ex - 0.008, 0.668, 0.552); mg.add(gl);
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.078, 0.18, 12), furMat);
+        ear.position.set(ex * 1.68, 0.825, 0.30); ear.rotation.z = ex < 0 ? 0.26 : -0.26; addInkOutline(ear, 0.04); mg.add(ear);
+        const innerEar = new THREE.Mesh(new THREE.ConeGeometry(0.046, 0.12, 8), pinkEar);
+        innerEar.position.set(ex * 1.66, 0.815, 0.335); innerEar.rotation.z = ex < 0 ? 0.26 : -0.26; mg.add(innerEar);
+      });
+      // Soft tapered cream paws
       [[-0.13, 0.22], [0.13, 0.22], [-0.13, -0.22], [0.13, -0.22]].forEach(lp => {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.044, 0.28, 10), creamFur);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.042, 0.26, 12), creamFur);
         leg.position.set(lp[0], 0.14, lp[1]); leg.castShadow = true; mg.add(leg);
+        const paw = new THREE.Mesh(new THREE.SphereGeometry(0.048, 10, 8), creamFur);
+        paw.scale.set(1.0, 0.65, 1.25); paw.position.set(lp[0], 0.03, lp[1] + 0.02); mg.add(paw);
       });
+      // Fluffy curled feathery Shiba tail!
       const tailCurve = new THREE.CatmullRomCurve3([
         new THREE.Vector3(0, 0.44, -0.34),
-        new THREE.Vector3(0, 0.64, -0.44),
-        new THREE.Vector3(0, 0.72, -0.26)
+        new THREE.Vector3(0, 0.66, -0.45),
+        new THREE.Vector3(0, 0.74, -0.24),
+        new THREE.Vector3(0, 0.62, -0.18)
       ]);
-      const tail = new THREE.Mesh(new THREE.TubeGeometry(tailCurve, 10, 0.058, 8, false), furMat);
-      mg.add(tail);
-      mg.position.set(-1.95, 0, 5.1);
-      mg.rotation.y = 0.55;
+      const tail = new THREE.Mesh(createTaperedHairLock(tailCurve, 12, 0.052, 0.072, 0.018, 0.9), furMat);
+      addInkOutline(tail, 0.035); mg.add(tail);
+      const mShadow = new THREE.Mesh(
+        new THREE.CircleGeometry(0.36, 18),
+        new THREE.MeshBasicMaterial({ color: 0x3b4466, transparent: true, opacity: 0.20, depthWrite: false })
+      );
+      mShadow.rotation.x = -Math.PI / 2; mShadow.position.y = 0.016; mg.add(mShadow);
+      mg.position.set(-1.72, 0, 5.40);
+      mg.rotation.y = 0.36;
       scene.add(mg);
       return { root: mg, tail: tail };
     }
@@ -2156,51 +2576,74 @@
     indoorLampLight.position.set(-5.8, 2.8, 3.2);
     interiorGroup.add(indoorLampLight);
 
-    // Helper: Equirectangular-compensated warm adult Studio Ghibli face (Mom & Dad!)
-    function createAdultFaceTex(isDad) {
-      const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+    // Helper: 1024x1024 Hand-Painted Warm Adult Studio Ghibli Face (Open + Blink states!)
+    function createAdultFaceTex(isDad, isBlink) {
+      const S = 1024;
+      const c = document.createElement('canvas'); c.width = S; c.height = S;
       const ctx = c.getContext('2d');
-      const g = ctx.createRadialGradient(256, 250, 40, 256, 256, 260);
-      g.addColorStop(0, isDad ? '#f6cdb4' : '#ffe1cd');
-      g.addColorStop(0.78, isDad ? '#e4b396' : '#f2c1a4');
-      g.addColorStop(1, '#d69e80');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+      const g = ctx.createRadialGradient(512, 490, 70, 512, 512, 530);
+      g.addColorStop(0, isDad ? '#f8d2ba' : '#ffe5d3');
+      g.addColorStop(0.74, isDad ? '#e8b99d' : '#f5c9ae');
+      g.addColorStop(1, '#d8a488');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
 
       ctx.save();
-      ctx.translate(256, 0); ctx.scale(0.52, 1.0); ctx.translate(-256, 0);
+      ctx.translate(512, 0); ctx.scale(0.52, 1.0); ctx.translate(-512, 0);
 
-      // Gentle rosy cheek warmth
-      [-84, 84].forEach(bx => {
-        const bg = ctx.createRadialGradient(256 + bx, 322, 5, 256 + bx, 322, 38);
-        bg.addColorStop(0, isDad ? 'rgba(220, 128, 118, 0.30)' : 'rgba(240, 124, 138, 0.44)');
-        bg.addColorStop(1, 'rgba(240, 124, 138, 0.0)');
-        ctx.fillStyle = bg; ctx.beginPath(); ctx.ellipse(256 + bx, 322, 40, 22, 0, 0, Math.PI * 2); ctx.fill();
+      // Warm watercolor cheek tint
+      [-168, 168].forEach(bx => {
+        const bg = ctx.createRadialGradient(512 + bx, 646, 10, 512 + bx, 646, 82);
+        bg.addColorStop(0, isDad ? 'rgba(218, 130, 120, 0.28)' : 'rgba(242, 126, 142, 0.44)');
+        bg.addColorStop(1, 'rgba(242, 126, 142, 0.0)');
+        ctx.fillStyle = bg; ctx.beginPath(); ctx.ellipse(512 + bx, 646, 84, 44, 0, 0, Math.PI * 2); ctx.fill();
       });
 
-      // Warm kind Studio Ghibli eyes
-      [-58, 58].forEach(ex => {
-        const cx = 256 + ex, cy = 272;
-        ctx.fillStyle = '#fffdf9';
-        ctx.beginPath(); ctx.ellipse(cx, cy, 32, 32, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = isDad ? '#362116' : '#4a2819';
-        ctx.beginPath(); ctx.ellipse(cx, cy + 1, 21, 24, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#180d08';
-        ctx.beginPath(); ctx.ellipse(cx, cy + 1, 11, 13, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(cx - 7, cy - 7, 7, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#281610'; ctx.lineWidth = 7.5; ctx.lineCap = 'round';
-        ctx.beginPath(); ctx.arc(cx, cy + 5, 33, Math.PI * 1.14, Math.PI * 1.86); ctx.stroke();
-        ctx.lineWidth = isDad ? 7 : 5; ctx.strokeStyle = '#331e14';
-        ctx.beginPath(); ctx.arc(cx, cy - 22, 30, Math.PI * 1.24, Math.PI * 1.76); ctx.stroke();
+      // Kind expressive Studio Ghibli eyes (or warm smiling blink!)
+      [-114, 114].forEach((ex, ei) => {
+        const cx = 512 + ex, cy = 548;
+        const flip = ei === 0 ? -1 : 1;
+        if (isBlink) {
+          ctx.strokeStyle = '#26140e'; ctx.lineWidth = 14; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(cx, cy + 24, 58, Math.PI * 1.18, Math.PI * 1.82); ctx.stroke();
+        } else {
+          ctx.strokeStyle = 'rgba(148, 90, 68, 0.36)'; ctx.lineWidth = 4.5;
+          ctx.beginPath(); ctx.arc(cx, cy + 4, 76, Math.PI * 1.18, Math.PI * 1.82); ctx.stroke();
+          ctx.fillStyle = '#fffdf9';
+          ctx.beginPath(); ctx.ellipse(cx, cy, 62, 62, 0, 0, Math.PI * 2); ctx.fill();
+          const ig = ctx.createLinearGradient(cx, cy - 48, cx, cy + 52);
+          ig.addColorStop(0, '#1e100a');
+          ig.addColorStop(0.55, isDad ? '#3f2619' : '#57311e');
+          ig.addColorStop(1, isDad ? '#784c32' : '#b87648');
+          ctx.fillStyle = ig;
+          ctx.beginPath(); ctx.ellipse(cx, cy + 2, 42, 48, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#140a06';
+          ctx.beginPath(); ctx.ellipse(cx, cy + 2, 21, 25, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(cx - 14, cy - 14, 14, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(cx + 15, cy + 14, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#24130d'; ctx.lineWidth = isDad ? 14 : 15; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.arc(cx, cy + 10, 65, Math.PI * 1.12, Math.PI * 1.88); ctx.stroke();
+          if (!isDad) {
+            ctx.lineWidth = 8.5;
+            ctx.beginPath(); ctx.moveTo(cx + flip * 58, cy - 8); ctx.lineTo(cx + flip * 72, cy - 18); ctx.stroke();
+          }
+        }
+        ctx.lineWidth = isDad ? 13 : 9; ctx.strokeStyle = '#311d14'; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.arc(cx, cy - 44, 58, Math.PI * 1.24, Math.PI * 1.76); ctx.stroke();
       });
 
-      // Warm smile (+ subtle neat mustache/chin contour on Dad)
+      // Soft nose shadow + warm affectionate Ghibli smile (+ soft groomed beard contour on Dad)
+      ctx.fillStyle = 'rgba(176, 112, 86, 0.28)';
+      ctx.beginPath(); ctx.ellipse(512, 642, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
       if (isDad) {
-        ctx.fillStyle = 'rgba(72, 46, 34, 0.20)';
-        ctx.beginPath(); ctx.ellipse(256, 366, 46, 20, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(72, 48, 36, 0.16)';
+        ctx.beginPath(); ctx.ellipse(512, 738, 86, 36, 0, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(228, 120, 128, 0.28)';
+        ctx.beginPath(); ctx.ellipse(512, 718, 42, 18, 0, 0, Math.PI * 2); ctx.fill();
       }
-      ctx.strokeStyle = '#863c34'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(256, 340, 26, 0.16 * Math.PI, 0.84 * Math.PI); ctx.stroke();
+      ctx.strokeStyle = '#843b33'; ctx.lineWidth = 10.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(512, 680, 48, 0.16 * Math.PI, 0.84 * Math.PI); ctx.stroke();
       ctx.restore();
 
       const tex = new THREE.CanvasTexture(c);
@@ -2208,91 +2651,147 @@
       return tex;
     }
 
-    // Helper: Build Sculpted Studio Ghibli Plush Armchair + Seated Parent (Mom or Dad!)
+    // Helper: Build Sculpted Studio Ghibli Plush Armchair + Next-Gen Seated Parent (Mom or Dad!)
     const seatedParents = [];
     function buildArmchairAndParent(x, z, rotY, chairHex, isDad) {
       const g = new THREE.Group();
       g.position.set(x, 0, z);
       g.rotation.y = rotY;
 
-      const fabricMat = makeGhibliMat(chairHex, { roughness: 0.88, rimBoost: 1.05, aoGround: 0.30 });
-      const woodLegMat = makeGhibliMat(0x6e452b, { map: TEX.bark, roughness: 0.78 });
-      // 4 tapered oak chair legs
+      const chairHexStr = '#' + chairHex.toString(16).padStart(6, '0');
+      const fabricMat = makeGhibliMat(0xffffff, {
+        map: createPaintedFabricTex(chairHexStr, 'rgba(70,45,35,0.15)', true),
+        roughness: 0.90, rimBoost: 1.0, aoGround: 0.28
+      });
+      const woodLegMat = makeGhibliMat(0xb57d48, { map: TEX.woodFloor, roughness: 0.72 });
+      // 4 tapered honey-oak chair legs
       [[-0.44, -0.40], [0.44, -0.40], [-0.44, 0.40], [0.44, 0.40]].forEach(lp => {
-        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.30, 8), woodLegMat);
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.032, 0.30, 10), woodLegMat);
         leg.position.set(lp[0], 0.15, lp[1]); leg.castShadow = true; g.add(leg);
       });
-      // Plush rounded seat cushion
+      // Plush rounded seat cushion + curved wing backrest + rolled armrests!
       const seat = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.28, 1.00), fabricMat);
       seat.position.set(0, 0.42, 0.02); seat.castShadow = true; seat.receiveShadow = true;
-      addInkOutline(seat, 0.022); g.add(seat);
-      // Tall plush curved wing-backrest
+      addInkOutline(seat, 0.020); g.add(seat);
       const back = new THREE.Mesh(new THREE.BoxGeometry(1.08, 1.02, 0.24), fabricMat);
       back.position.set(0, 0.96, -0.40); back.rotation.x = -0.10; back.castShadow = true;
-      addInkOutline(back, 0.022); g.add(back);
-      const topRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.08, 12), fabricMat);
+      addInkOutline(back, 0.020); g.add(back);
+      const topRoll = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 1.08, 14), fabricMat);
       topRoll.rotation.z = Math.PI / 2; topRoll.position.set(0, 1.46, -0.45); g.add(topRoll);
-      // Rolled padded armrests
       [-0.50, 0.50].forEach(ax => {
         const arm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.42, 0.94), fabricMat);
         arm.position.set(ax, 0.64, 0.0); arm.castShadow = true; g.add(arm);
-        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.96, 10), fabricMat);
+        const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.96, 12), fabricMat);
         roll.rotation.x = Math.PI / 2; roll.position.set(ax, 0.85, 0.0); g.add(roll);
       });
 
-      // Sculpted Seated Mom or Dad!
+      // Next-Gen Sculpted Seated Mom or Dad!
       const pG = new THREE.Group();
       pG.position.set(0, 0.54, 0.02);
-      const skinMat = makeGhibliMat(isDad ? 0xeab99c : 0xf7cdb5, { roughness: 0.72, rimBoost: 0.85, aoGround: 0.05 });
-      const topMat = makeGhibliMat(isDad ? 0x3b6e8c : 0xd9687c, { roughness: 0.78, rimBoost: 1.0 });
-      const pantsMat = makeGhibliMat(isDad ? 0x364457 : 0x5c4668, { roughness: 0.82 });
-      const hairMat = makeGhibliMat(isDad ? 0x261a14 : 0x382018, { roughness: 0.52, rimBoost: 1.2 });
+      const skinMat = makeGhibliSkinMat(isDad ? 0xefbfa2 : 0xfad2ba, null);
+      const topTex = isDad
+        ? createPaintedFabricTex('#4a7c9b', 'rgba(30,52,70,0.20)', true)
+        : createPaintedFabricTex('#e07386', 'rgba(130,45,62,0.18)', true);
+      const topMat = makeGhibliMat(0xffffff, { map: topTex, roughness: 0.82, rimBoost: 0.95 });
+      const pantsMat = makeGhibliMat(isDad ? 0x3a4a5e : 0x5c476b, { roughness: 0.84 });
+      const hairTex = isDad
+        ? createPaintedHairTex('#1d130e', '#342219', '#543a2c')
+        : createPaintedHairTex('#2a1711', '#4f2c20', '#7c4c38');
+      const hairMat = makeGhibliMat(0xffffff, { map: hairTex, roughness: 0.48, rimBoost: 1.3 });
 
       // Seated thighs, smooth rounded knees & lower legs resting naturally on floor
       [-0.14, 0.14].forEach(lx => {
-        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.078, 0.44, 12), pantsMat);
+        const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.088, 0.078, 0.44, 14), pantsMat);
         thigh.rotation.x = Math.PI / 2; thigh.position.set(lx, 0.08, 0.22); pG.add(thigh);
         const knee = new THREE.Mesh(new THREE.SphereGeometry(0.078, 12, 10), pantsMat);
         knee.position.set(lx, 0.08, 0.44); pG.add(knee);
-        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.058, 0.50, 12), pantsMat);
+        const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.072, 0.056, 0.50, 14), pantsMat);
         shin.position.set(lx, -0.17, 0.45); pG.add(shin);
-        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.085, 10, 8), makeGhibliMat(0x4b3224));
-        shoe.scale.set(0.95, 0.65, 1.45); shoe.position.set(lx, -0.45, 0.52); pG.add(shoe);
+        const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.084, 12, 10), makeGhibliMat(0x523424));
+        shoe.scale.set(0.95, 0.65, 1.48); shoe.position.set(lx, -0.45, 0.52); pG.add(shoe);
       });
-      // Sculpted upper torso
+      // Sculpted knitted cardigan / sweater torso + crisp inner collar + neck!
       const torsoPts = [
         new THREE.Vector2(0.22, 0.06), new THREE.Vector2(0.25, 0.28),
         new THREE.Vector2(0.26, 0.52), new THREE.Vector2(0.18, 0.66), new THREE.Vector2(0.09, 0.72)
       ];
-      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 20), topMat);
+      const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 24), topMat);
       torso.scale.set(isDad ? 1.15 : 1.02, 1.0, 0.84); torso.castShadow = true;
-      addInkOutline(torso, 0.025); pG.add(torso);
-      // Relaxed arms resting on chair armrests
-      [-0.31, 0.31].forEach(ax => {
-        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.056, 0.44, 10), topMat);
-        arm.position.set(ax, 0.40, 0.08); arm.rotation.x = -0.58; arm.rotation.z = ax < 0 ? -0.18 : 0.18;
+      addInkOutline(torso, 0.022); pG.add(torso);
+      const pNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.068, 0.076, 0.14, 14), skinMat);
+      pNeck.position.y = 0.74; pG.add(pNeck);
+      const innerCol = new THREE.Mesh(new THREE.TorusGeometry(0.125, 0.032, 8, 20), makeGhibliMat(isDad ? 0xf7f4ea : 0xffe4c4));
+      innerCol.rotation.x = Math.PI / 2; innerCol.position.set(0, 0.69, 0.02); pG.add(innerCol);
+      if (!isDad) {
+        // Mom's delicate cardigan buttons & cozy cream shawl knot
+        for (let b = 0; b < 3; b++) {
+          const btn = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), makeGhibliMat(0xfff4e0));
+          btn.position.set(0, 0.52 - b * 0.12, 0.215); pG.add(btn);
+        }
+      }
+      // Natural relaxed arms resting smoothly on chair armrests with sculpted hands & thumbs!
+      [-0.27, 0.27].forEach(ax => {
+        const sh = new THREE.Mesh(new THREE.SphereGeometry(0.064, 12, 10), topMat);
+        sh.position.set(ax, 0.56, 0.0); pG.add(sh);
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.052, 0.44, 12), topMat);
+        arm.position.set(ax * 1.08, 0.39, 0.09); arm.rotation.x = -0.60; arm.rotation.z = ax < 0 ? -0.18 : 0.18;
         pG.add(arm);
-        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.058, 10, 8), skinMat);
-        hand.position.set(ax * 1.12, 0.22, 0.26); pG.add(hand);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(0.052, 12, 10), skinMat);
+        hand.scale.set(0.92, 0.82, 1.18); hand.position.set(ax * 1.22, 0.22, 0.27); pG.add(hand);
       });
-      // Head + sculpted hair
+
+      // Sculpted Heart-Tapered Head + 3D Ears + 3D Nose + Live Blinking + Feathery Tapered Hair!
       const headG = new THREE.Group();
       headG.position.set(0, 0.94, 0.02);
-      const hMesh = new THREE.Mesh(
-        new THREE.SphereGeometry(0.255, 24, 20),
-        makeGhibliMat(0xffffff, { map: createAdultFaceTex(isDad), roughness: 0.68, rimBoost: 0.85, aoGround: 0.02 })
-      );
-      hMesh.rotation.y = -Math.PI / 2; hMesh.scale.set(0.96, 1.05, 0.96);
-      hMesh.castShadow = true; addInkOutline(hMesh, 0.025); headG.add(hMesh);
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.272, 20, 16, 0, Math.PI * 2, 0, Math.PI * 0.50), hairMat);
-      cap.position.set(0, 0.04, -0.02); cap.rotation.x = -0.32; headG.add(cap);
+      const texOpen = createAdultFaceTex(isDad, false);
+      const texBlink = createAdultFaceTex(isDad, true);
+      const fMat = makeGhibliSkinMat(0xffffff, texOpen);
+      const hMesh = new THREE.Mesh(createSculptedHeadGeo(0.255), fMat);
+      hMesh.rotation.y = -Math.PI / 2; hMesh.scale.set(0.98, 1.04, 0.98);
+      hMesh.castShadow = true; addInkOutline(hMesh, 0.022); headG.add(hMesh);
+      blinkingChars.push({ mat: fMat, texOpen, texBlink, nextBlink: 2.5 + (isDad ? 1.6 : 0.4), blinkEnd: 0 });
+
+      const pNose = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), skinMat);
+      pNose.scale.set(0.85, 0.85, 1.3); pNose.position.set(0, -0.044, 0.246); headG.add(pNose);
+      [-0.245, 0.245].forEach(ex => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.048, 10, 8), skinMat);
+        ear.scale.set(0.45, 1.15, 0.72); ear.position.set(ex, -0.025, -0.015); headG.add(ear);
+      });
+
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.270, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.50), hairMat);
+      cap.position.set(0, 0.04, -0.02); cap.rotation.x = -0.32; addInkOutline(cap, 0.02); headG.add(cap);
+
       if (!isDad) {
-        // Mom's warm soft chignon bun & shoulder-framing waves
-        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 12), hairMat);
-        bun.position.set(0, 0.08, -0.26); headG.add(bun);
-        [-0.22, 0.22].forEach(sx => {
-          const wave = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), hairMat);
-          wave.scale.set(0.75, 1.65, 0.9); wave.position.set(sx, -0.08, -0.04); headG.add(wave);
+        // Mom's warm side-parted feathery bangs, soft tapered cheek waves & chignon bun with golden comb!
+        [[-0.12, -0.19, 0.08], [-0.04, -0.10, 0.12], [0.05, 0.13, 0.11], [0.12, 0.19, 0.07]].forEach(b => {
+          const bc = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(b[0] * 0.6, 0.24, 0.10),
+            new THREE.Vector3(b[0] * 0.95, 0.18, 0.23),
+            new THREE.Vector3(b[1], b[2], 0.235)
+          ]);
+          headG.add(new THREE.Mesh(createTaperedHairLock(bc, 8, 0.032, 0.042, 0.005, 0.56), hairMat));
+        });
+        [-1, 1].forEach(side => {
+          const wc = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(side * 0.19, 0.16, 0.06),
+            new THREE.Vector3(side * 0.27, 0.00, 0.09),
+            new THREE.Vector3(side * 0.23, -0.18, 0.04)
+          ]);
+          headG.add(new THREE.Mesh(createTaperedHairLock(wc, 10, 0.044, 0.056, 0.008, 0.62), hairMat));
+        });
+        const bun = new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 12), hairMat);
+        bun.position.set(0, 0.07, -0.255); addInkOutline(bun, 0.025); headG.add(bun);
+        const comb = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.016, 6, 16, Math.PI), brassMat);
+        comb.position.set(0, 0.14, -0.21); comb.rotation.x = 0.55; headG.add(comb);
+      } else {
+        // Dad's neat layered swept-back short hair locks + subtle sideburns!
+        [[-0.12, -0.15, 0.11], [-0.04, -0.02, 0.14], [0.05, 0.09, 0.13], [0.13, 0.16, 0.10]].forEach(b => {
+          const bc = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(b[0] * 0.7, 0.24, 0.08),
+            new THREE.Vector3(b[0] * 0.95, 0.19, 0.22),
+            new THREE.Vector3(b[1], b[2], 0.232)
+          ]);
+          headG.add(new THREE.Mesh(createTaperedHairLock(bc, 7, 0.030, 0.036, 0.006, 0.58), hairMat));
         });
       }
       pG.add(headG);
@@ -3170,12 +3669,12 @@
         lead.root.rotation.y = moveAng;
       }
 
-      // Follower sister & Mochi cheerfully trot behind the active leader!
+      // Follower sister & Mochi cheerfully trot behind the active leader with clean personal space!
       let folWalking = false;
       const fdx = lead.root.position.x - fol.root.position.x;
       const fdz = lead.root.position.z - fol.root.position.z;
       const fDist = Math.hypot(fdx, fdz);
-      if (fDist > 1.32) {
+      if (fDist > 1.38) {
         folWalking = true;
         const sx = fol.root.position.x + (fdx / fDist) * (moveSpd * 0.94) * dt;
         const sz = fol.root.position.z + (fdz / fDist) * (moveSpd * 0.94) * dt;
@@ -3183,14 +3682,18 @@
         fol.root.rotation.y = Math.atan2(fdx, fdz);
       }
 
-      const mdx = fol.root.position.x - mochi.root.position.x;
-      const mdz = fol.root.position.z - mochi.root.position.z;
+      const mdx = lead.root.position.x - mochi.root.position.x;
+      const mdz = lead.root.position.z - mochi.root.position.z;
       const mDist = Math.hypot(mdx, mdz);
-      if (mDist > 1.45) {
+      if (mDist > 1.55) {
         const msx = mochi.root.position.x + (mdx / mDist) * (moveSpd * 0.92) * dt;
         const msz = mochi.root.position.z + (mdz / mDist) * (moveSpd * 0.92) * dt;
-        mochi.root.position.set(msx, currentArea === 'courtyard' ? getTerrainHeight(msx, msz) : 0, msz);
-        mochi.root.rotation.y = Math.atan2(mdx, mdz);
+        // Keep clean separation from both sisters so Mochi never clips into skirts!
+        if (Math.hypot(msx - lead.root.position.x, msz - lead.root.position.z) > 1.05
+            && Math.hypot(msx - fol.root.position.x, msz - fol.root.position.z) > 0.95) {
+          mochi.root.position.set(msx, currentArea === 'courtyard' ? getTerrainHeight(msx, msz) : 0, msz);
+          mochi.root.rotation.y = Math.atan2(mdx, mdz);
+        }
       }
 
       // Update context-sensitive glowing action pill (doorways & furniture always take priority over Pet Mochi!)
@@ -3213,7 +3716,19 @@
         actPill.classList.remove('show');
       }
 
-      // Smooth breathing, walk swing & hair breeze for Laila, Salma, Mochi & Seated Parents!
+      // Smooth breathing, walk swing, hair breeze & live natural blinking for Laila, Salma, Mom & Dad!
+      for (let bi = 0; bi < blinkingChars.length; bi++) {
+        const bc = blinkingChars[bi];
+        if (bc.blinkEnd > 0) {
+          if (t >= bc.blinkEnd) {
+            bc.mat.map = bc.texOpen; bc.mat.needsUpdate = true;
+            bc.blinkEnd = 0; bc.nextBlink = t + 3.0 + ((bi * 1.37 + t) % 2.4);
+          }
+        } else if (t >= bc.nextBlink) {
+          bc.mat.map = bc.texBlink; bc.mat.needsUpdate = true;
+          bc.blinkEnd = t + 0.13;
+        }
+      }
       [[lead, walking, 0], [fol, folWalking, 1]].forEach(([s, isW, idx]) => {
         const sw = isW ? Math.sin(t * 9.5 + idx) * 0.52 : 0;
         s.legs[0].rotation.x = sw;
