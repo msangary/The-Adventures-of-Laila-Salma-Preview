@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Laila &amp; Salma — 3D .GLB Studio &amp; A-Pose Turnaround Hub</title>
+  <title>Laila &amp; Salma — 10-Character 3D .GLB Studio &amp; A-Pose Hub</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -17,7 +17,6 @@
       --ink: #34251c;
       --muted: #6e5847;
       --sage: #4a7c59;
-      --coral: #d45d4c;
       --shadow: 0 10px 30px rgba(42, 26, 14, 0.22);
     }
     * { box-sizing: border-box; }
@@ -30,63 +29,52 @@
     #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
     #stage:active { cursor: grabbing; }
 
-    /* Drag overlay */
     #drop-overlay {
       position: fixed; inset: 0; z-index: 900;
-      background: rgba(34, 24, 16, 0.72);
-      backdrop-filter: blur(6px);
-      display: none; align-items: center; justify-content: center;
-      pointer-events: none;
+      background: rgba(34, 24, 16, 0.72); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; pointer-events: none;
     }
     #drop-overlay.active { display: flex; }
     .drop-card {
       background: var(--cream-solid); border: 3px dashed var(--gold);
-      border-radius: 22px; padding: 34px 44px; text-align: center;
-      box-shadow: var(--shadow);
+      border-radius: 22px; padding: 34px 44px; text-align: center; box-shadow: var(--shadow);
     }
     .drop-card h2 { margin: 8px 0 6px; font-size: 22px; }
     .drop-card p { margin: 0; color: var(--muted); font-size: 14px; }
 
-    /* Top floating bar */
     #top-bar {
       position: fixed; top: 12px; left: 12px; right: 12px; z-index: 40;
       display: flex; align-items: center; justify-content: space-between;
       gap: 10px; pointer-events: none;
     }
     .top-pill {
-      pointer-events: auto;
-      background: var(--cream); border: 2px solid var(--gold);
+      pointer-events: auto; background: var(--cream); border: 2px solid var(--gold);
       border-radius: 16px; padding: 8px 14px; box-shadow: var(--shadow);
-      display: flex; align-items: center; gap: 10px;
-      backdrop-filter: blur(8px);
+      display: flex; align-items: center; gap: 10px; backdrop-filter: blur(8px);
     }
     .brand-title { font-weight: 800; font-size: 15px; line-height: 1.15; }
     .brand-sub { font-size: 11px; color: var(--muted); }
     .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
     .nav-btn {
-      pointer-events: auto;
-      text-decoration: none; border: 1.5px solid #d7b278;
-      background: #fffdf8; color: var(--ink);
-      font-size: 12px; font-weight: 700; padding: 6px 11px;
-      border-radius: 11px; cursor: pointer; transition: all 0.15s;
+      pointer-events: auto; text-decoration: none; border: 1.5px solid #d7b278;
+      background: #fffdf8; color: var(--ink); font-size: 12px; font-weight: 700;
+      padding: 6px 11px; border-radius: 11px; cursor: pointer; transition: all 0.15s;
       display: inline-flex; align-items: center; gap: 5px;
     }
     .nav-btn:hover { background: #f8ebd3; border-color: var(--gold-dark); }
     .nav-btn.primary { background: var(--sage); color: #fff; border-color: #366143; }
     .nav-btn.primary:hover { background: #3b6949; }
 
-    /* Collapsible left studio panel */
     #studio-panel {
-      position: fixed; top: 74px; left: 12px; bottom: 14px; width: 392px; max-width: calc(100vw - 24px);
+      position: fixed; top: 74px; left: 12px; bottom: 14px; width: 406px; max-width: calc(100vw - 24px);
       z-index: 35; background: var(--cream); border: 2px solid var(--gold);
       border-radius: 18px; box-shadow: var(--shadow); backdrop-filter: blur(10px);
-      display: flex; flex-direction: column; overflow: hidden;
-      transition: transform 0.25s ease;
+      display: flex; flex-direction: column; overflow: hidden; transition: transform 0.25s ease;
     }
     #studio-panel.collapsed { transform: translateX(calc(-100% - 20px)); }
 
     .tabs {
-      display: flex; border-bottom: 1.5px solid #e4cfa9; background: rgba(246, 236, 214, 0.7);
+      display: flex; border-bottom: 1.5px solid #e4cfa9; background: rgba(246, 236, 214, 0.75);
     }
     .tab-btn {
       flex: 1; padding: 11px 8px; border: none; background: transparent;
@@ -94,41 +82,35 @@
       border-bottom: 3px solid transparent; transition: all 0.15s;
     }
     .tab-btn.active {
-      color: var(--ink); border-bottom-color: var(--gold-dark);
-      background: rgba(255, 252, 245, 0.85);
+      color: var(--ink); border-bottom-color: var(--gold-dark); background: rgba(255, 252, 245, 0.88);
     }
-    .panel-body {
-      flex: 1; overflow-y: auto; padding: 14px; display: none;
-    }
+    .panel-body { flex: 1; overflow-y: auto; padding: 13px; display: none; }
     .panel-body.active { display: block; }
 
     .section-card {
-      background: rgba(255, 253, 248, 0.92); border: 1.5px solid #e5d2b0;
-      border-radius: 14px; padding: 12px; margin-bottom: 12px;
+      background: rgba(255, 253, 248, 0.94); border: 1.5px solid #e5d2b0;
+      border-radius: 14px; padding: 11px; margin-bottom: 11px;
     }
     .section-head {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 6px;
     }
-    .section-head h3 { margin: 0; font-size: 14px; font-weight: 800; }
+    .section-head h3 { margin: 0; font-size: 13.5px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .mini-avatar { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--gold); }
     .height-chip {
       font-size: 11px; font-weight: 700; padding: 3px 8px;
-      border-radius: 999px; background: #f3e4c4; color: #6e4a19;
+      border-radius: 999px; background: #f3e4c4; color: #6e4a19; white-space: nowrap;
     }
 
-    .ref-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 9px;
-    }
+    .ref-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 8px; }
     .ref-item {
       background: #fff; border: 1.5px solid #e2d2b8; border-radius: 10px;
-      padding: 5px; text-align: center; transition: transform 0.15s, border-color 0.15s;
+      padding: 5px; text-align: center;
     }
-    .ref-item:hover { transform: translateY(-2px); border-color: var(--gold); }
     .ref-item img {
       width: 100%; aspect-ratio: 1 / 1; object-fit: contain;
       border-radius: 7px; background: #fff; display: block;
     }
-    .ref-label { font-size: 11px; font-weight: 700; margin: 4px 0; color: var(--muted); }
+    .ref-label { font-size: 11px; font-weight: 700; margin: 3px 0; color: var(--muted); }
     .dl-mini {
       display: block; text-decoration: none; font-size: 11px; font-weight: 800;
       background: #f8ebd3; color: #5c3c13; padding: 4px 6px; border-radius: 7px;
@@ -136,34 +118,37 @@
     }
     .dl-mini:hover { background: #efd9ae; }
 
-    .dl-row { display: flex; gap: 7px; }
     .btn-full {
-      flex: 1; text-align: center; text-decoration: none;
+      width: 100%; text-align: center; text-decoration: none;
       padding: 7px 10px; border-radius: 10px; font-size: 12px; font-weight: 800;
       border: 1.5px solid var(--gold); background: #fff9eb; color: #684414;
       cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
     }
     .btn-full:hover { background: #f6e6c2; }
-    .btn-full.green { background: var(--sage); color: #fff; border-color: #366143; }
-    .btn-full.green:hover { background: #3d6a4b; }
-    .btn-full.coral { background: var(--coral); color: #fff; border-color: #a84234; }
-    .btn-full.coral:hover { background: #bc4b3c; }
 
-    .steps-list { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.5; color: #4c392b; }
-    .steps-list li { margin-bottom: 5px; }
+    .steps-list { margin: 5px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.48; color: #4c392b; }
+    .steps-list li { margin-bottom: 4px; }
 
-    /* Tester controls */
-    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .roster-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .char-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 9px 4px 4px; border-radius: 999px;
+      border: 1.5px solid #dcc08c; background: #fffdf8;
+      font-size: 11.5px; font-weight: 700; color: var(--ink); cursor: pointer;
+    }
+    .char-pill img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+    .char-pill.active { background: var(--gold-dark); color: #fff; border-color: #653f10; }
+    .char-pill.loaded { border-color: var(--sage); box-shadow: 0 0 0 1px var(--sage) inset; }
+
     .drop-slot {
-      border: 2px dashed #cca05c; border-radius: 12px; padding: 10px 8px;
-      text-align: center; background: #fffdf7; cursor: pointer;
-      transition: all 0.15s;
+      display: block; border: 2px dashed #cca05c; border-radius: 12px; padding: 13px 10px;
+      text-align: center; background: #fffdf7; cursor: pointer; margin-bottom: 10px;
     }
     .drop-slot:hover { background: #faf0da; border-color: var(--gold-dark); }
     .drop-slot.loaded { border-style: solid; border-color: var(--sage); background: #f1f8f2; }
     .drop-slot input { display: none; }
-    .slot-title { font-weight: 800; font-size: 13px; }
-    .slot-status { font-size: 11px; color: var(--muted); margin-top: 3px; word-break: break-word; }
+    .slot-title { font-weight: 800; font-size: 13.5px; }
+    .slot-status { font-size: 11.5px; color: var(--muted); margin-top: 3px; word-break: break-word; }
 
     .control-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -177,39 +162,28 @@
     }
     .seg-btn.active { background: var(--gold-dark); color: #fff; border-color: #6a4212; }
 
-    .stats-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
-      margin-top: 8px; font-size: 11.5px;
-    }
-    .stat-pill {
-      background: #f7eedc; border-radius: 8px; padding: 6px 8px;
-      display: flex; justify-content: space-between;
-    }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; font-size: 11.5px; }
+    .stat-pill { background: #f7eedc; border-radius: 8px; padding: 6px 8px; display: flex; justify-content: space-between; }
     .stat-pill span:last-child { font-weight: 800; }
-
     .clip-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
     .clip-chip {
       padding: 5px 9px; border-radius: 8px; border: 1.5px solid #c9a66b;
       background: #fff; font-size: 11.5px; font-weight: 700; cursor: pointer;
     }
     .clip-chip.active { background: var(--sage); color: #fff; border-color: #355d41; }
-
     input[type="range"] { width: 155px; accent-color: var(--gold-dark); }
 
-    /* Bottom controls hint */
     #bottom-hint {
       position: fixed; right: 14px; bottom: 14px; z-index: 30;
       background: var(--cream); border: 1.5px solid var(--gold);
       border-radius: 14px; padding: 8px 13px; font-size: 12px;
       box-shadow: var(--shadow); backdrop-filter: blur(8px);
-      max-width: calc(100vw - 28px);
     }
     #toast {
       position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%);
       z-index: 80; background: #2d2018; color: #fff8ea;
       padding: 9px 16px; border-radius: 12px; font-size: 13px; font-weight: 700;
-      box-shadow: var(--shadow); opacity: 0; pointer-events: none;
-      transition: opacity 0.2s;
+      box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
     #toast.show { opacity: 1; }
 
@@ -225,131 +199,63 @@
   <div id="drop-overlay">
     <div class="drop-card">
       <div style="font-size:44px;">✨📦</div>
-      <h2>Drop Your .GLB Character Here</h2>
-      <p>Loads straight into Laila &amp; Salma's sunlit Studio Ghibli apartment!</p>
+      <h2>Drop Any Family .GLB Here</h2>
+      <p>Auto-matches Laila, Salma, Mom, Dad, Gedo, Nana, Bibo, Nouzi, Mai &amp; Mostafa!</p>
     </div>
   </div>
 
   <div id="top-bar">
     <div class="top-pill">
-      <button id="btn-toggle-panel" class="nav-btn" type="button" title="Show/Hide Studio Drawer">☰ Studio</button>
+      <button id="btn-toggle-panel" class="nav-btn" type="button">☰ Studio</button>
       <div>
-        <div class="brand-title">✨ 3D .GLB Studio &amp; A-Pose Hub</div>
-        <div class="brand-sub">Laila (1.24m) &amp; Salma (1.04m) • True 3D Pipeline</div>
+        <div class="brand-title">✨ 10-Character 3D .GLB Studio &amp; A-Pose Hub</div>
+        <div class="brand-sub">All 10 Google Drive Portraits • Multi-View Ready • Real-Scale Tester</div>
       </div>
     </div>
     <div class="top-pill nav-links">
-      <a class="nav-btn" href="showcase_hd2d.html">🎨 HD-2D Prototype</a>
+      <a class="nav-btn" href="showcase_hd2d.html">🎨 10-Family HD-2D</a>
       <a class="nav-btn primary" href="index.html">🏡 Open Preview Game</a>
     </div>
   </div>
 
   <aside id="studio-panel">
     <div class="tabs">
-      <button class="tab-btn active" data-tab="refs" type="button">📥 1. A-Pose Views</button>
+      <button class="tab-btn active" data-tab="refs" type="button">📥 1. All 10 A-Pose Views</button>
       <button class="tab-btn" data-tab="tester" type="button">🧪 2. Test .GLB Live</button>
     </div>
 
-    <!-- TAB 1: A-POSE TURNAROUNDS FOR TRIPO3D / MESHY / RODIN -->
     <div id="tab-refs" class="panel-body active">
       <div class="section-card">
         <div class="section-head">
-          <h3>👧 Laila — 3D Modeling Sheet</h3>
-          <span class="height-chip">Age 8 • 1.24m</span>
-        </div>
-        <div class="ref-grid">
-          <div class="ref-item">
-            <img src="assets/models/refs/laila_front.png" alt="Laila Front A-Pose" />
-            <div class="ref-label">Front</div>
-            <a class="dl-mini" href="assets/models/refs/laila_front.png" download="laila_front.png">⬇ PNG</a>
-          </div>
-          <div class="ref-item">
-            <img src="assets/models/refs/laila_side.png" alt="Laila Side A-Pose" />
-            <div class="ref-label">Side</div>
-            <a class="dl-mini" href="assets/models/refs/laila_side.png" download="laila_side.png">⬇ PNG</a>
-          </div>
-          <div class="ref-item">
-            <img src="assets/models/refs/laila_back.png" alt="Laila Back A-Pose" />
-            <div class="ref-label">Back</div>
-            <a class="dl-mini" href="assets/models/refs/laila_back.png" download="laila_back.png">⬇ PNG</a>
-          </div>
-        </div>
-        <div class="dl-row">
-          <a class="btn-full" href="assets/models/refs/laila_apose_3view.png" download="laila_apose_3view.png">⬇ Combined 3-View Sheet</a>
-        </div>
-      </div>
-
-      <div class="section-card">
-        <div class="section-head">
-          <h3>🧒 Salma — 3D Modeling Sheet</h3>
-          <span class="height-chip">Age 5 • 1.04m</span>
-        </div>
-        <div class="ref-grid">
-          <div class="ref-item">
-            <img src="assets/models/refs/salma_front.png" alt="Salma Front A-Pose" />
-            <div class="ref-label">Front</div>
-            <a class="dl-mini" href="assets/models/refs/salma_front.png" download="salma_front.png">⬇ PNG</a>
-          </div>
-          <div class="ref-item">
-            <img src="assets/models/refs/salma_side.png" alt="Salma Side A-Pose" />
-            <div class="ref-label">Side</div>
-            <a class="dl-mini" href="assets/models/refs/salma_side.png" download="salma_side.png">⬇ PNG</a>
-          </div>
-          <div class="ref-item">
-            <img src="assets/models/refs/salma_back.png" alt="Salma Back A-Pose" />
-            <div class="ref-label">Back</div>
-            <a class="dl-mini" href="assets/models/refs/salma_back.png" download="salma_back.png">⬇ PNG</a>
-          </div>
-        </div>
-        <div class="dl-row">
-          <a class="btn-full" href="assets/models/refs/salma_apose_3view.png" download="salma_apose_3view.png">⬇ Combined 3-View Sheet</a>
-        </div>
-      </div>
-
-      <div class="section-card">
-        <div class="section-head">
-          <h3>🛠️ 3-Step Multi-View → .GLB Workflow</h3>
+          <h3>🛠️ 3-Step Multi-View → Rigged .GLB</h3>
         </div>
         <ol class="steps-list">
-          <li>Open <strong>Tripo3D</strong> (<code>tripo3d.ai</code>), <strong>Meshy</strong> (<code>meshy.ai</code>), or <strong>Hyper3D Rodin</strong> and choose <strong>Multi-View Image-to-3D</strong>.</li>
-          <li>Upload the 3 individual PNGs (<code>front</code>, <code>side</code>, <code>back</code>) for Laila (then repeat for Salma). All 3 views are aligned to the exact same height &amp; pure white background.</li>
-          <li>Click <strong>Auto-Rig (Humanoid)</strong>, attach Idle + Walk + Run clips, export <strong><code>.glb</code></strong>, then drag it right onto this room (or upload it in chat for me to wire into the game!).</li>
+          <li>Open <strong>Tripo3D</strong> (<code>studio.tripo3d.ai</code>) or <strong>Meshy</strong> (<code>meshy.ai</code>) → <strong>Multi-View Image-to-3D</strong>.</li>
+          <li>Upload each character's <code>front</code>, <code>side</code>, and <code>back</code> PNGs (also saved in your Google Drive subfolder!).</li>
+          <li>Click <strong>Auto-Rig (Humanoid)</strong>, attach Idle/Walk/Run, export <strong><code>&lt;name&gt;.glb</code></strong>, then drop it here to test!</li>
         </ol>
       </div>
+      <div id="refs-cards"></div>
     </div>
 
-    <!-- TAB 2: LIVE 3D .GLB TESTER -->
     <div id="tab-tester" class="panel-body">
       <div class="section-card">
         <div class="section-head">
-          <h3>📦 Load .GLB Characters</h3>
-          <span class="height-chip">Drag &amp; Drop Anytime</span>
+          <h3>👨‍👩‍👧‍👦 Select Character Slot</h3>
+          <span class="height-chip" id="loaded-count">0/10 .GLB</span>
         </div>
-        <div class="upload-grid">
-          <label class="drop-slot" id="slot-laila">
-            <input type="file" id="file-laila" accept=".glb,.gltf" />
-            <div class="slot-title">👧 Laila .GLB</div>
-            <div class="slot-status" id="status-laila">Click or drop .glb</div>
-          </label>
-          <label class="drop-slot" id="slot-salma">
-            <input type="file" id="file-salma" accept=".glb,.gltf" />
-            <div class="slot-title">🧒 Salma .GLB</div>
-            <div class="slot-status" id="status-salma">Click or drop .glb</div>
-          </label>
-        </div>
-        <div class="control-row" style="margin-bottom:4px;">
-          <span>Walk / Inspect Target:</span>
-          <div class="seg-group">
-            <button class="seg-btn active" id="ctrl-laila" type="button">👧 Laila</button>
-            <button class="seg-btn" id="ctrl-salma" type="button">🧒 Salma</button>
-          </div>
-        </div>
+        <div class="roster-pills" id="tester-roster"></div>
+        <label class="drop-slot" id="active-drop-slot">
+          <input type="file" id="file-active" accept=".glb,.gltf" />
+          <div class="slot-title" id="slot-title">📦 Upload Laila .GLB</div>
+          <div class="slot-status" id="slot-status">Click or drag &amp; drop laila.glb anywhere</div>
+        </label>
       </div>
 
       <div class="section-card">
         <div class="section-head">
           <h3>🎨 Studio Calibration</h3>
-          <span class="height-chip" id="active-badge">HD-2D Reference Active</span>
+          <span class="height-chip" id="active-badge">HD-2D Reference</span>
         </div>
 
         <div class="control-row">
@@ -362,7 +268,7 @@
 
         <div class="control-row">
           <span>Height: <strong id="height-val">1.24m</strong></span>
-          <input type="range" id="height-slider" min="0.75" max="1.90" step="0.01" value="1.24" />
+          <input type="range" id="height-slider" min="0.75" max="1.95" step="0.01" value="1.24" />
         </div>
 
         <div class="control-row">
@@ -385,10 +291,8 @@
         <div class="section-head">
           <h3>🎬 Animation Clips &amp; Rig Info</h3>
         </div>
-        <div id="clip-container" class="clip-list">
-          <span style="font-size:12px;color:var(--muted);">Load a .glb file to inspect its embedded rig &amp; animation clips.</span>
-        </div>
-        <div class="stats-grid" id="rig-stats">
+        <div id="clip-container" class="clip-list"></div>
+        <div class="stats-grid">
           <div class="stat-pill"><span>Triangles</span><span id="stat-tris">—</span></div>
           <div class="stat-pill"><span>Bones</span><span id="stat-bones">—</span></div>
           <div class="stat-pill"><span>Clips</span><span id="stat-clips">—</span></div>
@@ -399,13 +303,51 @@
   </aside>
 
   <div id="bottom-hint">
-    <strong>WASD / Arrows</strong> or <strong>Click Floor</strong>: Walk • <strong>Shift</strong>: Run • <strong>Drag</strong>: 360° Orbit • <strong>Scroll</strong>: Zoom
+    <strong>WASD / Arrows</strong> or <strong>Click Floor</strong>: Walk • <strong>Shift</strong>: Run • <strong>Space</strong>: Jump • <strong>Drag</strong>: 360° Orbit • <strong>Scroll</strong>: Zoom
   </div>
   <div id="toast"></div>
 
   <script>
     (function () {
       const LS = window.LailaSalma;
+
+      const CHARACTERS = [
+        { key: 'laila',        name: 'Laila',        meta: 'Age 8 • 1.24m', height: 1.24 },
+        { key: 'salma',        name: 'Salma',        meta: 'Age 5 • 1.04m', height: 1.04 },
+        { key: 'mom',          name: 'Mom',          meta: '1.58m',         height: 1.58 },
+        { key: 'dad',          name: 'Dad',          meta: '1.72m',         height: 1.72 },
+        { key: 'gedo_mahmoud', name: 'Gedo Mahmoud', meta: '1.68m',         height: 1.68 },
+        { key: 'nana_omaima',  name: 'Nana Omaima',  meta: '1.54m',         height: 1.54 },
+        { key: 'bibo',         name: 'Bibo',         meta: 'Age 4 • 0.99m', height: 0.99 },
+        { key: 'nouzi',        name: 'Nouzi',        meta: 'Age 7 • 1.22m', height: 1.22 },
+        { key: 'mai',          name: 'Mai',          meta: '1.56m',         height: 1.56 },
+        { key: 'mostafa',      name: 'Mostafa',      meta: '1.72m',         height: 1.72 }
+      ];
+
+      // Build Tab 1 Download Cards for ALL 10 characters
+      const refsWrap = document.getElementById('refs-cards');
+      CHARACTERS.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'section-card';
+        card.innerHTML =
+          '<div class="section-head">' +
+            '<h3><img class="mini-avatar" src="assets/ghibli_showcase/portraits/' + c.key + '_card.jpg" alt="' + c.name + '" /> ' + c.name + '</h3>' +
+            '<span class="height-chip">' + c.meta + '</span>' +
+          '</div>' +
+          '<div class="ref-grid">' +
+            ['front', 'side', 'back'].map(v =>
+              '<div class="ref-item">' +
+                '<img loading="lazy" src="assets/models/refs/' + c.key + '_' + v + '.png" alt="' + c.name + ' ' + v + ' A-Pose" />' +
+                '<div class="ref-label">' + v.charAt(0).toUpperCase() + v.slice(1) + '</div>' +
+                '<a class="dl-mini" href="assets/models/refs/' + c.key + '_' + v + '.png" download="' + c.key + '_' + v + '.png">⬇ PNG</a>' +
+              '</div>'
+            ).join('') +
+          '</div>' +
+          '<a class="btn-full" href="assets/models/refs/' + c.key + '_apose_3view.png" download="' + c.key + '_apose_3view.png">⬇ ' + c.name + ' Combined 3-View Sheet</a>';
+        refsWrap.appendChild(card);
+      });
+
+      // Three.js Sunlit Ghibli Apartment Stage
       const canvas = document.getElementById('stage');
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -418,304 +360,179 @@
 
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0xdfeaf5);
-
       const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 80);
 
-      // Warm Studio Ghibli Apartment Lighting
-      const hemi = new THREE.HemisphereLight(0xfff6e5, 0xc7a982, 0.92);
-      scene.add(hemi);
-
+      scene.add(new THREE.HemisphereLight(0xfff6e5, 0xc7a982, 0.92));
       const sun = new THREE.DirectionalLight(0xfff1d6, 1.32);
       sun.position.set(4.5, 7.2, 5.2);
       sun.castShadow = true;
       sun.shadow.mapSize.set(1024, 1024);
-      sun.shadow.camera.near = 0.5;
-      sun.shadow.camera.far = 22;
-      sun.shadow.camera.left = -5.5;
-      sun.shadow.camera.right = 5.5;
-      sun.shadow.camera.top = 5.5;
-      sun.shadow.camera.bottom = -5.5;
+      sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 22;
+      sun.shadow.camera.left = -5.5; sun.shadow.camera.right = 5.5;
+      sun.shadow.camera.top = 5.5; sun.shadow.camera.bottom = -5.5;
       sun.shadow.bias = -0.0005;
       scene.add(sun);
-
       const fill = new THREE.DirectionalLight(0xddeeff, 0.35);
       fill.position.set(-4.0, 3.0, -2.5);
       scene.add(fill);
 
       const texLoader = new THREE.TextureLoader();
-      function loadSRGB(path, repX, repY) {
+      function loadSRGB(path, rx, ry) {
         const t = texLoader.load(path);
         t.encoding = THREE.sRGBEncoding;
-        if (repX && repY) {
-          t.wrapS = THREE.RepeatWrapping;
-          t.wrapT = THREE.RepeatWrapping;
-          t.repeat.set(repX, repY);
-        }
+        if (rx && ry) { t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); }
         return t;
       }
 
-      // 1. Warm Oak Living Room Floor
-      const floorGeo = new THREE.PlaneGeometry(11.5, 9.5);
-      const floorMat = new THREE.MeshStandardMaterial({
-        map: loadSRGB('assets/ghibli_showcase/wood_floor_ghibli.jpg', 3, 3),
-        roughness: 0.82,
-        metalness: 0.02
-      });
-      const floor = new THREE.Mesh(floorGeo, floorMat);
-      floor.rotation.x = -Math.PI / 2;
-      floor.receiveShadow = true;
-      scene.add(floor);
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(11.5, 9.5),
+        new THREE.MeshStandardMaterial({ map: loadSRGB('assets/ghibli_showcase/wood_floor_ghibli.jpg', 3, 3), roughness: 0.82 })
+      );
+      floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
 
-      // 2. Woven Studio Ghibli Living Room Rug
       const rug = new THREE.Mesh(
         new THREE.PlaneGeometry(4.6, 3.2),
-        new THREE.MeshStandardMaterial({
-          map: loadSRGB('assets/ghibli_showcase/woven_rug_ghibli.jpg'),
-          roughness: 0.96,
-          metalness: 0.0
-        })
+        new THREE.MeshStandardMaterial({ map: loadSRGB('assets/ghibli_showcase/woven_rug_ghibli.jpg'), roughness: 0.96 })
       );
-      rug.rotation.x = -Math.PI / 2;
-      rug.position.set(0, 0.006, 0.3);
-      rug.receiveShadow = true;
-      scene.add(rug);
+      rug.rotation.x = -Math.PI / 2; rug.position.set(0, 0.006, 0.3); rug.receiveShadow = true; scene.add(rug);
 
-      // 3. Cream Plaster Back Wall + Sunlit Balcony Arch + Sky Backdrop
-      const wallMat = new THREE.MeshStandardMaterial({
-        map: loadSRGB('assets/ghibli_showcase/plaster_wall.jpg', 2, 1),
-        roughness: 0.92,
-        metalness: 0.0
-      });
-      const backLeft = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.6, 0.24), wallMat);
-      backLeft.position.set(-3.4, 1.8, -3.0);
-      backLeft.receiveShadow = true;
-      scene.add(backLeft);
-
-      const backRight = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.6, 0.24), wallMat);
-      backRight.position.set(3.4, 1.8, -3.0);
-      backRight.receiveShadow = true;
-      scene.add(backRight);
-
-      const headerWall = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.95, 0.24), wallMat);
-      headerWall.position.set(0, 3.12, -3.0);
-      scene.add(headerWall);
-
+      const wallMat = new THREE.MeshStandardMaterial({ map: loadSRGB('assets/ghibli_showcase/plaster_wall.jpg', 2, 1), roughness: 0.92 });
+      const bL = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.6, 0.24), wallMat); bL.position.set(-3.4, 1.8, -3.0); scene.add(bL);
+      const bR = new THREE.Mesh(new THREE.BoxGeometry(3.8, 3.6, 0.24), wallMat); bR.position.set(3.4, 1.8, -3.0); scene.add(bR);
+      const bT = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.95, 0.24), wallMat); bT.position.set(0, 3.12, -3.0); scene.add(bT);
       const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x9c6b3f, roughness: 0.78 });
-      const baseboard = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.14, 0.28), woodTrimMat);
-      baseboard.position.set(0, 0.07, -2.98);
-      scene.add(baseboard);
+      const skyPlane = new THREE.Mesh(new THREE.PlaneGeometry(11, 6.2), new THREE.MeshBasicMaterial({ map: loadSRGB('assets/ghibli_showcase/sky_panorama.jpg') }));
+      skyPlane.position.set(0, 2.4, -5.2); scene.add(skyPlane);
 
-      // Sunlit Ghibli sky outside balcony
-      const skyPlane = new THREE.Mesh(
-        new THREE.PlaneGeometry(11, 6.2),
-        new THREE.MeshBasicMaterial({ map: loadSRGB('assets/ghibli_showcase/sky_panorama.jpg') })
-      );
-      skyPlane.position.set(0, 2.4, -5.2);
-      scene.add(skyPlane);
-
-      // Balcony railing
       const railMat = new THREE.MeshStandardMaterial({ color: 0x5c4637, roughness: 0.65, metalness: 0.15 });
-      const topRail = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.05, 0.06), railMat);
-      topRail.position.set(0, 1.0, -3.28);
-      scene.add(topRail);
+      const topRail = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.05, 0.06), railMat); topRail.position.set(0, 1.0, -3.28); scene.add(topRail);
       for (let rx = -1.4; rx <= 1.41; rx += 0.28) {
         const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 1.0, 6), railMat);
-        bar.position.set(rx, 0.5, -3.28);
-        scene.add(bar);
+        bar.position.set(rx, 0.5, -3.28); scene.add(bar);
       }
 
-      // 4. Real-Scale Reference Furniture (Dining Table 0.76m + Chair 0.46m Seat + Brass Height Gauge)
+      // Reference Chair (0.46m seat) & Height Gauge
       const oakMat = new THREE.MeshStandardMaterial({ color: 0xb7824f, roughness: 0.75 });
-      const cushionMat = new THREE.MeshStandardMaterial({ color: 0xdf9c62, roughness: 0.92 });
-      function buildReferenceChair(x, z, rotY) {
-        const g = new THREE.Group();
-        const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.44), oakMat);
-        seat.position.y = 0.46; seat.castShadow = true; seat.receiveShadow = true;
-        g.add(seat);
-        const cushion = new THREE.Mesh(new THREE.BoxGeometry(0.41, 0.035, 0.39), cushionMat);
-        cushion.position.y = 0.495;
-        g.add(cushion);
-        const back = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.42, 0.045), oakMat);
-        back.position.set(0, 0.69, -0.2); back.castShadow = true;
-        g.add(back);
-        [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]].forEach(([lx, lz]) => {
-          const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.018, 0.45, 8), oakMat);
-          leg.position.set(lx, 0.225, lz); leg.castShadow = true;
-          g.add(leg);
-        });
-        g.position.set(x, 0, z);
-        g.rotation.y = rotY;
-        return g;
-      }
-      scene.add(buildReferenceChair(2.35, -0.55, -0.52));
+      const chair = new THREE.Group();
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.05, 0.44), oakMat); seat.position.y = 0.46; seat.castShadow = true; chair.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.42, 0.045), oakMat); back.position.set(0, 0.69, -0.2); back.castShadow = true; chair.add(back);
+      [[-0.19, -0.18], [0.19, -0.18], [-0.19, 0.18], [0.19, 0.18]].forEach(([lx, lz]) => {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.018, 0.45, 8), oakMat); leg.position.set(lx, 0.225, lz); chair.add(leg);
+      });
+      chair.position.set(2.35, 0, -0.55); chair.rotation.y = -0.52; scene.add(chair);
 
-      // Cozy round side table (0.76m standard dining height)
-      const tableGroup = new THREE.Group();
-      const tTop = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.48, 0.045, 24), oakMat);
-      tTop.position.y = 0.76; tTop.castShadow = true; tTop.receiveShadow = true;
-      tableGroup.add(tTop);
-      const tLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.08, 0.74, 12), oakMat);
-      tLeg.position.y = 0.37; tLeg.castShadow = true;
-      tableGroup.add(tLeg);
-      const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.30, 0.04, 16), oakMat);
-      tBase.position.y = 0.02;
-      tableGroup.add(tBase);
-      tableGroup.position.set(2.95, 0, -1.15);
-      scene.add(tableGroup);
+      const poleGroup = new THREE.Group();
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 1.95, 10), woodTrimMat); post.position.y = 0.975; poleGroup.add(post);
+      [{ h: 1.04, label: '1.04m Salma', color: '#d45d4c' }, { h: 1.24, label: '1.24m Laila', color: '#d9a429' }, { h: 1.58, label: '1.58m Mom', color: '#4a7c59' }, { h: 1.72, label: '1.72m Dad', color: '#3b648c' }].forEach(m => {
+        const tick = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.016, 0.018), new THREE.MeshBasicMaterial({ color: m.color }));
+        tick.position.set(0.14, m.h, 0); poleGroup.add(tick);
+        const c = document.createElement('canvas'); c.width = 256; c.height = 56;
+        const ctx = c.getContext('2d'); ctx.fillStyle = 'rgba(253,248,238,0.94)'; ctx.fillRect(4, 6, 248, 44);
+        ctx.strokeStyle = m.color; ctx.lineWidth = 4; ctx.strokeRect(4, 6, 248, 44);
+        ctx.fillStyle = '#34251c'; ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(m.label, 128, 37);
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, toneMapped: false }));
+        sp.scale.set(0.56, 0.125, 1); sp.position.set(0.45, m.h, 0); poleGroup.add(sp);
+      });
+      poleGroup.position.set(-1.95, 0, -1.25); scene.add(poleGroup);
 
-      // Potted Ghibli lemon tree & flowers
-      function addPlantStandee(src, x, z, w, h) {
+      function addPlant(src, x, z, w, h) {
         const tex = loadSRGB(src);
-        const mat = new THREE.MeshStandardMaterial({
-          map: tex, transparent: true, alphaTest: 0.35, roughness: 0.9, side: THREE.DoubleSide
-        });
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
-        m.position.set(x, h * 0.5, z);
-        m.castShadow = true;
-        m.customDepthMaterial = new THREE.MeshDepthMaterial({
-          depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: 0.35
-        });
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.35, roughness: 0.9, side: THREE.DoubleSide }));
+        m.position.set(x, h * 0.5, z); m.castShadow = true;
+        m.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: 0.35 });
         scene.add(m);
       }
-      addPlantStandee('assets/ghibli_showcase/potted_lemon.png', -2.35, -2.15, 1.35, 1.68);
-      addPlantStandee('assets/ghibli_showcase/potted_flowers.png', 2.05, -2.25, 0.92, 0.95);
+      addPlant('assets/ghibli_showcase/potted_lemon.png', -2.35, -2.15, 1.35, 1.68);
+      addPlant('assets/ghibli_showcase/potted_flowers.png', 2.05, -2.25, 0.92, 0.95);
 
-      // Height Calibration Pole behind the rug (1.04m Salma / 1.24m Laila / 1.58m Mom / 1.72m Dad)
-      function buildHeightGauge() {
-        const g = new THREE.Group();
-        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 1.95, 10), woodTrimMat);
-        post.position.y = 0.975;
-        g.add(post);
-        const marks = [
-          { h: 1.04, label: '1.04m Salma', color: '#d45d4c' },
-          { h: 1.24, label: '1.24m Laila', color: '#d9a429' },
-          { h: 1.58, label: '1.58m Mom', color: '#4a7c59' },
-          { h: 1.72, label: '1.72m Dad', color: '#3b648c' }
-        ];
-        marks.forEach(m => {
-          const tick = new THREE.Mesh(
-            new THREE.BoxGeometry(0.28, 0.016, 0.018),
-            new THREE.MeshBasicMaterial({ color: m.color })
-          );
-          tick.position.set(0.14, m.h, 0);
-          g.add(tick);
-          const c = document.createElement('canvas');
-          c.width = 256; c.height = 56;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = 'rgba(253,248,238,0.92)';
-          ctx.fillRect(4, 6, 248, 44);
-          ctx.strokeStyle = m.color;
-          ctx.lineWidth = 4;
-          ctx.strokeRect(4, 6, 248, 44);
-          ctx.fillStyle = '#34251c';
-          ctx.font = 'bold 26px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(m.label, 128, 37);
-          const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
-          sp.scale.set(0.56, 0.125, 1);
-          sp.position.set(0.45, m.h, 0);
-          g.add(sp);
-        });
-        g.position.set(-1.95, 0, -1.25);
-        return g;
-      }
-      scene.add(buildHeightGauge());
+      // Active Character Stage Slot (shows selected character's HD-2D reference + loaded 3D .GLB)
+      const shadowCanvas = document.createElement('canvas'); shadowCanvas.width = 128; shadowCanvas.height = 128;
+      const sctx = shadowCanvas.getContext('2d');
+      const sg = sctx.createRadialGradient(64, 64, 6, 64, 64, 58);
+      sg.addColorStop(0, 'rgba(42,26,14,0.34)'); sg.addColorStop(1, 'rgba(42,26,14,0)');
+      sctx.fillStyle = sg; sctx.fillRect(0, 0, 128, 128);
+      const shadowTex = new THREE.CanvasTexture(shadowCanvas);
 
-      // 5. Character Slots (Laila & Salma — HD-2D Reference Standee + Hot-Swappable 3D .GLB Rig!)
-      function makeHD2DStandee(stripPath, heightM) {
-        const tex = loadSRGB(stripPath);
-        tex.repeat.set(0.25, 1);
-        tex.offset.set(0, 0);
-        const aspect = 0.72;
-        const w = heightM * aspect;
-        const mat = new THREE.MeshStandardMaterial({
-          map: tex, transparent: true, alphaTest: 0.32, roughness: 0.92, side: THREE.DoubleSide
-        });
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, heightM), mat);
-        mesh.position.y = heightM * 0.5;
-        mesh.castShadow = true;
-        mesh.customDepthMaterial = new THREE.MeshDepthMaterial({
-          depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: 0.32
-        });
-        return { mesh, tex };
-      }
+      const slots = {};
+      CHARACTERS.forEach(c => {
+        const root = new THREE.Group();
+        root.position.set(0.15, 0, 0.35);
+        root.visible = (c.key === 'laila');
+        const disc = new THREE.Mesh(new THREE.PlaneGeometry(0.76, 0.76), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }));
+        disc.rotation.x = -Math.PI / 2; disc.position.y = 0.014;
+        root.add(disc);
 
-      function makeShadowDisc() {
-        const c = document.createElement('canvas');
-        c.width = 128; c.height = 128;
-        const ctx = c.getContext('2d');
-        const g = ctx.createRadialGradient(64, 64, 6, 64, 64, 58);
-        g.addColorStop(0, 'rgba(42,26,14,0.34)');
-        g.addColorStop(1, 'rgba(42,26,14,0)');
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, 128, 128);
-        const m = new THREE.Mesh(
-          new THREE.PlaneGeometry(0.76, 0.76),
-          new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })
+        const tex = loadSRGB('assets/ghibli_showcase/hd2d/' + c.key + '_strip.png');
+        tex.repeat.set(0.25, 1); tex.offset.set(0, 0);
+        const w = c.height * (512 / 720);
+        const standeeMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(w, c.height),
+          new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: 0.30, roughness: 0.92, side: THREE.DoubleSide })
         );
-        m.rotation.x = -Math.PI / 2;
-        m.position.y = 0.014;
-        return m;
-      }
+        standeeMesh.position.y = c.height * 0.5;
+        standeeMesh.castShadow = true;
+        standeeMesh.customDepthMaterial = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: tex, alphaTest: 0.30 });
+        root.add(standeeMesh);
+        scene.add(root);
 
-      const slots = {
-        laila: {
-          key: 'laila',
-          name: 'Laila',
-          defaultHeight: 1.24,
-          root: new THREE.Group(),
-          standee: makeHD2DStandee('assets/ghibli_showcase/hd2d/laila_strip.png', 1.24),
-          glbRig: null,
-          fileName: null,
-          velY: 0,
-          grounded: true,
-          walkTarget: null
-        },
-        salma: {
-          key: 'salma',
-          name: 'Salma',
-          defaultHeight: 1.04,
-          root: new THREE.Group(),
-          standee: makeHD2DStandee('assets/ghibli_showcase/hd2d/salma_strip.png', 1.04),
-          glbRig: null,
-          fileName: null,
-          velY: 0,
-          grounded: true,
-          walkTarget: null
-        }
-      };
-
-      slots.laila.root.position.set(-0.55, 0, 0.35);
-      slots.salma.root.position.set(0.65, 0, 0.45);
-      ['laila', 'salma'].forEach(k => {
-        const s = slots[k];
-        s.root.add(makeShadowDisc());
-        s.root.add(s.standee.mesh);
-        scene.add(s.root);
+        slots[c.key] = {
+          key: c.key, name: c.name, defaultHeight: c.height, root,
+          standee: { mesh: standeeMesh, tex },
+          glbRig: null, fileName: null, velY: 0, grounded: true, walkTarget: null
+        };
       });
 
       let activeKey = 'laila';
       let show2DRef = true;
 
-      // Toast helper
+      // Build Tab 2 Roster Pills
+      const rosterWrap = document.getElementById('tester-roster');
+      CHARACTERS.forEach(c => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'char-pill' + (c.key === activeKey ? ' active' : '');
+        b.dataset.key = c.key;
+        b.innerHTML = '<img src="assets/ghibli_showcase/portraits/' + c.key + '_card.jpg" alt="' + c.name + '" /><span>' + c.name + '</span>';
+        b.onclick = () => selectCharacter(c.key);
+        rosterWrap.appendChild(b);
+      });
+
       const toastEl = document.getElementById('toast');
       let toastTimer = null;
       function showToast(msg) {
-        toastEl.textContent = msg;
-        toastEl.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+        toastEl.textContent = msg; toastEl.classList.add('show');
+        clearTimeout(toastTimer); toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+      }
+
+      function selectCharacter(key) {
+        if (!slots[key]) return;
+        activeKey = key;
+        Object.keys(slots).forEach(k => { slots[k].root.visible = (k === activeKey); });
+        refreshInspectorUI();
       }
 
       function refreshInspectorUI() {
         const slot = slots[activeKey];
         const rig = slot.glbRig;
-        document.getElementById('ctrl-laila').classList.toggle('active', activeKey === 'laila');
-        document.getElementById('ctrl-salma').classList.toggle('active', activeKey === 'salma');
-        document.getElementById('active-badge').textContent = rig
-          ? (slot.name + ' 3D .GLB Loaded')
-          : (slot.name + ' HD-2D Reference');
+        let loadedTotal = 0;
+        Object.values(slots).forEach(s => { if (s.glbRig) loadedTotal++; });
+        document.getElementById('loaded-count').textContent = loadedTotal + '/10 .GLB';
 
+        rosterWrap.querySelectorAll('.char-pill').forEach(b => {
+          b.classList.toggle('active', b.dataset.key === activeKey);
+          b.classList.toggle('loaded', Boolean(slots[b.dataset.key].glbRig));
+        });
+
+        const dropSlot = document.getElementById('active-drop-slot');
+        dropSlot.classList.toggle('loaded', Boolean(rig));
+        document.getElementById('slot-title').textContent = rig
+          ? ('✅ ' + slot.name + ' .GLB Loaded')
+          : ('📦 Upload ' + slot.name + ' .GLB');
+        document.getElementById('slot-status').textContent = rig
+          ? slot.fileName + ' (click or drop to replace)'
+          : ('Click or drag & drop ' + slot.key + '.glb anywhere');
+
+        document.getElementById('active-badge').textContent = rig ? (slot.name + ' 3D .GLB') : (slot.name + ' HD-2D Ref');
         const curH = rig ? rig.stats.targetHeight : slot.defaultHeight;
         document.getElementById('height-slider').value = curH.toFixed(2);
         document.getElementById('height-val').textContent = curH.toFixed(2) + 'm';
@@ -724,19 +541,14 @@
         document.getElementById('shader-matte').classList.toggle('active', matteOn);
         document.getElementById('shader-raw').classList.toggle('active', !matteOn);
 
-        // Toggle 2D standee visibility: if GLB is loaded, offset standee neatly beside it when comparison is enabled!
-        ['laila', 'salma'].forEach(k => {
-          const s = slots[k];
-          if (s.glbRig) {
-            s.standee.mesh.visible = show2DRef;
-            s.standee.mesh.position.x = show2DRef ? -0.78 : 0;
-          } else {
-            s.standee.mesh.visible = true;
-            s.standee.mesh.position.x = 0;
-          }
-        });
+        if (rig) {
+          slot.standee.mesh.visible = show2DRef;
+          slot.standee.mesh.position.x = show2DRef ? -0.82 : 0;
+        } else {
+          slot.standee.mesh.visible = true;
+          slot.standee.mesh.position.x = 0;
+        }
 
-        // Clips & stats
         const clipWrap = document.getElementById('clip-container');
         clipWrap.innerHTML = '';
         if (rig) {
@@ -746,8 +558,7 @@
           document.getElementById('stat-rig').textContent = rig.stats.hasSkinnedMesh ? 'Yes (Rigged)' : 'Static';
 
           const autoBtn = document.createElement('button');
-          autoBtn.className = 'clip-chip active';
-          autoBtn.textContent = '✨ Auto (Idle/Walk)';
+          autoBtn.className = 'clip-chip active'; autoBtn.textContent = '✨ Auto (Idle/Walk)';
           autoBtn.onclick = () => {
             rig.playState('idle');
             clipWrap.querySelectorAll('.clip-chip').forEach(b => b.classList.remove('active'));
@@ -755,85 +566,49 @@
           };
           clipWrap.appendChild(autoBtn);
 
-          if (rig.stats.clipNames.length) {
-            rig.stats.clipNames.forEach((cname, idx) => {
-              const btn = document.createElement('button');
-              btn.className = 'clip-chip';
-              btn.textContent = cname;
-              btn.onclick = () => {
-                rig.playClipByIndex(idx);
-                clipWrap.querySelectorAll('.clip-chip').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-              };
-              clipWrap.appendChild(btn);
-            });
-          } else {
-            const note = document.createElement('span');
-            note.style.cssText = 'font-size:11.5px;color:#6e5847;width:100%;margin-top:4px;';
-            note.textContent = 'No embedded clips detected — using gentle Ghibli bounce while walking!';
-            clipWrap.appendChild(note);
-          }
+          rig.stats.clipNames.forEach((cname, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'clip-chip'; btn.textContent = cname;
+            btn.onclick = () => {
+              rig.playClipByIndex(idx);
+              clipWrap.querySelectorAll('.clip-chip').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+            };
+            clipWrap.appendChild(btn);
+          });
         } else {
           document.getElementById('stat-tris').textContent = '—';
           document.getElementById('stat-bones').textContent = '—';
           document.getElementById('stat-clips').textContent = '—';
           document.getElementById('stat-rig').textContent = '—';
-          clipWrap.innerHTML = '<span style="font-size:12px;color:var(--muted);">Load a .glb file for ' + slot.name + ' to inspect its rig &amp; animation clips.</span>';
+          clipWrap.innerHTML = '<span style="font-size:12px;color:var(--muted);">Upload ' + slot.key + '.glb to inspect its rig &amp; embedded clips.</span>';
         }
       }
 
       async function loadGLBIntoSlot(slotKey, source, displayName) {
         const slot = slots[slotKey];
-        if (!slot) return;
-        const statusEl = document.getElementById('status-' + slotKey);
-        const slotEl = document.getElementById('slot-' + slotKey);
-        statusEl.textContent = 'Loading 3D model...';
+        if (!slot) return null;
         try {
-          const rig = await LS.loadGLBCharacter(source, {
-            targetHeight: slot.defaultHeight,
-            ghibliMatte: true
-          });
-          if (slot.glbRig) {
-            slot.root.remove(slot.glbRig.group);
-            slot.glbRig.dispose();
-          }
+          const rig = await LS.loadGLBCharacter(source, { targetHeight: slot.defaultHeight, ghibliMatte: true });
+          if (slot.glbRig) { slot.root.remove(slot.glbRig.group); slot.glbRig.dispose(); }
           slot.glbRig = rig;
           slot.fileName = displayName || (slotKey + '.glb');
           slot.root.add(rig.group);
-          slotEl.classList.add('loaded');
-          statusEl.textContent = '✅ ' + slot.fileName;
-          activeKey = slotKey;
-          // Switch to Tester tab automatically
+          selectCharacter(slotKey);
           document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'tester'));
           document.querySelectorAll('.panel-body').forEach(p => p.classList.toggle('active', p.id === 'tab-tester'));
-          refreshInspectorUI();
           showToast('✨ Loaded ' + slot.fileName + ' for ' + slot.name + ' (' + rig.stats.triangleCount.toLocaleString() + ' tris)');
           return rig;
         } catch (err) {
           console.error(err);
-          statusEl.textContent = '❌ Invalid .glb file';
           showToast('Could not load .glb: ' + (err && err.message ? err.message : 'parse error'));
           return null;
         }
       }
 
-      // Expose clean hook for automated tests & quick console testing
-      window.__glbStudio = {
-        loadGLBIntoSlot,
-        getSlotStats(key) {
-          const s = slots[key || activeKey];
-          return s && s.glbRig ? s.glbRig.stats : null;
-        },
-        setActiveTab(tab) {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-          document.querySelectorAll('.panel-body').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tab));
-        }
-      };
+      window.__glbStudio = { loadGLBIntoSlot, selectCharacter, characters: CHARACTERS.map(c => c.key) };
 
-      // UI wiring
-      document.getElementById('btn-toggle-panel').onclick = () => {
-        document.getElementById('studio-panel').classList.toggle('collapsed');
-      };
+      document.getElementById('btn-toggle-panel').onclick = () => document.getElementById('studio-panel').classList.toggle('collapsed');
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
           document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -843,45 +618,25 @@
         };
       });
 
-      document.getElementById('file-laila').onchange = e => {
+      document.getElementById('file-active').onchange = e => {
         const f = e.target.files && e.target.files[0];
-        if (f) loadGLBIntoSlot('laila', f, f.name);
+        if (f) loadGLBIntoSlot(activeKey, f, f.name);
+        e.target.value = '';
       };
-      document.getElementById('file-salma').onchange = e => {
-        const f = e.target.files && e.target.files[0];
-        if (f) loadGLBIntoSlot('salma', f, f.name);
-      };
-
-      document.getElementById('ctrl-laila').onclick = () => { activeKey = 'laila'; refreshInspectorUI(); };
-      document.getElementById('ctrl-salma').onclick = () => { activeKey = 'salma'; refreshInspectorUI(); };
-
-      document.getElementById('shader-matte').onclick = () => {
-        const rig = slots[activeKey].glbRig;
-        if (rig) rig.setGhibliMatte(true);
-        refreshInspectorUI();
-      };
-      document.getElementById('shader-raw').onclick = () => {
-        const rig = slots[activeKey].glbRig;
-        if (rig) rig.setGhibliMatte(false);
-        refreshInspectorUI();
-      };
-
+      document.getElementById('shader-matte').onclick = () => { const r = slots[activeKey].glbRig; if (r) r.setGhibliMatte(true); refreshInspectorUI(); };
+      document.getElementById('shader-raw').onclick = () => { const r = slots[activeKey].glbRig; if (r) r.setGhibliMatte(false); refreshInspectorUI(); };
       document.getElementById('height-slider').oninput = e => {
-        const val = parseFloat(e.target.value);
-        document.getElementById('height-val').textContent = val.toFixed(2) + 'm';
-        const rig = slots[activeKey].glbRig;
-        if (rig) rig.setTargetHeight(val);
+        const v = parseFloat(e.target.value);
+        document.getElementById('height-val').textContent = v.toFixed(2) + 'm';
+        const r = slots[activeKey].glbRig; if (r) r.setTargetHeight(v);
       };
-
       document.querySelectorAll('[data-yaw]').forEach(btn => {
         btn.onclick = () => {
           document.querySelectorAll('[data-yaw]').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
-          const rig = slots[activeKey].glbRig;
-          if (rig) rig.setYawOffset(parseFloat(btn.dataset.yaw));
+          const r = slots[activeKey].glbRig; if (r) r.setYawOffset(parseFloat(btn.dataset.yaw));
         };
       });
-
       document.getElementById('btn-toggle-2dref').onclick = e => {
         show2DRef = !show2DRef;
         e.target.classList.toggle('active', show2DRef);
@@ -889,66 +644,52 @@
         refreshInspectorUI();
       };
 
-      // Global Drag-and-Drop for .glb files
+      function matchSlotFromFilename(fname) {
+        const n = String(fname || '').toLowerCase();
+        if (n.includes('laila')) return 'laila';
+        if (n.includes('salma')) return 'salma';
+        if (n.includes('mom') || n.includes('mama')) return 'mom';
+        if (n.includes('dad') || n.includes('baba')) return 'dad';
+        if (n.includes('gedo') || n.includes('mahmoud')) return 'gedo_mahmoud';
+        if (n.includes('nana') || n.includes('omaima')) return 'nana_omaima';
+        if (n.includes('bibo')) return 'bibo';
+        if (n.includes('nouzi')) return 'nouzi';
+        if (n.includes('mostafa')) return 'mostafa';
+        if (n.includes('mai')) return 'mai';
+        return activeKey;
+      }
+
       const dropOverlay = document.getElementById('drop-overlay');
       let dragDepth = 0;
-      window.addEventListener('dragenter', e => {
-        e.preventDefault();
-        dragDepth++;
-        dropOverlay.classList.add('active');
-      });
+      window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; dropOverlay.classList.add('active'); });
       window.addEventListener('dragover', e => e.preventDefault());
-      window.addEventListener('dragleave', e => {
-        e.preventDefault();
-        dragDepth = Math.max(0, dragDepth - 1);
-        if (dragDepth === 0) dropOverlay.classList.remove('active');
-      });
+      window.addEventListener('dragleave', e => { e.preventDefault(); dragDepth = Math.max(0, dragDepth - 1); if (dragDepth === 0) dropOverlay.classList.remove('active'); });
       window.addEventListener('drop', e => {
-        e.preventDefault();
-        dragDepth = 0;
-        dropOverlay.classList.remove('active');
+        e.preventDefault(); dragDepth = 0; dropOverlay.classList.remove('active');
         const files = e.dataTransfer && e.dataTransfer.files;
-        if (!files || !files.length) return;
+        if (!files) return;
         for (let i = 0; i < files.length; i++) {
-          const f = files[i];
-          if (!/\.(glb|gltf)$/i.test(f.name)) continue;
-          const lower = f.name.toLowerCase();
-          const targetSlot = lower.includes('salma') ? 'salma' : lower.includes('laila') ? 'laila' : activeKey;
-          loadGLBIntoSlot(targetSlot, f, f.name);
+          if (/\.(glb|gltf)$/i.test(files[i].name)) {
+            loadGLBIntoSlot(matchSlotFromFilename(files[i].name), files[i], files[i].name);
+          }
         }
       });
 
-      // Camera Orbit + Click-to-Walk + Keyboard Movement
-      let camYaw = 0.08;
-      let camPitch = 0.24;
-      let camDist = 4.55;
-      let dragging = false;
-      let dragMoved = 0;
-      let lastX = 0, lastY = 0;
-      const keys = {};
-      const raycaster = new THREE.Raycaster();
-      const pointerNDC = new THREE.Vector2();
+      let camYaw = 0.08, camPitch = 0.24, camDist = 4.45;
+      let dragging = false, dragMoved = 0, lastX = 0, lastY = 0;
+      const keys = {}, raycaster = new THREE.Raycaster(), pointerNDC = new THREE.Vector2();
 
-      canvas.addEventListener('pointerdown', e => {
-        dragging = true;
-        dragMoved = 0;
-        lastX = e.clientX;
-        lastY = e.clientY;
-      });
+      canvas.addEventListener('pointerdown', e => { dragging = true; dragMoved = 0; lastX = e.clientX; lastY = e.clientY; });
       window.addEventListener('pointermove', e => {
         if (!dragging) return;
-        const dx = e.clientX - lastX;
-        const dy = e.clientY - lastY;
+        const dx = e.clientX - lastX, dy = e.clientY - lastY;
         dragMoved += Math.abs(dx) + Math.abs(dy);
-        lastX = e.clientX;
-        lastY = e.clientY;
+        lastX = e.clientX; lastY = e.clientY;
         camYaw -= dx * 0.0065;
         camPitch = Math.max(0.06, Math.min(0.88, camPitch + dy * 0.005));
       });
       window.addEventListener('pointerup', e => {
-        if (!dragging) return;
-        dragging = false;
-        // Tap/click on floor to walk active character there!
+        if (!dragging) return; dragging = false;
         if (dragMoved < 6) {
           const rect = canvas.getBoundingClientRect();
           pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -957,63 +698,24 @@
           const hits = raycaster.intersectObject(floor);
           if (hits.length) {
             const p = hits[0].point;
-            slots[activeKey].walkTarget = new THREE.Vector3(
-              Math.max(-3.6, Math.min(3.4, p.x)),
-              0,
-              Math.max(-2.1, Math.min(2.6, p.z))
-            );
+            slots[activeKey].walkTarget = new THREE.Vector3(Math.max(-3.6, Math.min(3.4, p.x)), 0, Math.max(-2.1, Math.min(2.6, p.z)));
           }
         }
       });
-      canvas.addEventListener('wheel', e => {
-        e.preventDefault();
-        camDist = Math.max(2.1, Math.min(8.2, camDist + e.deltaY * 0.003));
-      }, { passive: false });
-
+      canvas.addEventListener('wheel', e => { e.preventDefault(); camDist = Math.max(2.1, Math.min(8.2, camDist + e.deltaY * 0.003)); }, { passive: false });
       window.addEventListener('keydown', e => { keys[e.code] = true; });
       window.addEventListener('keyup', e => { keys[e.code] = false; });
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
+      window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
 
       const clock = new THREE.Clock();
-      const camFocus = new THREE.Vector3(0.05, 0.78, 0.35);
-
-      function updateHD2DBillboard(slot, elapsed, speed) {
-        if (!slot.standee.mesh.visible) return;
-        // Billboard Y toward camera & pick 4-direction frame cleanly
-        const dx = camera.position.x - slot.root.position.x;
-        const dz = camera.position.z - slot.root.position.z;
-        const camAngle = Math.atan2(dx, dz);
-        slot.standee.mesh.rotation.y = camAngle - slot.root.rotation.y;
-
-        let rel = camAngle - slot.root.rotation.y;
-        while (rel > Math.PI) rel -= Math.PI * 2;
-        while (rel < -Math.PI) rel += Math.PI * 2;
-        let col = 0;
-        if (Math.abs(rel) < Math.PI * 0.25) col = 0;        // Front
-        else if (Math.abs(rel) > Math.PI * 0.75) col = 3;   // Back
-        else if (rel > 0) col = 1;                          // Right
-        else col = 2;                                       // Left
-        slot.standee.tex.offset.x = col * 0.25;
-
-        const baseY = slot.defaultHeight * 0.5;
-        if (!slot.glbRig && speed > 0.15) {
-          slot.standee.mesh.position.y = baseY + Math.abs(Math.sin(elapsed * 9.5)) * 0.06;
-        } else {
-          slot.standee.mesh.position.y = baseY + Math.sin(elapsed * 2.1) * 0.006;
-        }
-      }
+      const camFocus = new THREE.Vector3(0.15, 0.82, 0.35);
 
       function animate() {
         requestAnimationFrame(animate);
         const dt = Math.min(clock.getDelta(), 0.05);
         const elapsed = clock.elapsedTime;
-
         const active = slots[activeKey];
+
         let mx = 0, mz = 0;
         if (keys['KeyW'] || keys['ArrowUp']) mz -= 1;
         if (keys['KeyS'] || keys['ArrowDown']) mz += 1;
@@ -1021,86 +723,64 @@
         if (keys['KeyD'] || keys['ArrowRight']) mx += 1;
 
         let moveSpeed = 0;
-        const running = Boolean(keys['ShiftLeft'] || keys['ShiftRight']);
-        const baseSpd = running ? 3.2 : 1.9;
-
+        const baseSpd = (keys['ShiftLeft'] || keys['ShiftRight']) ? 3.2 : 1.9;
         if (mx !== 0 || mz !== 0) {
           active.walkTarget = null;
-          const len = Math.hypot(mx, mz);
-          mx /= len; mz /= len;
-          const sinY = Math.sin(camYaw);
-          const cosY = Math.cos(camYaw);
-          const wx = mx * cosY + mz * sinY;
-          const wz = -mx * sinY + mz * cosY;
+          const len = Math.hypot(mx, mz); mx /= len; mz /= len;
+          const sinY = Math.sin(camYaw), cosY = Math.cos(camYaw);
+          const wx = mx * cosY + mz * sinY, wz = -mx * sinY + mz * cosY;
           active.root.position.x = Math.max(-3.6, Math.min(3.4, active.root.position.x + wx * baseSpd * dt));
           active.root.position.z = Math.max(-2.1, Math.min(2.6, active.root.position.z + wz * baseSpd * dt));
-          const targetYaw = Math.atan2(wx, wz);
-          let diff = targetYaw - active.root.rotation.y;
-          while (diff > Math.PI) diff -= Math.PI * 2;
-          while (diff < -Math.PI) diff += Math.PI * 2;
-          active.root.rotation.y += diff * Math.min(1, dt * 10);
+          active.root.rotation.y = Math.atan2(wx, wz);
           moveSpeed = baseSpd;
         } else if (active.walkTarget) {
-          const dx = active.walkTarget.x - active.root.position.x;
-          const dz = active.walkTarget.z - active.root.position.z;
+          const dx = active.walkTarget.x - active.root.position.x, dz = active.walkTarget.z - active.root.position.z;
           const dist = Math.hypot(dx, dz);
           if (dist > 0.08) {
             const step = Math.min(dist, baseSpd * dt);
             active.root.position.x += (dx / dist) * step;
             active.root.position.z += (dz / dist) * step;
-            const targetYaw = Math.atan2(dx, dz);
-            let diff = targetYaw - active.root.rotation.y;
-            while (diff > Math.PI) diff -= Math.PI * 2;
-            while (diff < -Math.PI) diff += Math.PI * 2;
-            active.root.rotation.y += diff * Math.min(1, dt * 10);
+            active.root.rotation.y = Math.atan2(dx, dz);
             moveSpeed = baseSpd;
-          } else {
-            active.walkTarget = null;
-          }
+          } else active.walkTarget = null;
         }
 
-        if (keys['Space'] && active.grounded) {
-          active.velY = 4.6;
-          active.grounded = false;
-        }
+        if (keys['Space'] && active.grounded) { active.velY = 4.6; active.grounded = false; }
         if (!active.grounded) {
-          active.velY -= 12.5 * dt;
-          active.root.position.y += active.velY * dt;
-          if (active.root.position.y <= 0) {
-            active.root.position.y = 0;
-            active.velY = 0;
-            active.grounded = true;
-          }
+          active.velY -= 12.5 * dt; active.root.position.y += active.velY * dt;
+          if (active.root.position.y <= 0) { active.root.position.y = 0; active.velY = 0; active.grounded = true; }
         }
 
-        // Update both characters (GLB rigs + HD-2D reference standees)
-        ['laila', 'salma'].forEach(k => {
-          const s = slots[k];
-          const spd = k === activeKey ? moveSpeed : 0;
-          if (s.glbRig) {
-            if (!s.grounded) s.glbRig.playState('jump');
-            else if (spd > 2.6) s.glbRig.playState('run');
-            else if (spd > 0.15) s.glbRig.playState('walk');
-            else s.glbRig.playState('idle');
-            s.glbRig.update(dt, elapsed, spd);
-          }
-          updateHD2DBillboard(s, elapsed, spd);
-        });
+        if (active.glbRig) {
+          if (!active.grounded) active.glbRig.playState('jump');
+          else if (moveSpeed > 2.6) active.glbRig.playState('run');
+          else if (moveSpeed > 0.15) active.glbRig.playState('walk');
+          else active.glbRig.playState('idle');
+          active.glbRig.update(dt, elapsed, moveSpeed);
+        }
 
-        // Smooth camera tracking
-        const desiredFocus = new THREE.Vector3(
-          active.root.position.x * 0.45,
-          0.78,
-          active.root.position.z * 0.45
-        );
-        camFocus.lerp(desiredFocus, Math.min(1, dt * 4));
+        if (active.standee.mesh.visible) {
+          const dx = camera.position.x - active.root.position.x, dz = camera.position.z - active.root.position.z;
+          const camAngle = Math.atan2(dx, dz);
+          active.standee.mesh.rotation.y = camAngle - active.root.rotation.y;
+          let rel = camAngle - active.root.rotation.y;
+          while (rel > Math.PI) rel -= Math.PI * 2;
+          while (rel < -Math.PI) rel += Math.PI * 2;
+          let col = 0;
+          if (Math.abs(rel) < Math.PI * 0.25) col = 0;
+          else if (Math.abs(rel) > Math.PI * 0.75) col = 3;
+          else if (rel > 0) col = 2;
+          else col = 1;
+          active.standee.tex.offset.x = col * 0.25;
+        }
+
+        camFocus.lerp(new THREE.Vector3(active.root.position.x * 0.45, active.defaultHeight * 0.56, active.root.position.z * 0.45), Math.min(1, dt * 4));
         camera.position.set(
           camFocus.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
           camFocus.y + Math.sin(camPitch) * camDist,
           camFocus.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist
         );
         camera.lookAt(camFocus);
-
         renderer.render(scene, camera);
       }
 
