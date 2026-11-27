@@ -63,13 +63,35 @@
     font-weight: 700;
     font-size: 13px;
   }
+  #portrait-card {
+    position: fixed; top: 16px; right: 16px; z-index: 20;
+    background: rgba(255, 250, 240, 0.95);
+    border: 2.5px solid #c8954c;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(60, 38, 22, 0.18);
+    text-align: center;
+    display: none;
+    width: 146px;
+  }
+  #portrait-card img {
+    width: 126px; height: 126px; object-fit: cover;
+    border-radius: 12px; border: 1.5px solid #d4a86a; display: block; margin: 0 auto;
+  }
+  #portrait-card span {
+    display: block; margin-top: 6px; font-size: 12px; font-weight: 800; color: #5b341e;
+  }
 </style>
 </head>
 <body>
 <a id="back-link" href="./index.html">← Play Game</a>
 <div id="hud-top">
-  <h1>✨ Official 9-Character Family Lineup (Watercolor-Ghibli 3D)</h1>
-  <p>Drag to orbit 360° • Scroll to zoom • Tap any family member below for a close-up</p>
+  <h1>✨ Official 9-Character Family Lineup (Stylized Studio Ghibli 3D)</h1>
+  <p>Drag to orbit 360° • Scroll to zoom • Tap any family member below for a close-up + dialogue portrait</p>
+</div>
+<div id="portrait-card">
+  <img id="portrait-card-img" src="" alt="Character portrait" />
+  <span id="portrait-card-name"></span>
 </div>
 <div id="char-bar"></div>
 
@@ -184,18 +206,27 @@
   let desiredX = 0, desiredY = 0.95, desiredDist = 9.4;
 
   const bar = document.getElementById('char-bar');
+  const cardEl = document.getElementById('portrait-card');
+  const cardImg = document.getElementById('portrait-card-img');
+  const cardName = document.getElementById('portrait-card-name');
   function setFocus(focusId, instant) {
     Array.from(bar.children).forEach(b => b.classList.toggle('active', b.dataset.id === focusId));
     if (focusId === 'all') {
       desiredX = 0; desiredY = 0.95; desiredDist = 9.4;
       camYaw = 0; camPitch = 0.08;
+      if (cardEl) cardEl.style.display = 'none';
     } else {
       const hit = chars.find(c => c.id === focusId);
       if (hit) {
         desiredX = hit.x;
         desiredY = hit.scale * 1.18;
-        desiredDist = hit.scale * 2.25;
+        desiredDist = hit.scale * 2.55;
         camYaw = 0; camPitch = 0.04;
+        if (cardEl && LS.DIALOGUE_PORTRAIT_URLS && LS.DIALOGUE_PORTRAIT_URLS[hit.id]) {
+          cardImg.src = LS.DIALOGUE_PORTRAIT_URLS[hit.id];
+          cardName.textContent = hit.label + ' (Dialogue Portrait)';
+          cardEl.style.display = 'block';
+        }
       }
     }
     if (instant) {

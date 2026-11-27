@@ -541,11 +541,11 @@ window.LailaSalma = window.LailaSalma || {};
   function createGhibliSkinMat(colorHex, mapTex) {
     const col = new THREE.Color(colorHex !== undefined ? colorHex : 0xffffff);
     const mat = new THREE.MeshStandardMaterial({
-      color: col.clone().multiplyScalar(0.84),
+      color: col.clone().multiplyScalar(0.86),
       map: mapTex || null,
       emissive: mapTex ? new THREE.Color(0xffffff) : col.clone(),
       emissiveMap: mapTex || null,
-      emissiveIntensity: 0.17,
+      emissiveIntensity: 0.25,
       roughness: 0.86,
       metalness: 0.0
     });
@@ -570,10 +570,10 @@ window.LailaSalma = window.LailaSalma || {};
           'vec3 nW = normalize(vSkinWNorm);',
           'vec3 vDir = normalize(cameraPosition - vSkinWPos);',
           'float ndl = dot(nW, normalize(uSunDir));',
-          'float cel = smoothstep(-0.35, 0.25, ndl);',
-          'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.95, 0.86, 0.82), gl_FragColor.rgb * vec3(1.00, 0.98, 0.96), cel);',
+          'float cel = smoothstep(-0.55, 0.15, ndl);',
+          'gl_FragColor.rgb = mix(gl_FragColor.rgb * vec3(0.98, 0.92, 0.89), gl_FragColor.rgb * vec3(1.00, 0.99, 0.97), cel);',
           'float fres = pow(1.0 - max(0.0, dot(nW, vDir)), 3.6);',
-          'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.18;',
+          'gl_FragColor.rgb += uRimCol * fres * smoothstep(-0.2, 0.6, ndl) * uRimStr * 0.16;',
           '#include <dithering_fragment>'
         ].join('\n'));
     };

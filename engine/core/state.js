@@ -815,6 +815,13 @@ window.LailaSalma = window.LailaSalma || {};
     const need = LS.xpForLevel(LS.state.level);
     const leaderTxt = LS.state.activeLeader === 'salma' ? '🧒 Salma Leading' : '👧 Laila Leading';
     if (lvEl) lvEl.textContent = 'Lv. ' + LS.state.level + ' • ' + leaderTxt;
+    const avatarImg = document.getElementById('hud-avatar-img');
+    if (avatarImg) {
+      const targetSrc = LS.state.activeLeader === 'salma'
+        ? 'assets/ghibli_showcase/portraits/salma_card.jpg'
+        : 'assets/ghibli_showcase/portraits/laila_card.jpg';
+      if (avatarImg.getAttribute('src') !== targetSrc) avatarImg.setAttribute('src', targetSrc);
+    }
     if (swapBtn) {
       swapBtn.textContent = LS.state.activeLeader === 'salma' ? '🧒⇄👧' : '👧⇄🧒';
       swapBtn.title = LS.state.activeLeader === 'salma'
