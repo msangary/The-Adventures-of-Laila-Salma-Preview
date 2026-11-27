@@ -3218,7 +3218,11 @@ window.LailaSalma = window.LailaSalma || {};
 
   LS.createAnimeCharacter = function (cfg) {
     if (cfg && cfg.portraitStyle && PORTRAIT_PROFILES[cfg.portraitStyle]) {
-      return buildUnifiedWatercolorCharacter(cfg);
+      const charObj = buildUnifiedWatercolorCharacter(cfg);
+      if (LS.attachGLBIfConfigured) {
+        LS.attachGLBIfConfigured(charObj, cfg.portraitStyle);
+      }
+      return charObj;
     }
     if (LS.isHD) return buildRealisticHDCharacter(cfg);
 
@@ -4050,6 +4054,10 @@ window.LailaSalma = window.LailaSalma || {};
   }
 
   LS.applyArticulatedPose = function (charObj, swing, mode, elapsed) {
+    if (charObj && charObj.glbRig) {
+      charObj.glbRig.playState(mode || 'idle');
+      return;
+    }
     if (!charObj || !charObj.leftKnee) return;
     if (mode === 'walk' || mode === 'run') {
       const kBoost = mode === 'run' ? 0.95 : 0.72;
@@ -4185,6 +4193,7 @@ window.LailaSalma = window.LailaSalma || {};
       }
     });
 
+    if (LS.updateGLBCharacters) LS.updateGLBCharacters(dt, elapsed);
     if (LS.updateDynamicBubbleCycling) LS.updateDynamicBubbleCycling(dt);
 
     if (LS.chars.mochiHeart) {
