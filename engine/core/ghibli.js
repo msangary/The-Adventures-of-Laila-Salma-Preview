@@ -447,15 +447,35 @@ window.LailaSalma = window.LailaSalma || {};
     wovenRug: 'assets/ghibli_showcase/woven_rug_ghibli.jpg',
     pottedLemon: 'assets/ghibli_showcase/potted_lemon.png',
     pottedFlowers: 'assets/ghibli_showcase/potted_flowers.png',
-    lailaFace: 'assets/ghibli_showcase/laila_face.jpg',
-    lailaFaceBlink: 'assets/ghibli_showcase/laila_face_blink.jpg',
-    salmaFace: 'assets/ghibli_showcase/salma_face.jpg',
-    salmaFaceBlink: 'assets/ghibli_showcase/salma_face_blink.jpg'
+    lailaFace: 'assets/ghibli_showcase/portraits/laila_face.jpg',
+    lailaFaceBlink: 'assets/ghibli_showcase/portraits/laila_face_blink.jpg',
+    salmaFace: 'assets/ghibli_showcase/portraits/salma_face.jpg',
+    salmaFaceBlink: 'assets/ghibli_showcase/portraits/salma_face_blink.jpg',
+    momFace: 'assets/ghibli_showcase/portraits/mom_face.jpg',
+    momFaceBlink: 'assets/ghibli_showcase/portraits/mom_face_blink.jpg',
+    dadFace: 'assets/ghibli_showcase/portraits/dad_face.jpg',
+    dadFaceBlink: 'assets/ghibli_showcase/portraits/dad_face_blink.jpg',
+    gedoMahmoudFace: 'assets/ghibli_showcase/portraits/gedo_mahmoud_face.jpg',
+    gedoMahmoudFaceBlink: 'assets/ghibli_showcase/portraits/gedo_mahmoud_face_blink.jpg',
+    nanaOmaimaFace: 'assets/ghibli_showcase/portraits/nana_omaima_face.jpg',
+    nanaOmaimaFaceBlink: 'assets/ghibli_showcase/portraits/nana_omaima_face_blink.jpg',
+    biboFace: 'assets/ghibli_showcase/portraits/bibo_face.jpg',
+    biboFaceBlink: 'assets/ghibli_showcase/portraits/bibo_face_blink.jpg',
+    nouziFace: 'assets/ghibli_showcase/portraits/nouzi_face.jpg',
+    nouziFaceBlink: 'assets/ghibli_showcase/portraits/nouzi_face_blink.jpg',
+    maiFace: 'assets/ghibli_showcase/portraits/mai_face.jpg',
+    maiFaceBlink: 'assets/ghibli_showcase/portraits/mai_face_blink.jpg'
   };
   const CLAMP_KEYS = {
     sakuraBough: true, leafBough: true, wovenRug: true,
     pottedLemon: true, pottedFlowers: true,
-    lailaFace: true, lailaFaceBlink: true, salmaFace: true, salmaFaceBlink: true
+    lailaFace: true, lailaFaceBlink: true, salmaFace: true, salmaFaceBlink: true,
+    momFace: true, momFaceBlink: true, dadFace: true, dadFaceBlink: true,
+    gedoMahmoudFace: true, gedoMahmoudFaceBlink: true,
+    nanaOmaimaFace: true, nanaOmaimaFaceBlink: true,
+    biboFace: true, biboFaceBlink: true,
+    nouziFace: true, nouziFaceBlink: true,
+    maiFace: true, maiFaceBlink: true
   };
   const paintedTexCache = {};
   let sharedTexLoader = null;

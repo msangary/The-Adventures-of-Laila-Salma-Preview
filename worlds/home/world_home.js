@@ -2391,7 +2391,14 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(3.18, 0.14, -6.08),
         baseRot: 0.48,
         seated: true,
-        char: { scale: 0.90, skinColor: 0xe6b595, hairColor: 0x2c1e18, topColor: 0xf4a261, bottomColor: 0x3d5a80, longHair: true }
+        char: {
+          scale: 0.93,
+          portraitStyle: 'mom',
+          topColor: 0xeba0ab,
+          bottomColor: 0x3d5a80,
+          shoeColor: 0x8b4c56,
+          longHair: true
+        }
       },
       {
         name: 'Dad ☕',
@@ -2404,7 +2411,14 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(6.02, 0.12, -6.08),
         baseRot: -0.48,
         seated: true,
-        char: { scale: 0.94, skinColor: 0xd9a480, hairColor: 0x241a16, topColor: 0x457b9d, bottomColor: 0x2b3a4a, pants: true, faceOpts: { glasses: true } }
+        char: {
+          scale: 1.00,
+          portraitStyle: 'dad',
+          topColor: 0xf8f6f2,
+          bottomColor: 0x2b3a4a,
+          shoeColor: 0x4b3426,
+          pants: true
+        }
       }
     ]);
 

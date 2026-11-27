@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="icon" href="data:," />
+<title>Main Character Lineup — The Adventures of Laila & Salma (Preview)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5ecdc;
+    color: #2f2018;
+    overflow: hidden;
+    user-select: none;
+  }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #hud-top {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 250, 240, 0.92);
+    border: 2px solid #d4a86a;
+    border-radius: 18px;
+    padding: 8px 18px;
+    box-shadow: 0 6px 20px rgba(60, 38, 22, 0.14);
+    text-align: center;
+    z-index: 20;
+    backdrop-filter: blur(6px);
+  }
+  #hud-top h1 { font-size: 16px; color: #5b341e; letter-spacing: 0.2px; }
+  #hud-top p { font-size: 12px; color: #7b5a42; margin-top: 2px; }
+  #char-bar {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+    max-width: 96vw;
+    background: rgba(255, 250, 240, 0.92);
+    border: 2px solid #d4a86a;
+    border-radius: 18px;
+    padding: 8px 12px;
+    box-shadow: 0 6px 22px rgba(60, 38, 22, 0.16);
+    z-index: 20;
+  }
+  .cbtn {
+    border: 1.5px solid #c99d66;
+    background: #fffaf0;
+    color: #4d2e1b;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .cbtn:hover { background: #fbe9cc; transform: translateY(-1px); }
+  .cbtn.active { background: #d97a4a; color: #fff; border-color: #a95228; }
+  #back-link {
+    position: fixed; top: 16px; left: 16px; z-index: 20;
+    background: rgba(255, 250, 240, 0.92);
+    border: 2px solid #d4a86a;
+    color: #5b341e;
+    text-decoration: none;
+    padding: 7px 14px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+<a id="back-link" href="./index.html">← Play Game</a>
+<div id="hud-top">
+  <h1>✨ Official 9-Character Family Lineup (Watercolor-Ghibli 3D)</h1>
+  <p>Drag to orbit 360° • Scroll to zoom • Tap any family member below for a close-up</p>
+</div>
+<div id="char-bar"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="engine/core/ghibli.js"></script>
+<script src="engine/core/textures.js"></script>
+<script src="engine/core/characters.js"></script>
+<script>
+(function () {
+  const LS = window.LailaSalma;
+  LS.isHD = true;
+
+  // Provide makeToonMat helper matching engine.js
+  if (!LS.makeToonMat) {
+    LS.makeToonMat = function (color, opts) {
+      return LS.ghibli.createGhibliMat(color, opts);
+    };
+  }
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf6eedf);
+
+  const camera = new THREE.PerspectiveCamera(34, window.innerWidth / window.innerHeight, 0.1, 100);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  // Warm balanced watercolor studio lighting (preserves rich pastel saturation on dresses & faces!)
+  const hemi = new THREE.HemisphereLight(0xfffaf0, 0xcab498, 0.68);
+  scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xfff5e4, 0.76);
+  sun.position.set(6, 12, 9);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.camera.left = -8; sun.shadow.camera.right = 8;
+  sun.shadow.camera.top = 6; sun.shadow.camera.bottom = -4;
+  scene.add(sun);
+
+  // Hand-painted honey-oak stage floor & calm warm linen backdrop
+  const floorTex = LS.ghibli.getPaintedTex('woodFloor', 6, 3);
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(22, 12),
+    new THREE.MeshStandardMaterial({ map: floorTex, color: 0xe6d4bc, roughness: 0.90 })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+
+  const wallTex = LS.ghibli.getPaintedTex('plaster', 5, 2);
+  const wall = new THREE.Mesh(
+    new THREE.PlaneGeometry(22, 7),
+    new THREE.MeshStandardMaterial({ map: wallTex, color: 0xeadfcc, roughness: 0.95 })
+  );
+  wall.position.set(0, 3.5, -2.4);
+  wall.receiveShadow = true;
+  scene.add(wall);
+
+  // Subtle height reference stripes on backdrop (0.5m, 1.0m, 1.5m)
+  [0.5, 1.0, 1.5].forEach(h => {
+    const line = new THREE.Mesh(
+      new THREE.BoxGeometry(16, 0.008, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0xd9c2a3, transparent: true, opacity: 0.55 })
+    );
+    line.position.set(0, h, -2.35);
+    scene.add(line);
+  });
+
+  const LINEUP = [
+    { id: 'laila', label: 'Laila', x: -3.6 },
+    { id: 'salma', label: 'Salma', x: -2.75 },
+    { id: 'mom', label: 'Mom', x: -1.85 },
+    { id: 'dad', label: 'Dad', x: -0.90 },
+    { id: 'gedo_mahmoud', label: 'Gedo Mahmoud', x: 0.05 },
+    { id: 'nana_omaima', label: 'Nana Omaima', x: 1.00 },
+    { id: 'bibo', label: 'Bibo', x: 1.85 },
+    { id: 'nouzi', label: 'Nouzi', x: 2.65 },
+    { id: 'mai', label: 'Mai', x: 3.55 }
+  ];
+
+  const chars = [];
+  function makeLabel(text) {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = 'rgba(255, 248, 232, 0.92)';
+    ctx.strokeStyle = '#9c7144';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.roundRect(8, 8, 240, 48, 12); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#3b2416';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(text, 128, 42);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true }));
+    sp.scale.set(0.72, 0.18, 1);
+    return sp;
+  }
+
+  LINEUP.forEach(item => {
+    const m = LS.createAnimeCharacter({ portraitStyle: item.id });
+    m.root.position.set(item.x, 0, 0);
+    scene.add(m.root);
+    const lbl = makeLabel(item.label);
+    lbl.position.set(item.x, 0.14, 0.56);
+    scene.add(lbl);
+    chars.push({ id: item.id, label: item.label, x: item.x, model: m, scale: LS.PORTRAIT_PROFILES[item.id].scale });
+  });
+
+  // Camera state & smooth focus controls
+  let targetX = 0, targetY = 0.95, camDist = 9.4, camYaw = 0, camPitch = 0.10;
+  let desiredX = 0, desiredY = 0.95, desiredDist = 9.4;
+
+  const bar = document.getElementById('char-bar');
+  function setFocus(focusId, instant) {
+    Array.from(bar.children).forEach(b => b.classList.toggle('active', b.dataset.id === focusId));
+    if (focusId === 'all') {
+      desiredX = 0; desiredY = 0.95; desiredDist = 9.4;
+      camYaw = 0; camPitch = 0.08;
+    } else {
+      const hit = chars.find(c => c.id === focusId);
+      if (hit) {
+        desiredX = hit.x;
+        desiredY = hit.scale * 1.18;
+        desiredDist = hit.scale * 2.25;
+        camYaw = 0; camPitch = 0.04;
+      }
+    }
+    if (instant) {
+      targetX = desiredX; targetY = desiredY; camDist = desiredDist;
+    }
+  }
+  window.setFocus = setFocus;
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'cbtn active'; allBtn.dataset.id = 'all'; allBtn.textContent = 'All 9 Lineup';
+  allBtn.onclick = () => setFocus('all');
+  bar.appendChild(allBtn);
+
+  LINEUP.forEach(item => {
+    const b = document.createElement('button');
+    b.className = 'cbtn'; b.dataset.id = item.id; b.textContent = item.label;
+    b.onclick = () => setFocus(item.id);
+    bar.appendChild(b);
+  });
+
+  // Orbit drag + zoom
+  let dragging = false, lx = 0, ly = 0;
+  renderer.domElement.addEventListener('pointerdown', e => { dragging = true; lx = e.clientX; ly = e.clientY; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    camYaw -= (e.clientX - lx) * 0.008;
+    camPitch = Math.max(-0.2, Math.min(0.65, camPitch + (e.clientY - ly) * 0.006));
+    lx = e.clientX; ly = e.clientY;
+  });
+  renderer.domElement.addEventListener('wheel', e => {
+    desiredDist = Math.max(1.2, Math.min(13.0, desiredDist + e.deltaY * 0.005));
+  }, { passive: true });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  const clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const elapsed = clock.elapsedTime;
+    LS.ghibli.update(dt, elapsed);
+
+    targetX += (desiredX - targetX) * Math.min(1, dt * 7);
+    targetY += (desiredY - targetY) * Math.min(1, dt * 7);
+    camDist += (desiredDist - camDist) * Math.min(1, dt * 7);
+
+    camera.position.set(
+      targetX + Math.sin(camYaw) * Math.cos(camPitch) * camDist,
+      targetY + Math.sin(camPitch) * camDist,
+      Math.cos(camYaw) * Math.cos(camPitch) * camDist
+    );
+    camera.lookAt(targetX, targetY, 0);
+
+    chars.forEach((c, idx) => {
+      const m = c.model;
+      m.bodyPivot.scale.y = 1.0 + Math.sin(elapsed * 2.0 + idx) * 0.006;
+      if (m.swayHair) {
+        m.swayHair.forEach((sg, si) => {
+          sg.rotation.z = Math.sin(elapsed * 1.8 + idx + si * 1.1) * 0.03;
+        });
+      }
+      // Natural blinking
+      if (m.faceMat && m.openFaceTex && m.blinkFaceTex) {
+        m.blinkTimer -= dt;
+        if (m.blinkTimer <= 0) {
+          m.isBlinking = !m.isBlinking;
+          const tex = m.isBlinking ? m.blinkFaceTex : m.openFaceTex;
+          m.faceMat.map = tex;
+          if (m.faceMat.emissiveMap) m.faceMat.emissiveMap = tex;
+          m.faceMat.needsUpdate = true;
+          m.blinkTimer = m.isBlinking ? 0.13 : (2.8 + (idx % 4) * 0.65);
+        }
+      }
+    });
+
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+</script>
+</body>
+</html>

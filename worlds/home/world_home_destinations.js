@@ -1626,15 +1626,8 @@ window.LailaSalma = window.LailaSalma || {};
     });
 
     const nouzi = LS.createAnimeCharacter({
-      scale: 0.74,
-      slim: true,
-      skinColor: 0xd9a480,
-      hairColor: 0x221713,
-      topColor: 0xe63982,
-      bottomColor: 0xe63982,
-      shoeColor: 0xfff5f8,
-      pigtails: true,
-      pants: true
+      scale: 0.73,
+      portraitStyle: 'nouzi'
     });
     nouzi.root.position.set(-6.4, 0.08, 2.2);
     worldGroup.add(nouzi.root);
@@ -1673,13 +1666,8 @@ window.LailaSalma = window.LailaSalma || {};
     });
 
     const bibo = LS.createAnimeCharacter({
-      scale: 0.66,
-      skinColor: 0xcf9772,
-      hairColor: 0x1e1613,
-      topColor: 0x3b82f6,
-      bottomColor: 0x1e3a5f,
-      shoeColor: 0xfacc15,
-      pants: true
+      scale: 0.59,
+      portraitStyle: 'bibo'
     });
     bibo.root.position.set(6.4, 0.03, 2.2);
     if (LS.applyArticulatedPose) LS.applyArticulatedPose(bibo, 0, 'floor_sit', 0);
@@ -1730,7 +1718,7 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(-5.6, 0, -5.8),
         baseRot: 0,
         waveOnNear: true,
-        char: { scale: 0.92, skinColor: 0xdca886, hairColor: 0x261a14, topColor: 0xe07a5f, bottomColor: 0x3d5a80, longHair: true }
+        char: { scale: 0.92, portraitStyle: 'mai' }
       },
       {
         name: 'Mostafa (Dr.) 🩺🦴',
@@ -2355,7 +2343,7 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(gmX, 0.02, gmZ),
         baseRot: chairPos.rotY,
         seated: true,
-        char: { scale: 0.96, skinColor: 0xd9a480, hairColor: 0xd0d4d8, topColor: 0x3b5998, bottomColor: 0x2b3a4a, pants: true, faceOpts: { glasses: true, mustache: true, elder: true } }
+        char: { scale: 0.98, portraitStyle: 'gedo_mahmoud' }
       },
       {
         name: 'Nana Omaima 🍲💛',
@@ -2363,7 +2351,7 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(4.2, 0, -4.1),
         baseRot: 0,
         waveOnNear: true,
-        char: { scale: 0.90, skinColor: 0xe6b898, hairColor: 0xcfd4da, topColor: 0x2a9d8f, bottomColor: 0x4a5568, hairBun: true, faceOpts: { elder: true } }
+        char: { scale: 0.90, portraitStyle: 'nana_omaima' }
       }
     ]);
 

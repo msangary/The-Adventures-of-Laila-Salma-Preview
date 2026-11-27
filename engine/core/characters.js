@@ -12,8 +12,8 @@ window.LailaSalma = window.LailaSalma || {};
 
   LS.OUTFITS = [
     // Tokyo — Laila outfits
-    { id: 'laila_school', who: 'laila', shop: 'tokyo', name: 'Sakura Sailor Uniform', desc: 'Classic navy & white uniform with red randoseru', cost: 0, swatch: '#2c4a7c',
-      style: { topColor: 0xffffff, bottomColor: 0x2c4a7c, shoeColor: 0xd94848, backpackColor: 0xc92c3b, hatType: 'none' } },
+    { id: 'laila_school', who: 'laila', shop: 'tokyo', name: 'Sunny Yellow Ruffled Dress', desc: 'Butter-yellow ruffled summer sundress & white bow headband', cost: 0, swatch: '#f8dc74',
+      style: { topColor: 0xf8dc74, bottomColor: 0xf4d25c, shoeColor: 0xd96055, backpackColor: 0xd96055, hatType: 'none' } },
     { id: 'laila_sakura', who: 'laila', shop: 'tokyo', name: 'Sakura Pink Dress & Beret', desc: 'Blossom-pink dress with a matching artist beret', cost: 80, swatch: '#ff8fab',
       style: { topColor: 0xffc2d1, bottomColor: 0xfb6f92, shoeColor: 0xffffff, backpackColor: 0xffe5ec, hatType: 'beret', hatColor: 0xfb6f92 } },
     { id: 'laila_hoodie', who: 'laila', shop: 'tokyo', name: 'Tokyo Mint Streetwear', desc: 'Mint hoodie, denim skirt & sporty cap', cost: 110, swatch: '#52b788',
@@ -28,8 +28,8 @@ window.LailaSalma = window.LailaSalma || {};
       style: { topColor: 0x2a9d8f, bottomColor: 0x264653, shoeColor: 0xe9c46a, backpackColor: 0xf4a261, hatType: 'foxmask', hatColor: 0xffffff } },
 
     // Tokyo — Salma outfits
-    { id: 'salma_kinder', who: 'salma', shop: 'tokyo', name: 'Sunny Sunnyside Set', desc: 'Sunny lemon top, rose skirt & sparkly pink headband', cost: 0, swatch: '#df586b',
-      style: { topColor: 0xfff3b0, bottomColor: 0xdf586b, shoeColor: 0xc86d24, backpackColor: 0xd97b38, hatType: 'none', hatColor: 0xfacc15 } },
+    { id: 'salma_kinder', who: 'salma', shop: 'tokyo', name: 'Sunnyside Tee & Coral Skirt', desc: 'Crisp white short-sleeve tee, coral skirt & terracotta headband', cost: 0, swatch: '#d96b5a',
+      style: { topColor: 0xf9f8f5, bottomColor: 0xd96b5a, shoeColor: 0xc87238, backpackColor: 0xd97b38, hatType: 'none', hatColor: 0xfacc15 } },
     { id: 'salma_strawberry', who: 'salma', shop: 'tokyo', name: 'Strawberry Picnic Outfit', desc: 'Berry-red dress with a white sun hat', cost: 75, swatch: '#ef476f',
       style: { topColor: 0xffccd5, bottomColor: 0xef476f, shoeColor: 0xffffff, backpackColor: 0xff758f, hatType: 'kinder', hatColor: 0xffffff } },
     { id: 'salma_bunny', who: 'salma', shop: 'tokyo', name: 'Sky-Blue Bunny Hoodie', desc: 'Pastel sky outfit with cute bunny ears', cost: 100, swatch: '#4cc9f0',
@@ -1828,9 +1828,1218 @@ window.LailaSalma = window.LailaSalma || {};
     };
   }
 
+  // Dedicated Next-Gen Photo-Matched Parent Builder (Mom & Dad from custom watercolor portraits!)
+  function buildNextGenPhotoParent(cfg) {
+    const isMom = cfg.portraitStyle === 'mom';
+    const geos = getHDHumanGeos();
+    const root = new THREE.Group();
+    const s = cfg.scale || (isMom ? 0.90 : 0.94);
+    const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
+    const fabTex = LS.createFabricTexture ? LS.createFabricTexture() : null;
+
+    // Exact skin hex matched seamlessly to extracted feathered dad_face.jpg / mom_face.jpg
+    const skinHex = isMom ? 0xf0ceae : 0xeeccad;
+    const skinCol = new THREE.Color(skinHex);
+    const skinMat = (LS.ghibli && LS.ghibli.createGhibliSkinMat)
+      ? LS.ghibli.createGhibliSkinMat(skinHex, null)
+      : LS.makeToonMat(skinHex);
+
+    // Rich glossy Studio Ghibli brushed hair tailored to each parent's portrait
+    const hairTex = isMom
+      ? createPaintedSisterHairTex('#19181a', '#2e2c32', '#4c4952')
+      : createPaintedSisterHairTex('#201f22', '#353439', '#5a5960');
+    const hairMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: hairTex,
+      roughness: 0.44,
+      metalness: 0.02,
+      side: THREE.DoubleSide
+    });
+
+    const topColor = cfg.topColor !== undefined ? cfg.topColor : (isMom ? 0xeba0ab : 0xf8f6f2);
+    const bottomColor = cfg.bottomColor !== undefined ? cfg.bottomColor : (isMom ? 0x3d5a80 : 0x2b3a4a);
+    const shoeColor = cfg.shoeColor !== undefined ? cfg.shoeColor : (isMom ? 0x8b4c56 : 0x4b3426);
+
+    const topMat = LS.makeToonMat(topColor, { map: fabTex || undefined });
+    const collarMat = LS.makeToonMat(isMom ? 0xf2aeb8 : 0xffffff);
+    const bottomMat = LS.makeToonMat(bottomColor, {
+      map: cfg.pants ? (fabTex || undefined) : getNeutralPleatTex()
+    });
+    const shoeMat = LS.makeToonMat(shoeColor);
+    const soleMat = LS.makeToonMat(0xf4f1ea);
+    const bpMat = LS.makeToonMat(0x555555);
+
+    const bodyPivot = new THREE.Group();
+    root.add(bodyPivot);
+    const hipY = 0.835;
+
+    // 1. Articulated Legs (supports full seated armchair pose cleanly!)
+    function makeParentLeg(sideX) {
+      const leg = new THREE.Group();
+      leg.position.set(sideX, hipY, 0);
+      const thighMat = cfg.pants ? bottomMat : skinMat;
+      const thigh = new THREE.Mesh(cfg.pants ? geos.pantThigh : geos.thigh, thighMat);
+      thigh.castShadow = true; thigh.receiveShadow = true;
+      leg.add(thigh);
+
+      const knee = new THREE.Group();
+      knee.position.set(0, -0.375, 0);
+      knee.add(new THREE.Mesh(new THREE.SphereGeometry(cfg.pants ? 0.050 : 0.046, 12, 10), thighMat));
+      const calf = new THREE.Mesh(cfg.pants ? geos.pantCalf : geos.calf, thighMat);
+      calf.castShadow = true; calf.receiveShadow = true;
+      knee.add(calf);
+
+      if (!cfg.pants) {
+        const sockMat = LS.makeToonMat(0xfaf8f5);
+        knee.add(new THREE.Mesh(geos.sock, sockMat));
+      } else {
+        const hem = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.007, 8, 16), bottomMat);
+        hem.rotation.x = Math.PI / 2; hem.position.y = -0.352;
+        knee.add(hem);
+      }
+
+      const shoeG = new THREE.Group();
+      shoeG.position.set(0, -0.388, 0.025);
+      const sole = new THREE.Mesh(new THREE.CylinderGeometry(0.050, 0.053, 0.024, 14), soleMat);
+      sole.scale.set(0.92, 1.0, 1.92); sole.position.set(0, -0.046, 0.016); sole.castShadow = true;
+      shoeG.add(sole);
+      const upper = new THREE.Mesh(new THREE.SphereGeometry(0.052, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), shoeMat);
+      upper.scale.set(0.90, 1.05, 1.85); upper.position.set(0, -0.036, 0.015); upper.castShadow = true;
+      addOut(upper, 0.032);
+      shoeG.add(upper);
+      knee.add(shoeG);
+      leg.add(knee);
+      return { leg, knee };
+    }
+    const lLeg = makeParentLeg(-0.088);
+    const rLeg = makeParentLeg(0.088);
+    bodyPivot.add(lLeg.leg, rLeg.leg);
+
+    // 2. Tailored Collared Button-Up Shirt / Blouse + Open V-Neckline + Medallion Necklace (Mom) / Placket
+    const torso = new THREE.Mesh(geos.torso, topMat);
+    torso.position.y = 0.805;
+    if (!isMom) torso.scale.set(1.06, 1.0, 1.02);
+    torso.castShadow = true; torso.receiveShadow = true;
+    addOut(torso, 0.024);
+    bodyPivot.add(torso);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.060, 0.155, 14), skinMat);
+    neck.position.y = 1.415; neck.castShadow = true;
+    bodyPivot.add(neck);
+
+    // Open V-neck skin triangle peeking cleanly between the folded shirt collar lapels!
+    const vSkin = new THREE.Mesh(new THREE.ConeGeometry(0.048, 0.145, 10), skinMat);
+    vSkin.rotation.x = Math.PI;
+    vSkin.scale.set(1.0, 1.0, 0.36);
+    vSkin.position.set(0, 1.318, 0.098);
+    bodyPivot.add(vSkin);
+
+    // Folded Back & Side Button-Up Collar Band + Structured Left & Right Collar Lapels
+    const collarBack = new THREE.Mesh(new THREE.TorusGeometry(0.066, 0.016, 8, 18, Math.PI * 1.4), collarMat);
+    collarBack.rotation.set(Math.PI / 2 + 0.14, 0, Math.PI * 0.8);
+    collarBack.position.set(0, 1.375, 0.002);
+    bodyPivot.add(collarBack);
+    [-1, 1].forEach(side => {
+      const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.088, 0.018), collarMat);
+      lapel.position.set(side * 0.056, 1.338, 0.092);
+      lapel.rotation.set(-0.14, side * -0.34, side * 0.36);
+      addOut(lapel, 0.028);
+      bodyPivot.add(lapel);
+    });
+
+    // Subtle Center Shirt Placket + Pearl Buttons (both Dad's crisp white shirt & Mom's blush-pink blouse!)
+    const placket = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.36, 0.010), collarMat);
+    placket.position.set(0, 1.075, 0.112);
+    bodyPivot.add(placket);
+    const btnMat = LS.makeToonMat(isMom ? 0xffe6ec : 0xe5dfd5);
+    [1.22, 1.12, 1.02].forEach(by => {
+      const btn = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 8, 6), btnMat);
+      btn.scale.set(1.0, 1.0, 0.45);
+      btn.position.set(0, by, 0.119);
+      bodyPivot.add(btn);
+    });
+
+    if (isMom) {
+      // MOM'S SIGNATURE SILVER CHAIN & ROUND FILIGREE MEDALLION NECKLACE (from 1795782475108.jpg!)
+      const silverMat = new THREE.MeshStandardMaterial({ color: 0xd8dfe8, roughness: 0.26, metalness: 0.78 });
+      const silverDark = new THREE.MeshStandardMaterial({ color: 0x8d97a4, roughness: 0.36, metalness: 0.65 });
+      const chainCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.044, 1.385, 0.052),
+        new THREE.Vector3(-0.032, 1.315, 0.112),
+        new THREE.Vector3(-0.008, 1.242, 0.124),
+        new THREE.Vector3(0.016, 1.315, 0.112),
+        new THREE.Vector3(0.044, 1.385, 0.052)
+      ]);
+      const chain = new THREE.Mesh(new THREE.TubeGeometry(chainCurve, 18, 0.0038, 6, false), silverMat);
+      bodyPivot.add(chain);
+
+      const medG = new THREE.Group();
+      medG.position.set(-0.008, 1.220, 0.128);
+      medG.rotation.x = -0.14;
+      const medOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.007, 16), silverMat);
+      medOuter.rotation.x = Math.PI / 2;
+      addOut(medOuter, 0.05);
+      medG.add(medOuter);
+      const medInner = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.009, 14), silverDark);
+      medInner.rotation.x = Math.PI / 2;
+      medG.add(medInner);
+      const medCore = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 6), silverMat);
+      medCore.position.z = 0.004;
+      medG.add(medCore);
+      bodyPivot.add(medG);
+
+      // Mom's tailored 3D radial-pleated navy/denim skirt + cream sash
+      if (!buildRealisticHDCharacter._npcSkirtGeo) {
+        buildRealisticHDCharacter._npcSkirtGeo = createPleatedSkirtMeshGeo([
+          new THREE.Vector2(0.245, 0.45),
+          new THREE.Vector2(0.260, 0.47),
+          new THREE.Vector2(0.228, 0.59),
+          new THREE.Vector2(0.175, 0.76),
+          new THREE.Vector2(0.142, 0.89)
+        ], 36, 14, 0.034);
+      }
+      const skirt = new THREE.Mesh(buildRealisticHDCharacter._npcSkirtGeo, bottomMat);
+      skirt.scale.set(1.0, 1.0, 0.84); skirt.castShadow = true; skirt.receiveShadow = true;
+      addOut(skirt, 0.022);
+      bodyPivot.add(skirt);
+      const waistBand = new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.017, 8, 22), LS.makeToonMat(0xfff4e0));
+      waistBand.rotation.x = Math.PI / 2; waistBand.scale.set(1.0, 0.84, 1.0); waistBand.position.y = 0.888;
+      bodyPivot.add(waistBand);
+    } else {
+      // Dad's tailored trousers pelvis + dark leather belt & brass buckle
+      const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.158, 18, 12), bottomMat);
+      pelvis.scale.set(1.04, 0.72, 0.72); pelvis.position.y = 0.815; pelvis.castShadow = true;
+      addOut(pelvis, 0.024);
+      bodyPivot.add(pelvis);
+      const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.150, 0.153, 0.036, 20), LS.makeToonMat(0x3a261a));
+      belt.scale.set(1.03, 1.0, 0.72); belt.position.y = 0.885;
+      bodyPivot.add(belt);
+      const buckle = new THREE.Mesh(
+        new THREE.BoxGeometry(0.044, 0.040, 0.016),
+        new THREE.MeshStandardMaterial({ color: 0xdcb45c, roughness: 0.30, metalness: 0.75 })
+      );
+      buckle.position.set(0, 0.885, 0.110);
+      bodyPivot.add(buckle);
+    }
+
+    // 3. Articulated Shirt-Sleeve Arms & Hands
+    function makeParentArm(sideX) {
+      const side = sideX < 0 ? -1 : 1;
+      const arm = new THREE.Group();
+      arm.position.set(sideX, 1.325, 0);
+      const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.056, 12, 10), topMat);
+      shoulder.scale.set(0.95, 1.05, 0.95); arm.add(shoulder);
+      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.041, 0.25, 12), topMat);
+      upperArm.position.y = -0.125; upperArm.castShadow = true; addOut(upperArm, 0.028); arm.add(upperArm);
+
+      const elbow = new THREE.Group();
+      elbow.position.set(0, -0.255, 0);
+      elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.040, 10, 8), topMat));
+      const foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.039, 0.033, 0.22, 12), isMom ? topMat : topMat);
+      foreArm.position.y = -0.11; foreArm.castShadow = true; elbow.add(foreArm);
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.034, 0.008, 6, 12), collarMat);
+      cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.21; elbow.add(cuff);
+
+      const hand = new THREE.Group();
+      hand.position.set(0, -0.228, 0.004);
+      const palm = new THREE.Mesh(new THREE.SphereGeometry(0.031, 10, 8), skinMat);
+      palm.scale.set(0.62, 1.15, 0.92); palm.position.y = -0.022; hand.add(palm);
+      const fingers = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, 0.052, 10), skinMat);
+      fingers.scale.set(0.55, 1.0, 1.12); fingers.position.set(0, -0.060, 0.006); fingers.rotation.x = -0.14; hand.add(fingers);
+      const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.011, 0.034, 8), skinMat);
+      thumb.position.set(-side * 0.012, -0.034, 0.024); thumb.rotation.set(0.45, 0, side * 0.25); hand.add(thumb);
+      elbow.add(hand);
+      arm.add(elbow);
+      return { arm, elbow };
+    }
+    const lArm = makeParentArm(isMom ? -0.168 : -0.180);
+    const rArm = makeParentArm(isMom ? 0.168 : 0.180);
+    bodyPivot.add(lArm.arm, rArm.arm);
+
+    // 4. ORTHOGRAPHIC FRONT-PLANAR PHOTO-MATCHED HEAD (Zero Distortion, Seamless Skin, Natural Blink!)
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 1.595, 0.008);
+    const headR = isMom ? 0.152 : 0.156;
+    const openFaceTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex(isMom ? 'momFace' : 'dadFace', 1, 1)
+      : null;
+    const blinkFaceTex = (LS.ghibli && LS.ghibli.getPaintedTex)
+      ? LS.ghibli.getPaintedTex(isMom ? 'momFaceBlink' : 'dadFaceBlink', 1, 1)
+      : openFaceTex;
+    const faceMat = (LS.ghibli && LS.ghibli.createGhibliSkinMat)
+      ? LS.ghibli.createGhibliSkinMat(0xffffff, openFaceTex)
+      : new THREE.MeshBasicMaterial({ map: openFaceTex });
+
+    const headGeo = createPhotoHeadGeo(headR, true);
+    const headMesh = new THREE.Mesh(headGeo, [faceMat, skinMat]);
+    headMesh.scale.set(isMom ? 0.96 : 0.95, isMom ? 1.03 : 1.08, 0.96);
+    headMesh.castShadow = true; headMesh.receiveShadow = true;
+    addOut(headMesh, 0.022);
+    headGroup.add(headMesh);
+
+    // Sculpted 3D Ears
+    const earInnerMat = LS.makeToonMat(skinCol.clone().multiplyScalar(0.84));
+    [-1, 1].forEach(side => {
+      const earG = new THREE.Group();
+      earG.position.set(side * (headR * 0.92), -0.012, -0.008);
+      earG.rotation.y = side * 0.22;
+      const helix = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 8), skinMat);
+      helix.scale.set(0.36, 1.15, 0.72); earG.add(helix);
+      const concha = new THREE.Mesh(new THREE.SphereGeometry(0.017, 8, 6), earInnerMat);
+      concha.scale.set(0.28, 0.92, 0.55); concha.position.set(side * 0.003, -0.002, 0.004); earG.add(concha);
+      headGroup.add(earG);
+    });
+
+    const swayHair = [];
+
+    if (!isMom) {
+      // DAD'S PORTRAIT HAIR (1795782470901.jpg): Short textured wavy charcoal-black hair + subtle salt-and-pepper temples + jawline beard continuity!
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.045, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.58), hairMat);
+      crown.scale.set(0.98, 1.04, 1.01);
+      crown.position.set(0, 0.024, -0.014);
+      crown.rotation.x = -0.34;
+      crown.castShadow = true;
+      addOut(crown, 0.024);
+      headGroup.add(crown);
+
+      // Textured short wavy top curls along the crown & natural masculine hairline!
+      [
+        [0.0, 0.148, 0.056, 0.062, 0.036, 0.048, 0.15, 0],
+        [-0.062, 0.142, 0.046, 0.055, 0.034, 0.044, 0.12, 0.25],
+        [0.064, 0.140, 0.046, 0.054, 0.034, 0.044, 0.12, -0.25],
+        [-0.095, 0.118, 0.022, 0.044, 0.034, 0.048, 0.05, 0.35],
+        [0.095, 0.118, 0.022, 0.044, 0.034, 0.048, 0.05, -0.35],
+        [0.0, 0.162, -0.015, 0.078, 0.038, 0.068, -0.08, 0]
+      ].forEach(c => {
+        const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), hairMat);
+        tuft.scale.set(c[3], c[4], c[5]);
+        tuft.position.set(c[0], c[1], c[2]);
+        tuft.rotation.set(c[6], 0, c[7]);
+        headGroup.add(tuft);
+      });
+
+      // Neat cropped nape + subtle salt-and-pepper sideburns/temples
+      const nape = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.96, 16, 12), hairMat);
+      nape.scale.set(0.95, 0.86, 0.72);
+      nape.position.set(0, -0.018, -0.068);
+      addOut(nape, 0.022);
+      headGroup.add(nape);
+
+      const saltMat = LS.makeToonMat(0x525258);
+      [-1, 1].forEach(side => {
+        const temple = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.092, 0.056), saltMat);
+        temple.position.set(side * (headR * 0.92), 0.028, -0.008);
+        temple.rotation.z = side * 0.08;
+        headGroup.add(temple);
+        // Subtle lower-jaw beard continuity connecting temple sideburns to the front photo beard!
+        const jawBeard = new THREE.Mesh(new THREE.SphereGeometry(0.048, 10, 8), hairMat);
+        jawBeard.scale.set(0.42, 0.92, 1.18);
+        jawBeard.position.set(side * (headR * 0.72), -0.072, 0.022);
+        jawBeard.rotation.set(0.24, side * -0.28, side * -0.22);
+        headGroup.add(jawBeard);
+      });
+    } else {
+      // MOM'S PORTRAIT HAIR (1795782475108.jpg): Center-parted voluminous shoulder-length wavy glossy black hair!
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.07, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.62), hairMat);
+      crown.scale.set(1.04, 1.04, 1.02);
+      crown.position.set(0, 0.022, -0.012);
+      crown.rotation.x = -0.32;
+      crown.castShadow = true;
+      addOut(crown, 0.024);
+      headGroup.add(crown);
+
+      // Center-parted lush side-swept top bangs framing Mom's forehead softly
+      [-1, 1].forEach(side => {
+        const sweep = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.48, 14, 10), hairMat);
+        sweep.scale.set(1.18, 0.48, 0.72);
+        sweep.position.set(side * headR * 0.42, headR * 0.76, headR * 0.56);
+        sweep.rotation.set(0.24, side * 0.34, -side * 0.46);
+        addOut(sweep, 0.020);
+        headGroup.add(sweep);
+      });
+
+      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.06, 20, 14), hairMat);
+      hairBack.scale.set(1.06, 1.12, 0.78);
+      hairBack.position.set(0, -0.028, -headR * 0.48);
+      addOut(hairBack, 0.022);
+      headGroup.add(hairBack);
+
+      // Cascading voluminous S-curved wavy shoulder-length locks over BOTH shoulders!
+      [-1, 1].forEach(side => {
+        const waveG = new THREE.Group();
+        const w1 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.132, 0.075, 0.030),
+          new THREE.Vector3(side * 0.172, -0.035, 0.048),
+          new THREE.Vector3(side * 0.145, -0.155, 0.082),
+          new THREE.Vector3(side * 0.180, -0.275, 0.098),
+          new THREE.Vector3(side * 0.145, -0.375, 0.105)
+        ]);
+        const m1 = new THREE.Mesh(createTaperedHairStrand(w1, 14, 0.044, 0.056, 0.014, 0.64), hairMat);
+        m1.castShadow = true; addOut(m1, 0.022); waveG.add(m1);
+
+        const w2 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.138, 0.040, -0.035),
+          new THREE.Vector3(side * 0.185, -0.085, -0.020),
+          new THREE.Vector3(side * 0.158, -0.215, 0.018),
+          new THREE.Vector3(side * 0.192, -0.335, 0.035),
+          new THREE.Vector3(side * 0.165, -0.415, 0.042)
+        ]);
+        const m2 = new THREE.Mesh(createTaperedHairStrand(w2, 14, 0.046, 0.060, 0.014, 0.60), hairMat);
+        m2.castShadow = true; addOut(m2, 0.020); waveG.add(m2);
+
+        const w3 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.118, 0.055, 0.072),
+          new THREE.Vector3(side * 0.146, -0.075, 0.082),
+          new THREE.Vector3(side * 0.125, -0.205, 0.105),
+          new THREE.Vector3(side * 0.112, -0.320, 0.112)
+        ]);
+        waveG.add(new THREE.Mesh(createTaperedHairStrand(w3, 10, 0.026, 0.034, 0.008, 0.58), hairMat));
+
+        headGroup.add(waveG);
+        swayHair.push(waveG);
+      });
+
+      // Voluminous wavy back shoulder curtain
+      for (let bl = -2; bl <= 2; bl++) {
+        const bx = bl * 0.064;
+        const bc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bx * 0.85, 0.02, -0.125),
+          new THREE.Vector3(bx * 1.15, -0.11, -0.152),
+          new THREE.Vector3(bx * 1.02, -0.25, -0.138),
+          new THREE.Vector3(bx * 1.12, -0.38 - (2 - Math.abs(bl)) * 0.02, -0.120)
+        ]);
+        const bm = new THREE.Mesh(createTaperedHairStrand(bc, 10, 0.038, 0.048, 0.010, 0.56), hairMat);
+        addOut(bm, 0.018); headGroup.add(bm);
+      }
+    }
+
+    const hatSlot = new THREE.Group();
+    headGroup.add(hatSlot);
+    bodyPivot.add(headGroup);
+
+    if (LS.createContactShadowTexture) {
+      const shadowDisc = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.86, 0.86),
+        new THREE.MeshBasicMaterial({ map: LS.createContactShadowTexture(), transparent: true, depthWrite: false })
+      );
+      shadowDisc.rotation.x = -Math.PI / 2;
+      shadowDisc.position.y = 0.024;
+      shadowDisc.userData.noOutline = true;
+      shadowDisc.userData.noCamClip = true;
+      root.add(shadowDisc);
+    }
+
+    root.scale.setScalar(s);
+
+    return {
+      root,
+      bodyPivot,
+      headGroup,
+      leftLeg: lLeg.leg,
+      rightLeg: rLeg.leg,
+      leftKnee: lLeg.knee,
+      rightKnee: rLeg.knee,
+      leftArm: lArm.arm,
+      rightArm: rArm.arm,
+      leftElbow: lArm.elbow,
+      rightElbow: rArm.elbow,
+      topMat,
+      bottomMat,
+      shoeMat,
+      bpMat,
+      hatSlot,
+      signatureBand: null,
+      swayHair,
+      faceMat,
+      openFaceTex,
+      blinkFaceTex,
+      happyFaceTex: openFaceTex,
+      blinkTimer: isMom ? 3.8 : 4.6,
+      isBlinking: false
+    };
+  }
+
+  let cachedWatercolorHairTex = null;
+  function getWatercolorHairStrandTex() {
+    if (cachedWatercolorHairTex) return cachedWatercolorHairTex;
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#cfcac4';
+    ctx.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 84; i++) {
+      const x = (i / 84) * 256 + Math.sin(i * 1.9) * 2.5;
+      ctx.strokeStyle = i % 3 === 0 ? 'rgba(255,250,242,0.22)' : (i % 3 === 1 ? 'rgba(40,32,28,0.22)' : 'rgba(90,78,70,0.14)');
+      ctx.lineWidth = 1.4 + (i % 3) * 0.7;
+      ctx.beginPath(); ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + Math.sin(i) * 4, 85, x - Math.cos(i) * 4, 170, x, 256);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    cachedWatercolorHairTex = tex;
+    return tex;
+  }
+
+  let cachedNouziFloralTex = null;
+  function getNouziFloralTex() {
+    if (cachedNouziFloralTex) return cachedNouziFloralTex;
+    const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#4a5058';
+    ctx.fillRect(0, 0, 256, 256);
+    const petals = ['#f2e6d8', '#e6b8b0', '#c8c0b4', '#9aa69e'];
+    for (let i = 0; i < 42; i++) {
+      const fx = ((i * 73) % 236) + 10;
+      const fy = ((i * 107) % 236) + 10;
+      ctx.fillStyle = petals[i % petals.length];
+      for (let p = 0; p < 5; p++) {
+        const a = (p / 5) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(fx + Math.cos(a) * 5.2, fy + Math.sin(a) * 5.2, 3.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#d4a359';
+      ctx.beginPath(); ctx.arc(fx, fy, 2.2, 0, Math.PI * 2); ctx.fill();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 2);
+    cachedNouziFloralTex = tex;
+    return tex;
+  }
+
+  // Dedicated Orthographic Portrait-Guide 3D Head Geometry (full-cheek UV framing so eyes/glasses/beard fill the 3D head naturally!)
+  function createPortraitHeadGeo(radius) {
+    const geo = new THREE.SphereGeometry(radius, 36, 28);
+    const pos = geo.attributes.position;
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+      const nx = x / radius, ny = y / radius, nz = z / radius;
+      if (ny < 0) {
+        const t = Math.min(1, -ny);
+        z *= (1.0 - 0.18 * Math.pow(t, 1.50));
+        x *= (1.0 - 0.06 * Math.pow(t, 1.55));
+        if (nx > 0.15) x += 0.020 * radius * Math.exp(-Math.pow((ny + 0.72) / 0.26, 2)) * nx;
+      }
+      if (nx > 0.30 && ny > -0.35 && ny < 0.45) {
+        const f = Math.max(0, (nx - 0.30) / 0.70) * (1.0 - Math.abs(ny - 0.05) / 0.55);
+        x -= radius * 0.028 * Math.max(0, f);
+      }
+      const cheek = Math.exp(-Math.pow((ny + 0.24) / 0.26, 2)) * Math.exp(-Math.pow((Math.abs(nz) - 0.62) / 0.30, 2));
+      z *= (1.0 + 0.042 * cheek);
+      pos.setXYZ(i, x, y, z);
+
+      // Generous orthographic projection: maps portrait features across ~74% of the 3D face width & height
+      const spanX = radius * 2.46;
+      const spanY = radius * 2.48;
+      const u = Math.max(0.01, Math.min(0.99, 0.5 - z / spanX));
+      const v = Math.max(0.01, Math.min(0.99, 0.5 + (y + radius * 0.035) / spanY));
+      uv.setXY(i, u, v);
+    }
+    if (geo.index) {
+      const oldIdx = geo.index.array;
+      const frontIdx = [], backIdx = [];
+      for (let k = 0; k < oldIdx.length; k += 3) {
+        const a = oldIdx[k], b = oldIdx[k + 1], c = oldIdx[k + 2];
+        if (pos.getX(a) > radius * 0.14 && pos.getX(b) > radius * 0.14 && pos.getX(c) > radius * 0.14) {
+          frontIdx.push(a, b, c);
+        } else {
+          backIdx.push(a, b, c);
+        }
+      }
+      const merged = new Uint16Array(frontIdx.length + backIdx.length);
+      merged.set(frontIdx, 0);
+      merged.set(backIdx, frontIdx.length);
+      geo.setIndex(new THREE.BufferAttribute(merged, 1));
+      geo.clearGroups();
+      geo.addGroup(0, frontIdx.length, 0);
+      geo.addGroup(frontIdx.length, backIdx.length, 1);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  // Official 9-Character Portrait Guide Registry (exact colors, proportions, faces & wardrobe defaults!)
+  const PORTRAIT_PROFILES = {
+    laila: {
+      scale: 0.76, headR: 0.152, skinHex: 0xf2d3b5, hairHex: 0x241d1b,
+      faceKey: 'lailaFace', blinkKey: 'lailaFaceBlink',
+      topHex: 0xf8dc74, bottomHex: 0xf4d25c, shoeHex: 0xd96055, bpHex: 0xd96055,
+      sleeves: 'ruffle_straps', bottomType: 'skirt', torsoScaleX: 0.90, shoulderX: 0.148
+    },
+    salma: {
+      scale: 0.63, headR: 0.160, skinHex: 0xf5d6ba, hairHex: 0x281e1b,
+      faceKey: 'salmaFace', blinkKey: 'salmaFaceBlink',
+      topHex: 0xefebe2, bottomHex: 0xd96b5a, shoeHex: 0xc87238, bpHex: 0xd97b38,
+      sleeves: 'short', bottomType: 'skirt', torsoScaleX: 0.90, shoulderX: 0.146
+    },
+    mom: {
+      scale: 0.93, headR: 0.140, skinHex: 0xf0ceae, hairHex: 0x1e1d21,
+      faceKey: 'momFace', blinkKey: 'momFaceBlink',
+      topHex: 0xeba0ab, bottomHex: 0x3d5a80, shoeHex: 0x8b4c56,
+      sleeves: 'long_cuff', bottomType: 'skirt', collar: 'button_v', necklace: 'silver_medallion',
+      torsoScaleX: 0.96, shoulderX: 0.162
+    },
+    dad: {
+      scale: 1.00, headR: 0.144, skinHex: 0xeeccad, hairHex: 0x222125,
+      faceKey: 'dadFace', blinkKey: 'dadFaceBlink',
+      topHex: 0xebe6dc, bottomHex: 0x2b3a4a, shoeHex: 0x4b3426,
+      sleeves: 'long_cuff', bottomType: 'pants', collar: 'button_v',
+      torsoScaleX: 1.05, shoulderX: 0.176
+    },
+    gedo_mahmoud: {
+      scale: 0.98, headR: 0.144, skinHex: 0xebc6a5, hairHex: 0xd6d9de,
+      faceKey: 'gedoMahmoudFace', blinkKey: 'gedoMahmoudFaceBlink',
+      topHex: 0x2d2e32, shirtHex: 0x8db4da, bottomHex: 0x26282c, shoeHex: 0x2d241e,
+      sleeves: 'long_cuff', bottomType: 'pants', collar: 'blazer', glassesCol: 0x3b3836,
+      torsoScaleX: 1.04, shoulderX: 0.176
+    },
+    nana_omaima: {
+      scale: 0.90, headR: 0.140, skinHex: 0xeecbae, hairHex: 0xf6f4ee,
+      faceKey: 'nanaOmaimaFace', blinkKey: 'nanaOmaimaFaceBlink',
+      topHex: 0xc83c32, shirtHex: 0x2c2b2e, bottomHex: 0x2e333c, shoeHex: 0x46322d,
+      sleeves: 'long_cuff', bottomType: 'skirt', collar: 'blazer', glassesCol: 0x3b3836,
+      torsoScaleX: 0.98, shoulderX: 0.166
+    },
+    bibo: {
+      scale: 0.59, headR: 0.162, skinHex: 0xf4d6b8, hairHex: 0x8b5a34,
+      faceKey: 'biboFace', blinkKey: 'biboFaceBlink',
+      topHex: 0xd8584e, bottomHex: 0x354864, shoeHex: 0xf2c94c,
+      sleeves: 'short', bottomType: 'shorts', collar: 'polo',
+      torsoScaleX: 0.92, shoulderX: 0.146
+    },
+    nouzi: {
+      scale: 0.73, headR: 0.152, skinHex: 0xf4d7bc, hairHex: 0x28211f,
+      faceKey: 'nouziFace', blinkKey: 'nouziFaceBlink',
+      topHex: 0xffffff, bottomHex: 0xffffff, shoeHex: 0x5d4a50,
+      sleeves: 'sleeveless', bottomType: 'skirt', floralDress: true, glassesCol: 0x7a342a,
+      torsoScaleX: 0.88, shoulderX: 0.144
+    },
+    mai: {
+      scale: 0.92, headR: 0.140, skinHex: 0xf2d0b6, hairHex: 0x523626,
+      faceKey: 'maiFace', blinkKey: 'maiFaceBlink',
+      topHex: 0xb53b34, bottomHex: 0x9e302a, shoeHex: 0x6b453a,
+      sleeves: 'sleeveless', bottomType: 'skirt', pleatedTop: true,
+      torsoScaleX: 0.94, shoulderX: 0.158
+    }
+  };
+  LS.PORTRAIT_PROFILES = PORTRAIT_PROFILES;
+
+  // Unified Slender Watercolor-Ghibli 3D Character Builder (ALL 9 official portrait-guide characters!)
+  function buildUnifiedWatercolorCharacter(cfg) {
+    const style = cfg.portraitStyle;
+    const P = PORTRAIT_PROFILES[style] || PORTRAIT_PROFILES.laila;
+    const geos = getHDHumanGeos();
+    const root = new THREE.Group();
+    const s = cfg.scale !== undefined ? cfg.scale : P.scale;
+    const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
+    const fabTex = LS.createFabricTexture ? LS.createFabricTexture() : null;
+
+    const skinCol = new THREE.Color(P.skinHex);
+    const skinMat = (LS.ghibli && LS.ghibli.createGhibliSkinMat)
+      ? LS.ghibli.createGhibliSkinMat(P.skinHex, null)
+      : LS.makeToonMat(P.skinHex);
+
+    // Rich watercolor toon hair (ZERO washed-out gray specular glare!)
+    const hairMat = LS.makeToonMat(P.hairHex, {
+      map: getWatercolorHairStrandTex(),
+      side: THREE.DoubleSide
+    });
+
+    const topHex = cfg.topColor !== undefined ? cfg.topColor : P.topHex;
+    const bottomHex = cfg.bottomColor !== undefined ? cfg.bottomColor : P.bottomHex;
+    const shoeHex = cfg.shoeColor !== undefined ? cfg.shoeColor : P.shoeHex;
+    const bpHex = cfg.backpackColor !== undefined ? cfg.backpackColor : (P.bpHex || 0xc9485a);
+
+    const floralTex = P.floralDress ? getNouziFloralTex() : null;
+    const topMat = LS.makeToonMat(topHex, {
+      map: floralTex || (P.pleatedTop ? getNeutralPleatTex() : (fabTex || undefined))
+    });
+    const bottomMat = LS.makeToonMat(bottomHex, {
+      map: floralTex || (P.bottomType === 'skirt' ? getNeutralPleatTex() : (fabTex || undefined))
+    });
+    const shoeMat = LS.makeToonMat(shoeHex);
+    const soleMat = LS.makeToonMat(0xf5f1e8);
+    const bpMat = LS.makeToonMat(bpHex);
+
+    const bodyPivot = new THREE.Group();
+    root.add(bodyPivot);
+    const hipY = 0.835;
+
+    // 1. ARTICULATED SLENDER LEGS & SCULPTED SHOES (supports walking, jumping, chair_sit & floor_sit!)
+    const isPants = P.bottomType === 'pants';
+    const isShorts = P.bottomType === 'shorts';
+    function makeUnifiedLeg(sideX) {
+      const leg = new THREE.Group();
+      leg.position.set(sideX, hipY, 0);
+      const thighMat = (isPants || isShorts) ? bottomMat : skinMat;
+      const thigh = new THREE.Mesh(geos.thigh, thighMat);
+      thigh.castShadow = true; thigh.receiveShadow = true;
+      leg.add(thigh);
+
+      const knee = new THREE.Group();
+      knee.position.set(0, -0.375, 0);
+      const calfMat = isPants ? bottomMat : skinMat;
+      knee.add(new THREE.Mesh(new THREE.SphereGeometry(isPants ? 0.048 : 0.044, 12, 10), calfMat));
+      const calf = new THREE.Mesh(isPants ? geos.pantCalf : geos.calf, calfMat);
+      calf.castShadow = true; calf.receiveShadow = true;
+      knee.add(calf);
+
+      if (!isPants) {
+        const sockMat = LS.makeToonMat(0xfbf9f5);
+        knee.add(new THREE.Mesh(geos.sock, sockMat));
+      } else {
+        const hem = new THREE.Mesh(new THREE.TorusGeometry(0.044, 0.007, 8, 16), bottomMat);
+        hem.rotation.x = Math.PI / 2; hem.position.y = -0.352;
+        knee.add(hem);
+      }
+
+      const shoeG = new THREE.Group();
+      shoeG.position.set(0, -0.388, 0.024);
+      const sole = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.051, 0.022, 14), soleMat);
+      sole.scale.set(0.90, 1.0, 1.88); sole.position.set(0, -0.046, 0.015); sole.castShadow = true;
+      shoeG.add(sole);
+      const upper = new THREE.Mesh(new THREE.SphereGeometry(0.050, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), shoeMat);
+      upper.scale.set(0.88, 1.04, 1.82); upper.position.set(0, -0.036, 0.014); upper.castShadow = true;
+      addOut(upper, 0.026);
+      shoeG.add(upper);
+      knee.add(shoeG);
+      leg.add(knee);
+      return { leg, knee };
+    }
+    const legOff = P.torsoScaleX < 0.92 ? 0.078 : 0.086;
+    const lLeg = makeUnifiedLeg(-legOff);
+    const rLeg = makeUnifiedLeg(legOff);
+    bodyPivot.add(lLeg.leg, rLeg.leg);
+
+    // 2. SLENDER TAILORED TORSO, NECKLINE, COLLARS, BLAZERS, RUFFLES & SKIRT/TROUSERS
+    const torso = new THREE.Mesh(geos.torso, topMat);
+    torso.position.y = 0.805;
+    torso.scale.set(P.torsoScaleX, 1.0, 0.92);
+    torso.castShadow = true; torso.receiveShadow = true;
+    addOut(torso, 0.014);
+    bodyPivot.add(torso);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.055, 0.16, 14), skinMat);
+    neck.position.y = 1.415; neck.castShadow = true; neck.receiveShadow = false;
+    bodyPivot.add(neck);
+
+    // Smooth forward-facing V-neck skin patch (CCW + DoubleSide, sits cleanly proud of shirt/blazer panel!)
+    function addSkinVNeck(w, h, yPos, zPos) {
+      const shape = new THREE.Shape();
+      shape.moveTo(-w * 0.5, h * 0.5);
+      shape.lineTo(0, -h * 0.5);
+      shape.lineTo(w * 0.5, h * 0.5);
+      shape.closePath();
+      const vMat = new THREE.MeshBasicMaterial({ color: skinCol.clone().multiplyScalar(0.95), side: THREE.DoubleSide });
+      const vMesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), vMat);
+      vMesh.position.set(0, yPos, zPos);
+      bodyPivot.add(vMesh);
+    }
+
+    if (P.sleeves === 'ruffle_straps') {
+      // LAILA: Butter-yellow sleeveless summer dress with square scoop neckline & ruffled shoulder straps!
+      const scoop = new THREE.Mesh(new THREE.CylinderGeometry(0.074, 0.064, 0.10, 14), skinMat);
+      scoop.scale.set(1.0, 1.0, 0.62); scoop.position.set(0, 1.335, 0.044); scoop.receiveShadow = false;
+      bodyPivot.add(scoop);
+      const bodiceTrim = new THREE.Mesh(new THREE.BoxGeometry(0.19, 0.022, 0.024), topMat);
+      bodiceTrim.position.set(0, 1.245, 0.098); bodyPivot.add(bodiceTrim);
+      [-1, 1].forEach(side => {
+        const strap = new THREE.Mesh(new THREE.TorusGeometry(0.068, 0.015, 8, 16, Math.PI * 1.15), topMat);
+        strap.rotation.set(0, Math.PI / 2, -0.15);
+        strap.position.set(side * 0.102, 1.32, 0.008);
+        bodyPivot.add(strap);
+        for (let r = 0; r < 3; r++) {
+          const ruf = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), topMat);
+          ruf.scale.set(0.75, 0.42, 1.15);
+          ruf.position.set(side * (0.125 + r * 0.004), 1.355 - r * 0.036, 0.036 - r * 0.025);
+          ruf.rotation.z = side * -0.42;
+          addOut(ruf, 0.022);
+          bodyPivot.add(ruf);
+        }
+      });
+    } else if (P.collar === 'button_v') {
+      const colMat = LS.makeToonMat(style === 'mom' ? 0xf2aeb8 : 0xe3ddd2);
+      const plackMat = LS.makeToonMat(style === 'mom' ? 0xe597a4 : 0xdad3c6);
+      addSkinVNeck(0.090, 0.110, 1.330, 0.118);
+      const cBack = new THREE.Mesh(new THREE.TorusGeometry(0.064, 0.014, 8, 18, Math.PI * 1.4), colMat);
+      cBack.rotation.set(Math.PI / 2 + 0.14, 0, Math.PI * 0.8); cBack.position.set(0, 1.374, 0.002);
+      bodyPivot.add(cBack);
+      [-1, 1].forEach(side => {
+        const lap = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.082, 0.014), colMat);
+        lap.position.set(side * 0.054, 1.338, 0.096);
+        lap.rotation.set(-0.14, side * -0.34, side * 0.36);
+        addOut(lap, 0.020);
+        bodyPivot.add(lap);
+      });
+      const plack = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.35, 0.010), plackMat);
+      plack.position.set(0, 1.075, 0.112); bodyPivot.add(plack);
+      const btnMat = LS.makeToonMat(style === 'mom' ? 0xffe6ec : 0xc9c0b2);
+      [1.22, 1.12, 1.02].forEach(by => {
+        const b = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 8, 6), btnMat);
+        b.scale.set(1, 1, 0.45); b.position.set(0, by, 0.118); bodyPivot.add(b);
+      });
+    } else if (P.collar === 'blazer') {
+      const innerMat = LS.makeToonMat(P.shirtHex || 0x8db4da);
+      const isNana = (style === 'nana_omaima');
+      const innerPanel = new THREE.Mesh(new THREE.BoxGeometry(0.118, isNana ? 0.48 : 0.46, 0.048), innerMat);
+      innerPanel.position.set(0, isNana ? 1.135 : 1.125, 0.098); bodyPivot.add(innerPanel);
+      if (style === 'gedo_mahmoud') {
+        addSkinVNeck(0.072, 0.088, 1.334, 0.125);
+        const sColMat = LS.makeToonMat(0x7ca6d0);
+        [-1, 1].forEach(side => {
+          const sCol = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.072, 0.014), sColMat);
+          sCol.position.set(side * 0.044, 1.344, 0.116);
+          sCol.rotation.set(-0.12, side * -0.30, side * 0.32);
+          addOut(sCol, 0.018);
+          bodyPivot.add(sCol);
+        });
+      }
+      [-1, 1].forEach(side => {
+        const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.064, 0.29, 0.022), topMat);
+        lapel.position.set(side * 0.078, 1.21, 0.112);
+        lapel.rotation.set(0, side * -0.18, side * 0.16);
+        addOut(lapel, 0.018);
+        bodyPivot.add(lapel);
+      });
+    } else if (P.collar === 'polo') {
+      const cBack = new THREE.Mesh(new THREE.TorusGeometry(0.060, 0.014, 8, 18), topMat);
+      cBack.rotation.x = Math.PI / 2 + 0.15; cBack.position.set(0, 1.370, 0.005);
+      bodyPivot.add(cBack);
+      [-1, 1].forEach(side => {
+        const lap = new THREE.Mesh(new THREE.BoxGeometry(0.046, 0.062, 0.014), topMat);
+        lap.position.set(side * 0.045, 1.342, 0.084);
+        lap.rotation.set(-0.14, side * -0.32, side * 0.38);
+        addOut(lap, 0.020);
+        bodyPivot.add(lap);
+      });
+    } else {
+      const trim = new THREE.Mesh(new THREE.TorusGeometry(0.060, 0.012, 8, 18), topMat);
+      trim.rotation.x = Math.PI / 2 + 0.14; trim.position.set(0, 1.366, 0.008);
+      bodyPivot.add(trim);
+    }
+
+    if (P.necklace === 'silver_medallion') {
+      const silverBright = new THREE.MeshStandardMaterial({
+        color: 0xe6ecf5, emissive: 0x5d6775, emissiveIntensity: 0.42, roughness: 0.25, metalness: 0.42
+      });
+      const silverEtch = new THREE.MeshStandardMaterial({
+        color: 0xb7c2d0, emissive: 0x3a4350, emissiveIntensity: 0.30, roughness: 0.35, metalness: 0.35
+      });
+      const chainCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(-0.042, 1.385, 0.048),
+        new THREE.Vector3(-0.028, 1.312, 0.109),
+        new THREE.Vector3(-0.004, 1.242, 0.120),
+        new THREE.Vector3(0.020, 1.312, 0.109),
+        new THREE.Vector3(0.042, 1.385, 0.048)
+      ]);
+      bodyPivot.add(new THREE.Mesh(new THREE.TubeGeometry(chainCurve, 18, 0.0036, 6, false), silverBright));
+      const medG = new THREE.Group();
+      medG.position.set(-0.004, 1.220, 0.124); medG.rotation.x = -0.14;
+      const medOuter = new THREE.Mesh(new THREE.CylinderGeometry(0.023, 0.023, 0.006, 18), silverBright);
+      medOuter.rotation.x = Math.PI / 2; addOut(medOuter, 0.04); medG.add(medOuter);
+      const medInner = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.008, 14), silverEtch);
+      medInner.rotation.x = Math.PI / 2; medG.add(medInner);
+      const medCore = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), silverBright);
+      medCore.position.z = 0.004; medG.add(medCore);
+      bodyPivot.add(medG);
+    }
+
+    if (P.bottomType === 'skirt') {
+      if (!buildUnifiedWatercolorCharacter._slenderSkirtGeo) {
+        buildUnifiedWatercolorCharacter._slenderSkirtGeo = createPleatedSkirtMeshGeo([
+          new THREE.Vector2(0.215, 0.46),
+          new THREE.Vector2(0.228, 0.48),
+          new THREE.Vector2(0.200, 0.60),
+          new THREE.Vector2(0.158, 0.76),
+          new THREE.Vector2(0.132, 0.89)
+        ], 36, 14, 0.026);
+      }
+      const skirt = new THREE.Mesh(buildUnifiedWatercolorCharacter._slenderSkirtGeo, bottomMat);
+      skirt.scale.set(P.torsoScaleX, 1.0, 0.84);
+      skirt.castShadow = true; skirt.receiveShadow = true;
+      addOut(skirt, 0.018);
+      bodyPivot.add(skirt);
+      const waistMat = (style === 'laila' || style === 'salma') ? topMat : bottomMat;
+      const waistBand = new THREE.Mesh(new THREE.TorusGeometry(0.132, 0.013, 8, 22), waistMat);
+      waistBand.rotation.x = Math.PI / 2;
+      waistBand.scale.set(P.torsoScaleX, 0.84, 1.0);
+      waistBand.position.y = 0.888;
+      bodyPivot.add(waistBand);
+    } else {
+      const pelvis = new THREE.Mesh(new THREE.SphereGeometry(0.150, 18, 12), bottomMat);
+      pelvis.scale.set(P.torsoScaleX, 0.72, 0.72); pelvis.position.y = 0.815; pelvis.castShadow = true;
+      addOut(pelvis, 0.018); bodyPivot.add(pelvis);
+      if (isPants) {
+        const belt = new THREE.Mesh(new THREE.CylinderGeometry(0.144, 0.147, 0.034, 20), LS.makeToonMat(0x3a261a));
+        belt.scale.set(P.torsoScaleX, 1.0, 0.72); belt.position.y = 0.885; bodyPivot.add(belt);
+        const buckle = new THREE.Mesh(
+          new THREE.BoxGeometry(0.040, 0.036, 0.014),
+          new THREE.MeshStandardMaterial({ color: 0xdcb45c, roughness: 0.30, metalness: 0.65 })
+        );
+        buckle.position.set(0, 0.885, 0.106); bodyPivot.add(buckle);
+      }
+    }
+
+    if (style === 'laila' || style === 'salma') {
+      const packG = new THREE.Group();
+      packG.position.set(0, 1.08, -0.118);
+      const pMain = new THREE.Mesh(new THREE.SphereGeometry(0.108, 14, 10), bpMat);
+      pMain.scale.set(0.95, 1.12, 0.56); pMain.castShadow = true; addOut(pMain, 0.022); packG.add(pMain);
+      const pFlap = new THREE.Mesh(new THREE.SphereGeometry(0.098, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.52), bpMat);
+      pFlap.scale.set(0.96, 0.65, 0.62); pFlap.position.set(0, 0.048, -0.012); packG.add(pFlap);
+      bodyPivot.add(packG);
+    }
+
+    // 3. ARTICULATED ARMS
+    function makeUnifiedArm(sideX) {
+      const side = sideX < 0 ? -1 : 1;
+      const arm = new THREE.Group();
+      arm.position.set(sideX, 1.324, 0);
+      const upperMat = (P.sleeves === 'sleeveless' || P.sleeves === 'ruffle_straps') ? skinMat : topMat;
+      const foreMat = P.sleeves === 'long_cuff' ? topMat : skinMat;
+      const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.050, 12, 10), upperMat);
+      shoulder.scale.set(0.92, 1.02, 0.92); arm.add(shoulder);
+      if (P.sleeves === 'short') {
+        const slv = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.042, 0.13, 12), topMat);
+        slv.position.y = -0.065; slv.castShadow = true; addOut(slv, 0.020); arm.add(slv);
+        const lowUp = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.034, 0.13, 10), skinMat);
+        lowUp.position.y = -0.185; arm.add(lowUp);
+      } else {
+        const up = new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.037, 0.25, 12), upperMat);
+        up.position.y = -0.125; up.castShadow = true;
+        if (upperMat === topMat) addOut(up, 0.020);
+        arm.add(up);
+      }
+      const elbow = new THREE.Group();
+      elbow.position.set(0, -0.255, 0);
+      elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.036, 10, 8), foreMat));
+      const foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.030, 0.22, 12), foreMat);
+      foreArm.position.y = -0.11; foreArm.castShadow = true; elbow.add(foreArm);
+      if (P.sleeves === 'long_cuff') {
+        const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.031, 0.007, 6, 12), topMat);
+        cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.21; elbow.add(cuff);
+      }
+      const hand = new THREE.Group();
+      hand.position.set(0, -0.228, 0.004);
+      const palm = new THREE.Mesh(new THREE.SphereGeometry(0.029, 10, 8), skinMat);
+      palm.scale.set(0.62, 1.14, 0.90); palm.position.y = -0.022; hand.add(palm);
+      const fingers = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.015, 0.050, 10), skinMat);
+      fingers.scale.set(0.55, 1.0, 1.10); fingers.position.set(0, -0.058, 0.005); fingers.rotation.x = -0.14; hand.add(fingers);
+      const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.0085, 0.010, 0.032, 8), skinMat);
+      thumb.position.set(-side * 0.011, -0.032, 0.022); thumb.rotation.set(0.45, 0, side * 0.25); hand.add(thumb);
+      elbow.add(hand);
+      arm.add(elbow);
+      return { arm, elbow };
+    }
+    const lArm = makeUnifiedArm(-P.shoulderX);
+    const rArm = makeUnifiedArm(P.shoulderX);
+    bodyPivot.add(lArm.arm, rArm.arm);
+
+    // 4. ORTHOGRAPHIC PORTRAIT-MATCHED 3D HEAD + EARS + EXACT GUIDE HAIRSTYLES & HIJAB!
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 1.590, 0.008);
+    const headR = P.headR;
+    const openFaceTex = (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex(P.faceKey, 1, 1) : null;
+    const blinkFaceTex = (LS.ghibli && LS.ghibli.getPaintedTex) ? LS.ghibli.getPaintedTex(P.blinkKey, 1, 1) : openFaceTex;
+    const faceMat = (LS.ghibli && LS.ghibli.createGhibliSkinMat)
+      ? LS.ghibli.createGhibliSkinMat(0xffffff, openFaceTex)
+      : new THREE.MeshBasicMaterial({ map: openFaceTex });
+
+    const headMesh = new THREE.Mesh(createPortraitHeadGeo(headR), [faceMat, skinMat]);
+    headMesh.rotation.y = -Math.PI / 2;
+    const isAdultMale = (style === 'dad' || style === 'gedo_mahmoud');
+    const isAdultFemale = (style === 'mom' || style === 'nana_omaima' || style === 'mai');
+    headMesh.scale.set(
+      isAdultMale ? 0.90 : (isAdultFemale ? 0.91 : 0.94),
+      isAdultMale ? 1.08 : (isAdultFemale ? 1.05 : 1.01),
+      0.95
+    );
+    headMesh.castShadow = true;
+    headMesh.receiveShadow = false;
+    addOut(headMesh, 0.018);
+    headGroup.add(headMesh);
+
+    if (style !== 'nana_omaima') {
+      const earInnerMat = LS.makeToonMat(skinCol.clone().multiplyScalar(0.84));
+      [-1, 1].forEach(side => {
+        const earG = new THREE.Group();
+        earG.position.set(side * (headR * 0.88), -0.012, -0.010);
+        earG.rotation.y = side * 0.22;
+        const helix = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), skinMat);
+        helix.scale.set(0.36, 1.12, 0.72); earG.add(helix);
+        const concha = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), earInnerMat);
+        concha.scale.set(0.28, 0.90, 0.55); concha.position.set(side * 0.003, -0.002, 0.004); earG.add(concha);
+        headGroup.add(earG);
+      });
+    }
+
+    // Subtle side-view glasses temple arms tucked cleanly behind the front lens plane (no floating front dots!)
+    if (P.glassesCol && style !== 'nana_omaima') {
+      const gMat = LS.makeToonMat(P.glassesCol);
+      [-1, 1].forEach(side => {
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.0026, 0.0026, headR * 0.62, 6), gMat);
+        arm.rotation.x = Math.PI / 2;
+        arm.position.set(side * (headR * 0.84), headR * 0.14, -headR * 0.05);
+        headGroup.add(arm);
+      });
+    }
+
+    const signatureBand = new THREE.Group();
+    headGroup.add(signatureBand);
+    const swayHair = [];
+
+    if (style === 'laila') {
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.03, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.47), hairMat);
+      crown.scale.set(0.96, 1.04, 0.99); crown.position.set(0, 0.018, -0.012); crown.rotation.x = -0.41;
+      crown.castShadow = true; addOut(crown, 0.018); headGroup.add(crown);
+      [-1, 1].forEach(side => {
+        const sweep = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.44, 14, 10), hairMat);
+        sweep.scale.set(1.14, 0.34, 0.58);
+        sweep.position.set(side * headR * 0.44, headR * 0.78, headR * 0.54);
+        sweep.rotation.set(0.22, side * 0.34, -side * 0.46);
+        headGroup.add(sweep);
+      });
+      const back = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.02, 18, 12), hairMat);
+      back.scale.set(0.98, 1.06, 0.78); back.position.set(0, -0.020, -headR * 0.46); addOut(back, 0.018); headGroup.add(back);
+      const whiteBand = LS.makeToonMat(0xfbf9f4);
+      const band = new THREE.Mesh(new THREE.TorusGeometry(headR * 1.01, 0.012, 8, 28, Math.PI * 1.02), whiteBand);
+      band.scale.set(0.98, 1.03, 0.74); band.position.set(0, 0.032, 0.012); band.rotation.x = -0.22;
+      addOut(band, 0.022); signatureBand.add(band);
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.015, 10, 8), whiteBand);
+      knot.position.set(0, headR * 1.06 + 0.018, 0.042); addOut(knot, 0.026); signatureBand.add(knot);
+      [-1, 1].forEach(side => {
+        const ear = new THREE.Mesh(new THREE.SphereGeometry(0.021, 10, 8), whiteBand);
+        ear.scale.set(1.52, 0.68, 0.44);
+        ear.position.set(side * 0.030, headR * 1.06 + 0.026, 0.038);
+        ear.rotation.z = side * 0.28; addOut(ear, 0.024); signatureBand.add(ear);
+      });
+      const braidG = new THREE.Group();
+      for (let i = 0; i < 6; i++) {
+        const t = i / 5;
+        const link = new THREE.Mesh(new THREE.SphereGeometry(0.025 * (1 - t * 0.25), 10, 8), hairMat);
+        link.scale.set(0.95, 1.25, 0.80);
+        link.position.set(-0.072 - t * 0.030, -0.07 - t * 0.22, -0.10 + t * 0.08);
+        addOut(link, 0.020); braidG.add(link);
+      }
+      headGroup.add(braidG); swayHair.push(braidG);
+    } else if (style === 'salma') {
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.03, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.47), hairMat);
+      crown.scale.set(0.96, 1.04, 0.99); crown.position.set(0, 0.018, -0.012); crown.rotation.x = -0.41;
+      crown.castShadow = true; addOut(crown, 0.018); headGroup.add(crown);
+      [-1, 1].forEach(side => {
+        const sweep = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.44, 14, 10), hairMat);
+        sweep.scale.set(1.14, 0.34, 0.58);
+        sweep.position.set(side * headR * 0.42, headR * 0.78, headR * 0.54);
+        sweep.rotation.set(0.22, side * 0.30, -side * 0.44);
+        headGroup.add(sweep);
+      });
+      const terraBand = new THREE.Mesh(new THREE.TorusGeometry(headR * 1.015, 0.0095, 8, 28, Math.PI * 1.02), LS.makeToonMat(0xc95432));
+      terraBand.scale.set(0.98, 1.03, 0.74); terraBand.position.set(0, 0.032, 0.012); terraBand.rotation.x = -0.22;
+      addOut(terraBand, 0.024); signatureBand.add(terraBand);
+      const back = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.02, 18, 12), hairMat);
+      back.scale.set(1.00, 1.08, 0.78); back.position.set(0, -0.024, -headR * 0.46); addOut(back, 0.018); headGroup.add(back);
+      for (let bl = -2; bl <= 2; bl++) {
+        const bx = bl * 0.054;
+        const bc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bx * 0.85, 0.02, -0.112),
+          new THREE.Vector3(bx * 1.10, -0.11, -0.134),
+          new THREE.Vector3(bx * 1.06, -0.28 - (2 - Math.abs(bl)) * 0.02, -0.116)
+        ]);
+        const bm = new THREE.Mesh(createTaperedHairStrand(bc, 9, 0.033, 0.042, 0.010, 0.56), hairMat);
+        addOut(bm, 0.016); headGroup.add(bm);
+      }
+      [-1, 1].forEach(side => {
+        const wg = new THREE.Group();
+        const wc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * 0.128, 0.05, -0.01),
+          new THREE.Vector3(side * 0.148, -0.10, 0.01),
+          new THREE.Vector3(side * 0.132, -0.25, 0.04)
+        ]);
+        const wm = new THREE.Mesh(createTaperedHairStrand(wc, 10, 0.033, 0.040, 0.010, 0.60), hairMat);
+        addOut(wm, 0.018); wg.add(wm); headGroup.add(wg); swayHair.push(wg);
+      });
+    } else if (style === 'mom' || style === 'nouzi' || style === 'mai') {
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.04, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.47), hairMat);
+      crown.scale.set(0.98, 1.06, 1.00); crown.position.set(0, 0.018, -0.012); crown.rotation.x = -0.42;
+      crown.castShadow = true; addOut(crown, 0.018); headGroup.add(crown);
+      [-1, 1].forEach(side => {
+        const sweep = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.45, 14, 10), hairMat);
+        sweep.scale.set(1.16, 0.35, 0.60);
+        const shift = (style === 'mai' && side > 0) ? 0.10 : 0;
+        sweep.position.set(side * headR * (0.44 + shift), headR * 0.78, headR * 0.54);
+        sweep.rotation.set(0.22, side * 0.34, -side * 0.46);
+        addOut(sweep, 0.016); headGroup.add(sweep);
+      });
+      const hairBack = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.04, 20, 14), hairMat);
+      hairBack.scale.set(1.02, 1.10, 0.80); hairBack.position.set(0, -0.024, -headR * 0.46);
+      addOut(hairBack, 0.018); headGroup.add(hairBack);
+      const lenScale = style === 'nouzi' ? 1.04 : (style === 'mai' ? 0.90 : 1.00);
+      [-1, 1].forEach(side => {
+        const waveG = new THREE.Group();
+        const w1 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * headR * 0.86, headR * 0.48, 0.022),
+          new THREE.Vector3(side * headR * 1.10, -headR * 0.24, 0.036),
+          new THREE.Vector3(side * headR * 0.94, -headR * 1.02 * lenScale, 0.068),
+          new THREE.Vector3(side * headR * 1.14, -headR * 1.82 * lenScale, 0.084),
+          new THREE.Vector3(side * headR * 0.92, -headR * 2.45 * lenScale, 0.088)
+        ]);
+        const m1 = new THREE.Mesh(createTaperedHairStrand(w1, 14, 0.039, 0.050, 0.012, 0.62), hairMat);
+        m1.castShadow = true; addOut(m1, 0.018); waveG.add(m1);
+        const w2 = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(side * headR * 0.88, headR * 0.24, -0.032),
+          new THREE.Vector3(side * headR * 1.18, -headR * 0.56, -0.018),
+          new THREE.Vector3(side * headR * 1.00, -headR * 1.42 * lenScale, 0.016),
+          new THREE.Vector3(side * headR * 1.20, -headR * 2.22 * lenScale, 0.032),
+          new THREE.Vector3(side * headR * 1.04, -headR * 2.68 * lenScale, 0.038)
+        ]);
+        const m2 = new THREE.Mesh(createTaperedHairStrand(w2, 14, 0.041, 0.052, 0.012, 0.58), hairMat);
+        m2.castShadow = true; addOut(m2, 0.016); waveG.add(m2);
+        headGroup.add(waveG); swayHair.push(waveG);
+      });
+      for (let bl = -2; bl <= 2; bl++) {
+        const bx = bl * (headR * 0.42);
+        const bc = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(bx * 0.85, 0.02, -headR * 0.82),
+          new THREE.Vector3(bx * 1.12, -headR * 0.72, -headR * 0.96),
+          new THREE.Vector3(bx * 1.00, -headR * 1.62 * lenScale, -headR * 0.86),
+          new THREE.Vector3(bx * 1.10, -headR * 2.42 * lenScale, -headR * 0.76)
+        ]);
+        const bm = new THREE.Mesh(createTaperedHairStrand(bc, 10, 0.034, 0.044, 0.010, 0.56), hairMat);
+        addOut(bm, 0.016); headGroup.add(bm);
+      }
+    } else if (style === 'dad') {
+      // Short wavy dark charcoal hair with natural upper-forehead volume & salt-and-pepper temples (clear forehead above eyebrows!)
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.02, 22, 16, 0, Math.PI * 2, 0, Math.PI * 0.46), hairMat);
+      crown.scale.set(0.94, 1.09, 1.00); crown.position.set(0, 0.024, -0.014); crown.rotation.x = -0.44;
+      crown.castShadow = true; addOut(crown, 0.018); headGroup.add(crown);
+      [
+        [0.0, 0.156, 0.054, 0.056, 0.032, 0.044], [-0.054, 0.146, 0.046, 0.050, 0.030, 0.040],
+        [0.056, 0.144, 0.046, 0.048, 0.030, 0.040], [0.0, 0.166, -0.010, 0.072, 0.036, 0.064],
+        [-0.088, 0.098, 0.012, 0.034, 0.044, 0.042], [0.088, 0.098, 0.012, 0.034, 0.044, 0.042]
+      ].forEach(c => {
+        const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), hairMat);
+        tuft.scale.set(c[3], c[4], c[5]); tuft.position.set(c[0], c[1], c[2]); headGroup.add(tuft);
+      });
+      const nape = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.94, 16, 12), hairMat);
+      nape.scale.set(0.92, 0.88, 0.72); nape.position.set(0, -0.016, -0.062); addOut(nape, 0.018); headGroup.add(nape);
+      const saltMat = LS.makeToonMat(0x525258);
+      [-1, 1].forEach(side => {
+        const temple = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.082, 0.048), saltMat);
+        temple.position.set(side * (headR * 0.86), 0.026, -0.016); headGroup.add(temple);
+      });
+    } else if (style === 'gedo_mahmoud') {
+      const backCap = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.01, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.48), hairMat);
+      backCap.scale.set(0.94, 1.04, 0.98); backCap.position.set(0, 0.014, -0.034); backCap.rotation.x = -0.76;
+      backCap.castShadow = true; addOut(backCap, 0.018); headGroup.add(backCap);
+      [-1, 1].forEach(side => {
+        const sideHair = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.38, 12, 10), hairMat);
+        sideHair.scale.set(0.42, 1.04, 1.32); sideHair.position.set(side * (headR * 0.82), 0.036, -0.024);
+        addOut(sideHair, 0.018); headGroup.add(sideHair);
+      });
+      const nape = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.92, 16, 12), hairMat);
+      nape.scale.set(0.92, 0.84, 0.72); nape.position.set(0, -0.020, -0.060); addOut(nape, 0.018); headGroup.add(nape);
+    } else if (style === 'nana_omaima') {
+      // Sculpted cream-white hijab with WIDE OPEN front window centered squarely on +Z (phi 0.16*PI..0.84*PI)!
+      const hijabMat = LS.makeToonMat(0xf2efe8, { side: THREE.DoubleSide });
+      const innerCapMat = LS.makeToonMat(0x28272a);
+      // Dark inner underscarf peak right at the top forehead hairline
+      const underCap = new THREE.Mesh(new THREE.TorusGeometry(headR * 0.84, 0.011, 8, 22, Math.PI * 0.82), innerCapMat);
+      underCap.position.set(0, 0.038, 0.056); underCap.rotation.z = 0.28; headGroup.add(underCap);
+      // Open-front sculpted hijab hood: phiStart=0.84*PI, phiLength=1.32*PI leaves +Z (phi=0.5*PI) 100% OPEN!
+      const hDome = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.13, 24, 18, Math.PI * 0.84, Math.PI * 1.32), hijabMat);
+      hDome.scale.set(1.00, 1.09, 1.04); hDome.position.set(0, 0.012, -0.008);
+      hDome.castShadow = true; addOut(hDome, 0.018); headGroup.add(hDome);
+      // Smooth curved cream-white forehead arch framing the top of her face
+      const topArch = new THREE.Mesh(new THREE.TorusGeometry(headR * 0.92, 0.022, 10, 26, Math.PI * 1.08), hijabMat);
+      topArch.position.set(0, 0.026, 0.056); topArch.rotation.z = -0.14;
+      addOut(topArch, 0.018); headGroup.add(topArch);
+      // Soft side cheek drapes framing her warm smile & glasses cleanly
+      [-1, 1].forEach(side => {
+        const fold = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.032, headR * 1.44, 12), hijabMat);
+        fold.position.set(side * (headR * 0.86), -0.024, 0.032); fold.rotation.z = side * 0.14;
+        addOut(fold, 0.018); headGroup.add(fold);
+      });
+      // Layered graceful neck/chest hijab wrap tucked neatly inside her crimson blazer!
+      const chinWrap = new THREE.Mesh(new THREE.TorusGeometry(headR * 0.74, 0.032, 10, 22), hijabMat);
+      chinWrap.rotation.x = Math.PI / 2 + 0.18; chinWrap.scale.set(1.04, 0.88, 1.0);
+      chinWrap.position.set(0, -headR * 1.02, 0.012); addOut(chinWrap, 0.020); headGroup.add(chinWrap);
+      const neckDrape = new THREE.Mesh(new THREE.CylinderGeometry(headR * 0.74, headR * 0.94, 0.14, 16), hijabMat);
+      neckDrape.scale.set(1.04, 1.0, 0.82); neckDrape.position.set(0, -headR * 1.44, 0.012);
+      addOut(neckDrape, 0.018); headGroup.add(neckDrape);
+    } else if (style === 'bibo') {
+      const crown = new THREE.Mesh(new THREE.SphereGeometry(headR * 1.04, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.46), hairMat);
+      crown.scale.set(0.98, 1.04, 1.00); crown.position.set(0, 0.022, -0.012); crown.rotation.x = -0.41;
+      crown.castShadow = true; addOut(crown, 0.018); headGroup.add(crown);
+      [
+        [0.0, 0.158, 0.080, 0.056], [-0.066, 0.150, 0.070, 0.052], [0.068, 0.148, 0.072, 0.054],
+        [-0.114, 0.110, 0.034, 0.050], [0.114, 0.108, 0.036, 0.050],
+        [-0.042, 0.184, 0.014, 0.062], [0.048, 0.182, 0.012, 0.060],
+        [0.0, 0.174, -0.052, 0.068], [-0.120, 0.054, -0.022, 0.048], [0.120, 0.054, -0.022, 0.048]
+      ].forEach(c => {
+        const curl = new THREE.Mesh(new THREE.SphereGeometry(c[3], 10, 8), hairMat);
+        curl.scale.set(1.12, 0.84, 1.02); curl.position.set(c[0], c[1], c[2]);
+        addOut(curl, 0.018); headGroup.add(curl);
+      });
+      const nape = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.96, 16, 12), hairMat);
+      nape.scale.set(0.98, 0.88, 0.76); nape.position.set(0, -0.020, -0.064); addOut(nape, 0.018); headGroup.add(nape);
+    }
+
+    const hatSlot = new THREE.Group();
+    hatSlot.position.set(0, 0.068, -0.006);
+    hatSlot.scale.set(0.56, 0.56, 0.56);
+    if (cfg.hatType && cfg.hatType !== 'none') {
+      hatSlot.add(buildHatMeshes(cfg.hatType, cfg.hatColor));
+    }
+    headGroup.add(hatSlot);
+    bodyPivot.add(headGroup);
+
+    if (LS.createContactShadowTexture) {
+      const shadowDisc = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.84, 0.84),
+        new THREE.MeshBasicMaterial({ map: LS.createContactShadowTexture(), transparent: true, depthWrite: false })
+      );
+      shadowDisc.rotation.x = -Math.PI / 2;
+      shadowDisc.position.y = 0.024;
+      shadowDisc.userData.noOutline = true;
+      shadowDisc.userData.noCamClip = true;
+      root.add(shadowDisc);
+    }
+
+    root.scale.setScalar(s);
+
+    return {
+      root,
+      bodyPivot,
+      headGroup,
+      leftLeg: lLeg.leg,
+      rightLeg: rLeg.leg,
+      leftKnee: lLeg.knee,
+      rightKnee: rLeg.knee,
+      leftArm: lArm.arm,
+      rightArm: rArm.arm,
+      leftElbow: lArm.elbow,
+      rightElbow: rArm.elbow,
+      topMat,
+      bottomMat,
+      shoeMat,
+      bpMat,
+      hatSlot,
+      signatureBand,
+      swayHair,
+      faceMat,
+      openFaceTex,
+      blinkFaceTex,
+      happyFaceTex: openFaceTex,
+      blinkTimer: 3.0 + (style.length * 0.37) % 2.4,
+      isBlinking: false
+    };
+  }
+
   LS.createAnimeCharacter = function (cfg) {
-    if (cfg && (cfg.portraitStyle === 'laila' || cfg.portraitStyle === 'salma')) {
-      return buildNextGenPhotoSister(cfg);
+    if (cfg && cfg.portraitStyle && PORTRAIT_PROFILES[cfg.portraitStyle]) {
+      return buildUnifiedWatercolorCharacter(cfg);
     }
     if (LS.isHD) return buildRealisticHDCharacter(cfg);
 
@@ -2307,36 +3516,27 @@ window.LailaSalma = window.LailaSalma || {};
 
   LS.initCoreCharacters = function (scene) {
     LS.chars.laila = LS.createAnimeCharacter({
-      scale: 0.86,
+      scale: 0.76,
       portraitStyle: 'laila',
-      skinColor: 0xdfa882,
-      hairColor: 0x2c201b,
-      topColor: 0xffffff,
-      bottomColor: 0x2c4a7c,
-      shoeColor: 0xd94848,
-      sailorCollar: true,
-      backpackColor: 0xc92c3b,
-      longHair: true,
-      hatType: 'none',
-      faceOpts: { portrait: 'laila', smileTeeth: true, eyeColor: '#3a2216', eyeHighlight: '#885838', blush: 'rgba(222, 112, 92, 0.36)' }
+      topColor: 0xf8dc74,
+      bottomColor: 0xf4d25c,
+      shoeColor: 0xd96055,
+      backpackColor: 0xd96055,
+      hatType: 'none'
     });
     scene.add(LS.chars.laila.root);
 
     LS.chars.salma = LS.createAnimeCharacter({
-      scale: 0.68,
+      scale: 0.63,
       portraitStyle: 'salma',
-      skinColor: 0xf6c8ae,
-      hairColor: 0x34221c,
-      topColor: 0xfff3b0,
-      bottomColor: 0xdf586b,
-      shoeColor: 0xc86d24,
+      topColor: 0xf9f8f5,
+      bottomColor: 0xd96b5a,
+      shoeColor: 0xc87238,
       backpackColor: 0xd97b38,
-      hatType: 'none',
-      hatColor: 0xfacc15,
-      faceOpts: { portrait: 'salma', smileTeeth: true, eyeColor: '#3c2317', eyeHighlight: '#92623e', blush: 'rgba(244, 134, 146, 0.42)' }
+      hatType: 'none'
     });
     LS.chars.salmaBubble = LS.createSpeechBubbleSprite('Salma', 'Wait for me, Laila! Let us explore together! 🌸');
-    LS.chars.salmaBubble.position.set(0, 1.92, 0);
+    LS.chars.salmaBubble.position.set(0, 2.08, 0);
     LS.chars.salma.root.add(LS.chars.salmaBubble);
     scene.add(LS.chars.salma.root);
 
