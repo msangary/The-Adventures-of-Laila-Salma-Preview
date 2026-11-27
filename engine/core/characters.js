@@ -2429,6 +2429,13 @@ window.LailaSalma = window.LailaSalma || {};
       topHex: 0xb83c34, bottomHex: 0xa2302a, shoeHex: 0x6b453a,
       sleeves: 'sleeveless', bottomType: 'skirt', pleatedTop: true, torsoW: 0.94,
       face: { eyeColor: '#3b2416', eyeHighlight: '#8a5632', eyeScale: 0.88, lashStyle: 'graceful', mouthStyle: 'open_smile' }
+    },
+    mostafa: {
+      scale: 0.98, headR: 0.196, isChild: false, skinHex: 0xdfb28b,
+      hairPalette: ['#3c3430', '#5a504a', '#7c7068'], browColor: '#3c3028',
+      topHex: 0xf4e4a2, bottomHex: 0x3b485b, shoeHex: 0x7b4c2a,
+      sleeves: 'long', bottomType: 'pants', collar: true, torsoW: 1.04,
+      face: { eyeColor: '#3b2416', eyeHighlight: '#7a5230', eyeScale: 0.84, lashStyle: 'clean', mouthStyle: 'open_smile' }
     }
   };
   LS.PORTRAIT_PROFILES = PORTRAIT_PROFILES;

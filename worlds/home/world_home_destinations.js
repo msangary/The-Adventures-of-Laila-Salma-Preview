@@ -1726,25 +1726,7 @@ window.LailaSalma = window.LailaSalma || {};
         pos: new THREE.Vector3(4.48, 0.02, -3.8),
         baseRot: Math.PI / 2,
         seated: true,
-        char: {
-          scale: 1.0,
-          athletic: true,
-          skinColor: 0x5c3822,
-          hairColor: 0x161210,
-          bald: true,
-          doctorCoat: true,
-          stethoscope: true,
-          topColor: 0xffffff,
-          bottomColor: 0x1e293b,
-          pants: true,
-          faceOpts: {
-            charismaticMale: true,
-            goatee: true,
-            smileTeeth: true,
-            eyeColor: '#1e120c',
-            eyeHighlight: '#5a3a24'
-          }
-        }
+        char: { scale: 0.98, portraitStyle: 'mostafa' }
       }
     ]);
 
