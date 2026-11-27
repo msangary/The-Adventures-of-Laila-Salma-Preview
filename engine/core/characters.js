@@ -424,55 +424,28 @@ window.LailaSalma = window.LailaSalma || {};
           roughness: 0.56,
           metalness: 0.0
         });
+    const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
+
+    // Studio Ghibli brushed hair sheen multiplied cleanly by each NPC's true hairHex (rich espresso/chestnut/gold/silver!)
+    if (!buildRealisticHDCharacter._neutralHairTex) {
+      buildRealisticHDCharacter._neutralHairTex = createPaintedSisterHairTex('#9e9892', '#ccc5be', '#ebe2d8');
+    }
     const hairMat = new THREE.MeshStandardMaterial({
       color: hairHex,
-      map: hairTex,
-      bumpMap: hairTex,
-      bumpScale: 0.006,
-      roughness: 0.42,
-      metalness: 0.04,
-      envMapIntensity: 0.18,
+      map: buildRealisticHDCharacter._neutralHairTex,
+      roughness: 0.46,
+      metalness: 0.02,
       side: THREE.DoubleSide
     });
-    const topMat = new THREE.MeshStandardMaterial({
-      color: cfg.topColor !== undefined ? cfg.topColor : 0xffffff,
-      map: fabTex,
-      bumpMap: fabTex,
-      bumpScale: 0.018,
-      roughness: 0.82,
-      metalness: 0.02,
-      envMapIntensity: 0.10
+    const topMat = LS.makeToonMat(cfg.topColor !== undefined ? cfg.topColor : 0xffffff, {
+      map: fabTex || undefined
     });
-    const bottomMat = new THREE.MeshStandardMaterial({
-      color: cfg.bottomColor !== undefined ? cfg.bottomColor : 0x2d4373,
-      map: fabTex,
-      bumpMap: fabTex,
-      bumpScale: 0.018,
-      roughness: 0.84,
-      metalness: 0.02,
-      envMapIntensity: 0.10
+    const bottomMat = LS.makeToonMat(cfg.bottomColor !== undefined ? cfg.bottomColor : 0x2d4373, {
+      map: cfg.pants ? (fabTex || undefined) : getNeutralPleatTex()
     });
-    const shoeMat = new THREE.MeshStandardMaterial({
-      color: cfg.shoeColor !== undefined ? cfg.shoeColor : 0xd94c4c,
-      roughness: 0.52,
-      metalness: 0.05,
-      envMapIntensity: 0.14
-    });
-    const soleMat = new THREE.MeshStandardMaterial({
-      color: 0xf4f1ea,
-      roughness: 0.72,
-      metalness: 0.02,
-      envMapIntensity: 0.10
-    });
-    const bpMat = new THREE.MeshStandardMaterial({
-      color: cfg.backpackColor !== undefined ? cfg.backpackColor : 0xc92c3b,
-      map: fabTex,
-      bumpMap: fabTex,
-      bumpScale: 0.022,
-      roughness: 0.62,
-      metalness: 0.04,
-      envMapIntensity: 0.12
-    });
+    const shoeMat = LS.makeToonMat(cfg.shoeColor !== undefined ? cfg.shoeColor : 0xd94c4c);
+    const soleMat = LS.makeToonMat(0xf4f1ea);
+    const bpMat = LS.makeToonMat(cfg.backpackColor !== undefined ? cfg.backpackColor : 0xc92c3b);
 
     const bodyPivot = new THREE.Group();
     root.add(bodyPivot);
@@ -531,6 +504,7 @@ window.LailaSalma = window.LailaSalma || {};
       upper.scale.set(0.90, 1.05, 1.85);
       upper.position.set(0, -0.036, 0.015);
       upper.castShadow = true;
+      addOut(upper, 0.034);
       shoeG.add(upper);
 
       const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.048, 0.042, 12), shoeMat);
@@ -550,35 +524,47 @@ window.LailaSalma = window.LailaSalma || {};
     const rLeg = makeRealisticLeg(0.088);
     bodyPivot.add(lLeg.leg, rLeg.leg);
 
-    // 2. Anatomical Torso, Pelvis, Collar, Skirt/Belt & Rounded Backpack with Straps
+    // 2. Anatomical Torso, Pelvis, Collar, 3D Pleated Skirt/Belt & Rounded Backpack with Straps
     const torso = new THREE.Mesh(geos.torso, topMat);
     torso.position.y = 0.805;
     torso.castShadow = true;
     torso.receiveShadow = true;
+    addOut(torso, 0.024);
     bodyPivot.add(torso);
 
     // Natural Neck & Collarbone Transition
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.055, 0.145, 14), skinMat);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.058, 0.145, 14), skinMat);
     neck.position.y = 1.415;
     neck.castShadow = true;
     bodyPivot.add(neck);
 
     // Crisp Woven Shirt Collar / Neckline Trim
-    const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 8, 18), topMat);
+    const collarRing = new THREE.Mesh(new THREE.TorusGeometry(0.064, 0.014, 8, 18), LS.makeToonMat(0xfffaf0));
     collarRing.rotation.x = Math.PI / 2 + 0.14;
     collarRing.position.set(0, 1.372, 0.008);
     bodyPivot.add(collarRing);
 
     if (!cfg.pants) {
-      // Realistic Pleated A-Line Skirt + Fitted Waistband
-      const skirt = new THREE.Mesh(geos.skirt, bottomMat);
-      skirt.position.y = 0.725;
+      // Studio Ghibli 3D Radial-Pleated A-Line Skirt + Waist Sash + Soft Lace Hem (matches Laila & Salma!)
+      if (!buildRealisticHDCharacter._npcSkirtGeo) {
+        buildRealisticHDCharacter._npcSkirtGeo = createPleatedSkirtMeshGeo([
+          new THREE.Vector2(0.245, 0.45),
+          new THREE.Vector2(0.260, 0.47),
+          new THREE.Vector2(0.228, 0.59),
+          new THREE.Vector2(0.175, 0.76),
+          new THREE.Vector2(0.142, 0.89)
+        ], 36, 14, 0.034);
+      }
+      const skirt = new THREE.Mesh(buildRealisticHDCharacter._npcSkirtGeo, bottomMat);
+      skirt.scale.set(1.0, 1.0, 0.84);
       skirt.castShadow = true;
       skirt.receiveShadow = true;
+      addOut(skirt, 0.022);
       bodyPivot.add(skirt);
-      const waistBand = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.148, 0.048, 22), bottomMat);
-      waistBand.scale.set(1.0, 1.0, 0.78);
-      waistBand.position.y = 0.892;
+      const waistBand = new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.018, 8, 22), LS.makeToonMat(0xfff4e0));
+      waistBand.rotation.x = Math.PI / 2;
+      waistBand.scale.set(1.0, 0.84, 1.0);
+      waistBand.position.y = 0.888;
       bodyPivot.add(waistBand);
     } else {
       // Tailored Trouser Pelvis + Leather Belt & Brass Buckle
@@ -586,6 +572,7 @@ window.LailaSalma = window.LailaSalma || {};
       pelvis.scale.set(1.0, 0.72, 0.70);
       pelvis.position.y = 0.815;
       pelvis.castShadow = true;
+      addOut(pelvis, 0.024);
       bodyPivot.add(pelvis);
 
       const beltMat = new THREE.MeshStandardMaterial({ color: 0x3a261a, roughness: 0.45, metalness: 0.12 });
@@ -738,9 +725,9 @@ window.LailaSalma = window.LailaSalma || {};
     const isLailaPortrait = cfg.portraitStyle === 'laila';
     const isSalmaPortrait = cfg.portraitStyle === 'salma';
     const headGroup = new THREE.Group();
-    headGroup.position.y = 1.572;
-    // Age-natural head-to-body ratio: 5yo Salma (1.16), 9yo Laila (1.08), adults/teens (0.98)
-    const headRatio = isSalmaPortrait ? 1.16 : (isLailaPortrait ? 1.08 : (s < 0.75 ? 1.15 : (s < 0.88 ? 1.06 : 0.98)));
+    headGroup.position.y = 1.588;
+    // Cohesive Studio Ghibli head-to-body ratio aligned cleanly with Laila & Salma (adults ~0.27m head, kids ~0.22-0.25m)
+    const headRatio = isSalmaPortrait ? 1.24 : (isLailaPortrait ? 1.22 : (s < 0.75 ? 1.28 : (s < 0.88 ? 1.24 : 1.20)));
     headGroup.scale.setScalar(headRatio);
     bodyPivot.add(headGroup);
 
@@ -751,6 +738,7 @@ window.LailaSalma = window.LailaSalma || {};
     if (cfg.bald) skinMat.roughness = 0.44;
     headMesh.castShadow = true;
     headMesh.receiveShadow = true;
+    addOut(headMesh, 0.022);
     headGroup.add(headMesh);
 
     // Sculpted 3D Nose (delicate petite button nose for Laila & Salma; full contoured nose for adults)
@@ -884,6 +872,7 @@ window.LailaSalma = window.LailaSalma || {};
       hairCap.position.set(0, 0.018, -0.014);
       hairCap.rotation.x = isGirlP ? -0.36 : -0.34;
       hairCap.castShadow = true;
+      addOut(hairCap, 0.024);
       headGroup.add(hairCap);
     }
 
@@ -1058,6 +1047,7 @@ window.LailaSalma = window.LailaSalma || {};
         const curtain = new THREE.Mesh(geos.longHairCurtain, hairMat);
         curtain.position.set(0, -0.125, -0.014);
         curtain.castShadow = true;
+        addOut(curtain, 0.024);
         headGroup.add(curtain);
 
         [-1, 1].forEach(side => {
@@ -1065,6 +1055,7 @@ window.LailaSalma = window.LailaSalma || {};
           sLock.scale.set(0.58, 1.38, 0.72);
           sLock.position.set(side * 0.118, 0.012, 0.012);
           sLock.rotation.z = side * 0.06;
+          addOut(sLock, 0.026);
           headGroup.add(sLock);
         });
       } else if (cfg.pigtails) {
@@ -1073,7 +1064,7 @@ window.LailaSalma = window.LailaSalma || {};
         nape.position.set(0, -0.028, -0.066);
         headGroup.add(nape);
 
-        const tieMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, map: fabTex, roughness: 0.68 });
+        const tieMat = LS.makeToonMat(0xf59e0b);
         [-1, 1].forEach(side => {
           const tie = new THREE.Mesh(new THREE.TorusGeometry(0.024, 0.009, 8, 14), tieMat);
           tie.position.set(side * 0.124, -0.008, -0.038);
@@ -1084,6 +1075,7 @@ window.LailaSalma = window.LailaSalma || {};
           curl.position.set(side * 0.130, -0.008, -0.042);
           curl.rotation.set(0.08, 0, side * 0.26);
           curl.castShadow = true;
+          addOut(curl, 0.026);
           headGroup.add(curl);
         });
       } else if (cfg.hairBun) {
@@ -1096,9 +1088,10 @@ window.LailaSalma = window.LailaSalma || {};
         bun.scale.set(1.08, 0.92, 0.92);
         bun.position.set(0, 0.088, -0.132);
         bun.castShadow = true;
+        addOut(bun, 0.028);
         headGroup.add(bun);
 
-        const bunTie = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.008, 8, 16), new THREE.MeshStandardMaterial({ color: 0xd94848, roughness: 0.65 }));
+        const bunTie = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.008, 8, 16), LS.makeToonMat(0xd94848));
         bunTie.position.set(0, 0.080, -0.106);
         bunTie.rotation.x = 0.45;
         headGroup.add(bunTie);
@@ -1435,7 +1428,7 @@ window.LailaSalma = window.LailaSalma || {};
     // Calibrate photo-sister model cleanly to world architecture & adult NPCs
     // (Laila ~1.20m, Salma ~0.95m vs Mom 1.54m, Dad 1.61m, benches 0.92m, doors 2.60m)
     const modelWrap = new THREE.Group();
-    modelWrap.scale.setScalar(0.72);
+    modelWrap.scale.setScalar(0.76);
     root.add(modelWrap);
     const bodyPivot = new THREE.Group();
     modelWrap.add(bodyPivot);
@@ -1463,69 +1456,69 @@ window.LailaSalma = window.LailaSalma || {};
     const laceMat = LS.makeToonMat(0xfffcf5, { side: THREE.DoubleSide });
     const brassMat = LS.makeToonMat(0xf4c84d);
 
-    // 1. REAL 3D PLEATED SKIRT + SCALLOPED LACE PETTICOAT + WAIST BOW
+    // 1. REAL 3D PLEATED SKIRT + SCALLOPED LACE PETTICOAT + WAIST BOW (graceful world-aligned width!)
     const skirtPts = [
-      new THREE.Vector2(0.36, 0.42),
-      new THREE.Vector2(0.40, 0.44),
-      new THREE.Vector2(0.34, 0.56),
-      new THREE.Vector2(0.24, 0.74),
-      new THREE.Vector2(0.18, 0.86)
+      new THREE.Vector2(0.245, 0.42),
+      new THREE.Vector2(0.270, 0.44),
+      new THREE.Vector2(0.232, 0.56),
+      new THREE.Vector2(0.175, 0.74),
+      new THREE.Vector2(0.138, 0.86)
     ];
-    const skirt = new THREE.Mesh(createPleatedSkirtMeshGeo(skirtPts, 40, 16, 0.052), bottomMat);
+    const skirt = new THREE.Mesh(createPleatedSkirtMeshGeo(skirtPts, 40, 16, 0.036), bottomMat);
     skirt.castShadow = true; addOut(skirt, 0.022);
     bodyPivot.add(skirt);
 
-    const lacePts = [new THREE.Vector2(0.34, 0.395), new THREE.Vector2(0.365, 0.425), new THREE.Vector2(0.32, 0.48)];
-    bodyPivot.add(new THREE.Mesh(createPleatedSkirtMeshGeo(lacePts, 32, 18, 0.045), laceMat));
+    const lacePts = [new THREE.Vector2(0.232, 0.395), new THREE.Vector2(0.252, 0.425), new THREE.Vector2(0.220, 0.48)];
+    bodyPivot.add(new THREE.Mesh(createPleatedSkirtMeshGeo(lacePts, 32, 18, 0.032), laceMat));
 
-    const sash = new THREE.Mesh(new THREE.TorusGeometry(0.188, 0.025, 8, 24), accentMat);
+    const sash = new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.020, 8, 24), accentMat);
     sash.rotation.x = Math.PI / 2; sash.position.y = 0.855; bodyPivot.add(sash);
-    const backBow = buildSisterBow(accentMat, 1.2);
-    backBow.position.set(0, 0.84, -0.19); backBow.rotation.y = Math.PI; bodyPivot.add(backBow);
+    const backBow = buildSisterBow(accentMat, 0.92);
+    backBow.position.set(0, 0.84, -0.146); backBow.rotation.y = Math.PI; bodyPivot.add(backBow);
 
-    // 2. SCULPTED BLOUSE TORSO, NECK & COLLAR
+    // 2. SCULPTED BLOUSE TORSO, NECK & COLLAR (graceful Miyazaki anime width!)
     const torsoPts = [
-      new THREE.Vector2(0.165, 0.84), new THREE.Vector2(0.205, 0.98),
-      new THREE.Vector2(0.215, 1.13), new THREE.Vector2(0.155, 1.25),
-      new THREE.Vector2(0.085, 1.30)
+      new THREE.Vector2(0.128, 0.84), new THREE.Vector2(0.154, 0.98),
+      new THREE.Vector2(0.160, 1.13), new THREE.Vector2(0.120, 1.25),
+      new THREE.Vector2(0.066, 1.30)
     ];
     const torso = new THREE.Mesh(new THREE.LatheGeometry(torsoPts, 24), topMat);
-    torso.scale.set(1.06, 1.0, 0.82); torso.castShadow = true; addOut(torso, 0.022);
+    torso.scale.set(1.0, 1.0, 0.80); torso.castShadow = true; addOut(torso, 0.022);
     bodyPivot.add(torso);
 
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.064, 0.072, 0.14, 12), skinMat);
-    neck.position.y = 1.32; bodyPivot.add(neck);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.055, 0.14, 12), skinMat);
+    neck.position.y = 1.315; bodyPivot.add(neck);
 
     if (!isSalma) {
-      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.245, 0.19, 20), bottomMat);
-      collar.scale.set(1.12, 1, 0.88); collar.position.y = 1.21; bodyPivot.add(collar);
-      const cTrim = new THREE.Mesh(new THREE.TorusGeometry(0.228, 0.011, 6, 22), laceMat);
-      cTrim.rotation.x = Math.PI / 2; cTrim.scale.set(1.08, 0.86, 1); cTrim.position.y = 1.135; bodyPivot.add(cTrim);
-      const fBow = buildSisterBow(accentMat, 1.12);
-      fBow.position.set(0, 1.12, 0.195); bodyPivot.add(fBow);
+      const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.106, 0.184, 0.175, 20), bottomMat);
+      collar.scale.set(1.06, 1, 0.84); collar.position.y = 1.21; bodyPivot.add(collar);
+      const cTrim = new THREE.Mesh(new THREE.TorusGeometry(0.170, 0.009, 6, 22), laceMat);
+      cTrim.rotation.x = Math.PI / 2; cTrim.scale.set(1.04, 0.84, 1); cTrim.position.y = 1.138; bodyPivot.add(cTrim);
+      const fBow = buildSisterBow(accentMat, 0.88);
+      fBow.position.set(0, 1.125, 0.146); bodyPivot.add(fBow);
     } else {
-      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.148, 0.032, 8, 22), laceMat);
-      collar.rotation.x = Math.PI / 2; collar.scale.set(1.08, 0.88, 1); collar.position.y = 1.245; bodyPivot.add(collar);
-      [-0.10, 0.10].forEach(sx => {
-        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.36, 0.028), bottomMat);
-        strap.position.set(sx, 1.04, 0.165); strap.rotation.x = -0.10; bodyPivot.add(strap);
-        const btn = new THREE.Mesh(new THREE.SphereGeometry(0.018, 7, 6), brassMat);
-        btn.position.set(sx, 0.90, 0.185); bodyPivot.add(btn);
+      const collar = new THREE.Mesh(new THREE.TorusGeometry(0.114, 0.024, 8, 22), laceMat);
+      collar.rotation.x = Math.PI / 2; collar.scale.set(1.04, 0.84, 1); collar.position.y = 1.245; bodyPivot.add(collar);
+      [-0.076, 0.076].forEach(sx => {
+        const strap = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.36, 0.022), bottomMat);
+        strap.position.set(sx, 1.04, 0.126); strap.rotation.x = -0.10; bodyPivot.add(strap);
+        const btn = new THREE.Mesh(new THREE.SphereGeometry(0.014, 7, 6), brassMat);
+        btn.position.set(sx, 0.90, 0.142); bodyPivot.add(btn);
       });
-      const fBow = buildSisterBow(accentMat, 0.92);
-      fBow.position.set(0, 1.19, 0.175); bodyPivot.add(fBow);
+      const fBow = buildSisterBow(accentMat, 0.76);
+      fBow.position.set(0, 1.19, 0.135); bodyPivot.add(fBow);
     }
 
     // 3. ROUNDED STORYBOOK SATCHEL BACKPACK
     const packG = new THREE.Group();
-    packG.position.set(0, 1.03, -0.21);
-    const pMain = new THREE.Mesh(new THREE.SphereGeometry(0.19, 16, 12), bpMat);
+    packG.position.set(0, 1.03, -0.155);
+    const pMain = new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 12), bpMat);
     pMain.scale.set(0.92, 1.08, 0.56); pMain.castShadow = true; addOut(pMain, 0.030); packG.add(pMain);
-    const pFlap = new THREE.Mesh(new THREE.SphereGeometry(0.175, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), bpMat);
-    pFlap.scale.set(0.95, 0.65, 0.62); pFlap.position.set(0, 0.08, -0.02); packG.add(pFlap);
-    [-0.06, 0.06].forEach(bx => {
-      const buck = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.038, 0.02), brassMat);
-      buck.position.set(bx, 0.02, -0.105); packG.add(buck);
+    const pFlap = new THREE.Mesh(new THREE.SphereGeometry(0.132, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), bpMat);
+    pFlap.scale.set(0.95, 0.65, 0.62); pFlap.position.set(0, 0.062, -0.016); packG.add(pFlap);
+    [-0.046, 0.046].forEach(bx => {
+      const buck = new THREE.Mesh(new THREE.BoxGeometry(0.024, 0.030, 0.016), brassMat);
+      buck.position.set(bx, 0.016, -0.082); packG.add(buck);
     });
     bodyPivot.add(packG);
 
@@ -1533,65 +1526,66 @@ window.LailaSalma = window.LailaSalma || {};
     function makeSisterLeg(lx) {
       const leg = new THREE.Group();
       leg.position.set(lx, 0.56, 0);
-      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.054, 0.24, 12), skinMat);
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.046, 0.24, 12), skinMat);
       thigh.position.y = -0.12; thigh.castShadow = true; leg.add(thigh);
       const knee = new THREE.Group();
       knee.position.set(0, -0.24, 0);
-      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.044, 0.20, 12), skinMat);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.038, 0.20, 12), skinMat);
       shin.position.y = -0.10; shin.castShadow = true; knee.add(shin);
-      const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.045, 0.16, 12), sockMat);
+      const sock = new THREE.Mesh(new THREE.CylinderGeometry(0.044, 0.039, 0.16, 12), sockMat);
       sock.position.y = -0.15; knee.add(sock);
-      const sockCuff = new THREE.Mesh(new THREE.TorusGeometry(0.051, 0.011, 7, 16), sockMat);
+      const sockCuff = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.009, 7, 16), sockMat);
       sockCuff.rotation.x = Math.PI / 2; sockCuff.position.y = -0.07; knee.add(sockCuff);
-      const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.070, 14, 10), shoeMat);
-      shoe.scale.set(0.94, 0.68, 1.50); shoe.position.set(0, -0.265, 0.036); shoe.castShadow = true;
+      const shoe = new THREE.Mesh(new THREE.SphereGeometry(0.058, 14, 10), shoeMat);
+      shoe.scale.set(0.92, 0.68, 1.52); shoe.position.set(0, -0.268, 0.030); shoe.castShadow = true;
       addOut(shoe, 0.036); knee.add(shoe);
-      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.009, 6, 14, Math.PI), shoeMat);
-      strap.position.set(0, -0.235, 0.035); strap.rotation.x = 0.25; knee.add(strap);
+      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.008, 6, 14, Math.PI), shoeMat);
+      strap.position.set(0, -0.242, 0.028); strap.rotation.x = 0.25; knee.add(strap);
       leg.add(knee);
       return { leg, knee };
     }
-    const lLeg = makeSisterLeg(-0.105);
-    const rLeg = makeSisterLeg(0.105);
+    const lLeg = makeSisterLeg(-0.082);
+    const rLeg = makeSisterLeg(0.082);
     bodyPivot.add(lLeg.leg, rLeg.leg);
 
     // 5. BELL SLEEVES + ARTICULATED ELBOW ARMS + HANDS WITH THUMBS
     const sleevePts = [
-      new THREE.Vector2(0.056, -0.16), new THREE.Vector2(0.088, -0.10),
-      new THREE.Vector2(0.092, -0.03), new THREE.Vector2(0.068, 0.03),
-      new THREE.Vector2(0.032, 0.05)
+      new THREE.Vector2(0.044, -0.15), new THREE.Vector2(0.068, -0.095),
+      new THREE.Vector2(0.072, -0.03), new THREE.Vector2(0.054, 0.025),
+      new THREE.Vector2(0.026, 0.045)
     ];
     const sleeveGeo = new THREE.LatheGeometry(sleevePts, 16);
     function makeSisterArm(ax) {
       const arm = new THREE.Group();
-      arm.position.set(ax, 1.22, 0.01);
+      arm.position.set(ax, 1.21, 0.01);
       const puff = new THREE.Mesh(sleeveGeo, topMat);
       puff.castShadow = true; addOut(puff, 0.030); arm.add(puff);
-      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.054, 0.011, 6, 14), isSalma ? accentMat : bottomMat);
-      cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.155; arm.add(cuff);
-      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.041, 0.14, 10), skinMat);
-      upperArm.position.y = -0.18; arm.add(upperArm);
+      const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.043, 0.009, 6, 14), isSalma ? accentMat : bottomMat);
+      cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.145; arm.add(cuff);
+      const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.033, 0.14, 10), skinMat);
+      upperArm.position.y = -0.175; arm.add(upperArm);
       const elbow = new THREE.Group();
-      elbow.position.set(0, -0.25, 0);
+      elbow.position.set(0, -0.245, 0);
       elbow.rotation.x = -0.18;
-      elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.040, 8, 7), skinMat));
-      const foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.033, 0.17, 10), skinMat);
+      elbow.add(new THREE.Mesh(new THREE.SphereGeometry(0.033, 8, 7), skinMat));
+      const foreArm = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.028, 0.17, 10), skinMat);
       foreArm.position.y = -0.085; foreArm.castShadow = true; elbow.add(foreArm);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.044, 10, 8), skinMat);
-      hand.scale.set(0.88, 1.15, 0.72); hand.position.y = -0.19; elbow.add(hand);
-      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.017, 7, 6), skinMat);
-      thumb.position.set(ax < 0 ? 0.032 : -0.032, -0.18, 0.022); elbow.add(thumb);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.037, 10, 8), skinMat);
+      hand.scale.set(0.88, 1.15, 0.72); hand.position.y = -0.188; elbow.add(hand);
+      const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.014, 7, 6), skinMat);
+      thumb.position.set(ax < 0 ? 0.026 : -0.026, -0.178, 0.018); elbow.add(thumb);
       arm.add(elbow);
-      arm.rotation.z = ax < 0 ? -0.16 : 0.16;
+      arm.rotation.z = ax < 0 ? -0.14 : 0.14;
       return { arm, elbow };
     }
-    const lArm = makeSisterArm(-0.215);
-    const rArm = makeSisterArm(0.215);
+    const lArm = makeSisterArm(-0.162);
+    const rArm = makeSisterArm(0.162);
     bodyPivot.add(lArm.arm, rArm.arm);
 
-    // 6. PHOTO-EXACT SCULPTED HEAD + 3D EARS + NATURAL BLINKING
+    // 6. PHOTO-EXACT SCULPTED HEAD + 3D EARS + NATURAL BLINKING (aligned to Mom/Dad & world width!)
     const headGroup = new THREE.Group();
-    headGroup.position.set(0, 1.56, 0.01);
+    headGroup.position.set(0, 1.485, 0.01);
+    headGroup.scale.setScalar(0.75);
     const openFaceTex = (LS.ghibli && LS.ghibli.getPaintedTex)
       ? LS.ghibli.getPaintedTex(isSalma ? 'salmaFace' : 'lailaFace', 1, 1)
       : LS.createAnimeFaceTexture(cfg.faceOpts);
