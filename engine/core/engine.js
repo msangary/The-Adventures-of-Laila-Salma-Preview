@@ -2905,9 +2905,9 @@ window.LailaSalma = window.LailaSalma || {};
 
     if (LS.runtime.camMode === 1) {
       _fwd.set(Math.sin(laila.root.rotation.y), 0, Math.cos(laila.root.rotation.y));
-      _frontPos.copy(p).addScaledVector(_fwd, 2.25);
-      _frontPos.y += 1.32;
-      _frontLook.set(p.x, p.y + 1.18, p.z);
+      _frontPos.copy(p).addScaledVector(_fwd, 1.85);
+      _frontPos.y += 1.04;
+      _frontLook.set(p.x, p.y + 0.90, p.z);
       camera.position.lerp(_frontPos, Math.min(1, dt * 8.5));
       camTarget.lerp(_frontLook, Math.min(1, dt * 12));
       camera.lookAt(camTarget);
@@ -2918,9 +2918,9 @@ window.LailaSalma = window.LailaSalma || {};
     if (LS.runtime.camMode === 2 && salma) {
       const sp = salma.root.position;
       _fwd.set(Math.sin(salma.root.rotation.y), 0, Math.cos(salma.root.rotation.y));
-      _frontPos.copy(sp).addScaledVector(_fwd, 1.95);
-      _frontPos.y += 1.1;
-      _frontLook.set(sp.x, sp.y + 0.95, sp.z);
+      _frontPos.copy(sp).addScaledVector(_fwd, 1.55);
+      _frontPos.y += 0.84;
+      _frontLook.set(sp.x, sp.y + 0.72, sp.z);
       camera.position.lerp(_frontPos, Math.min(1, dt * 8.5));
       camTarget.lerp(_frontLook, Math.min(1, dt * 12));
       camera.lookAt(camTarget);
@@ -2929,7 +2929,7 @@ window.LailaSalma = window.LailaSalma || {};
     }
 
     // Standard 3rd-person orbit: smooth pivot target + crisp circular arc + anti-clip spring arm!
-    _desiredTarget.set(p.x, p.y + 1.25, p.z);
+    _desiredTarget.set(p.x, p.y + 1.02, p.z);
     if (camSnapNext) {
       camTarget.copy(_desiredTarget);
       effectiveCamDist = camDist;

@@ -1432,8 +1432,13 @@ window.LailaSalma = window.LailaSalma || {};
   function buildNextGenPhotoSister(cfg) {
     const isSalma = cfg.portraitStyle === 'salma';
     const root = new THREE.Group();
+    // Calibrate photo-sister model cleanly to world architecture & adult NPCs
+    // (Laila ~1.20m, Salma ~0.95m vs Mom 1.54m, Dad 1.61m, benches 0.92m, doors 2.60m)
+    const modelWrap = new THREE.Group();
+    modelWrap.scale.setScalar(0.72);
+    root.add(modelWrap);
     const bodyPivot = new THREE.Group();
-    root.add(bodyPivot);
+    modelWrap.add(bodyPivot);
     const s = cfg.scale || (isSalma ? 0.68 : 0.86);
     const addOut = (LS.ghibli && LS.ghibli.addInkOutline) ? LS.ghibli.addInkOutline : function () {};
 
@@ -1796,7 +1801,7 @@ window.LailaSalma = window.LailaSalma || {};
       shadowDisc.position.y = 0.024;
       shadowDisc.userData.noOutline = true;
       shadowDisc.userData.noCamClip = true;
-      root.add(shadowDisc);
+      modelWrap.add(shadowDisc);
     }
 
     root.scale.setScalar(s);
@@ -2337,7 +2342,7 @@ window.LailaSalma = window.LailaSalma || {};
       faceOpts: { portrait: 'salma', smileTeeth: true, eyeColor: '#3c2317', eyeHighlight: '#92623e', blush: 'rgba(244, 134, 146, 0.42)' }
     });
     LS.chars.salmaBubble = LS.createSpeechBubbleSprite('Salma', 'Wait for me, Laila! Let us explore together! 🌸');
-    LS.chars.salmaBubble.position.set(0, 2.35, 0);
+    LS.chars.salmaBubble.position.set(0, 1.92, 0);
     LS.chars.salma.root.add(LS.chars.salmaBubble);
     scene.add(LS.chars.salma.root);
 
@@ -2377,9 +2382,9 @@ window.LailaSalma = window.LailaSalma || {};
     const inRoom = LS.WORLDS && LS.WORLDS[LS.state.currentWorld] && LS.WORLDS[LS.state.currentWorld].isInterior;
     if (inRoom) {
       nb.scale.multiplyScalar(0.54);
-      nb.position.set(0, 1.98, 0);
+      nb.position.set(0, 1.66, 0);
     } else {
-      nb.position.set(0, 2.35, 0);
+      nb.position.set(0, 1.92, 0);
     }
     nb.visible = Boolean(showMs);
     LS.chars.salmaBubble = nb;
