@@ -1101,7 +1101,8 @@ window.LailaSalma = window.LailaSalma || {};
     nana_omaima: 'assets/ghibli_showcase/portraits/nana_omaima_card.jpg',
     bibo: 'assets/ghibli_showcase/portraits/bibo_card.jpg',
     nouzi: 'assets/ghibli_showcase/portraits/nouzi_card.jpg',
-    mai: 'assets/ghibli_showcase/portraits/mai_card.jpg'
+    mai: 'assets/ghibli_showcase/portraits/mai_card.jpg',
+    mostafa: 'assets/ghibli_showcase/portraits/mostafa_card.jpg'
   };
   LS.DIALOGUE_PORTRAIT_URLS = DIALOGUE_PORTRAIT_URLS;
   const dialoguePortraitCache = {};
@@ -1117,6 +1118,7 @@ window.LailaSalma = window.LailaSalma || {};
     if (n.includes('omaima')) return 'nana_omaima';
     if (n.includes('bibo')) return 'bibo';
     if (n.includes('nouzi')) return 'nouzi';
+    if (n.includes('mostafa')) return 'mostafa';
     if (n.includes('mai') && !n.includes('omaima')) return 'mai';
     return null;
   }

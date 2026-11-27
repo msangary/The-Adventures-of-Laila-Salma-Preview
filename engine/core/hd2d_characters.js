@@ -22,7 +22,8 @@ window.LailaSalma = window.LailaSalma || {};
     nana_omaima:  { strip: 'assets/ghibli_showcase/hd2d/nana_omaima_strip.png',  height: 1.54, ready: true },
     bibo:         { strip: 'assets/ghibli_showcase/hd2d/bibo_strip.png',         height: 0.99, ready: false },
     nouzi:        { strip: 'assets/ghibli_showcase/hd2d/nouzi_strip.png',        height: 1.22, ready: true },
-    mai:          { strip: 'assets/ghibli_showcase/hd2d/mai_strip.png',          height: 1.56, ready: true }
+    mai:          { strip: 'assets/ghibli_showcase/hd2d/mai_strip.png',          height: 1.56, ready: true },
+    mostafa:      { strip: 'assets/ghibli_showcase/hd2d/mostafa_strip.png',      height: 1.72, ready: false }
   };
 
   const textureLoader = new THREE.TextureLoader();

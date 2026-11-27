@@ -14,7 +14,8 @@ window.LailaSalma = window.LailaSalma || {};
     nana_omaima: 1.54,
     bibo: 0.99,
     nouzi: 1.22,
-    mai: 1.56
+    mai: 1.56,
+    mostafa: 1.72
   };
 
   /**
@@ -33,7 +34,8 @@ window.LailaSalma = window.LailaSalma || {};
     nana_omaima: null,
     bibo: null,
     nouzi: null,
-    mai: null
+    mai: null,
+    mostafa: null
   };
 
   const activeRigs = new Set();
